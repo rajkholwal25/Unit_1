@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from ..models import SapPushLog
 
-sap_logs_bp = Blueprint('sap_logs', __name__, template_folder='templates')
+sap_logs_bp = Blueprint('sap_logs', __name__)
 
 @sap_logs_bp.route('/')
 def list_logs():

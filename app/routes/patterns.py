@@ -3,7 +3,7 @@ from ..extensions import db
 from ..models import Pattern
 from sqlalchemy import or_
 
-patterns_bp = Blueprint('patterns', __name__, template_folder='templates')
+patterns_bp = Blueprint('patterns', __name__)
 
 @patterns_bp.route('/', methods=['GET','POST'])
 def list_patterns():

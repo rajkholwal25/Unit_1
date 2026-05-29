@@ -3,7 +3,7 @@ from ..extensions import db
 from ..models import BomTemplate
 import json
 
-templates_bp = Blueprint('bom_templates', __name__, template_folder='templates')
+templates_bp = Blueprint('bom_templates', __name__)
 
 @templates_bp.route('/', methods=['GET','POST'])
 def list_templates():

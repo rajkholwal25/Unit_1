@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from ..extensions import db
 from ..models import MaterialType
 
-material_bp = Blueprint('material_types', __name__, template_folder='templates')
+material_bp = Blueprint('material_types', __name__)
 
 @material_bp.route('/', methods=['GET','POST'])
 def list_materials():

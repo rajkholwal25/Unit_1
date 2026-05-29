@@ -6,7 +6,7 @@ from ..services.bom_generation import BomGenerationService
 from ..services.sap_push_service import SapPushService
 from datetime import datetime
 
-generator_bp = Blueprint('generator', __name__, template_folder='templates')
+generator_bp = Blueprint('generator', __name__)
 
 @generator_bp.route('/', methods=['GET'])
 def index():

@@ -88,7 +88,7 @@
         <main class="app-content">
     {% endif %}
 
-    {% include '_flash_messages.html' %}
+    {% include 'partials/flash_messages.html' %}
     {% block content %}{% endblock %}
 
     {% if session.user_id %}

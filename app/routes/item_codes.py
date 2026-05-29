@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from ..models import GeneratedFGItem, GeneratedProcessItem
 
-item_codes_bp = Blueprint('item_codes', __name__, template_folder='templates')
+item_codes_bp = Blueprint('item_codes', __name__)
 
 @item_codes_bp.route('/')
 def list_item_codes():
