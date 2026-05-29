@@ -1,21 +1,45 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>All Item Codes</h3>
-<p>Click any code to copy it to clipboard.</p>
-<ul class="list-group">
-  {% for code in item_codes %}
-  <li class="list-group-item d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="copyCode('{{code}}')">
-    <span>{{code}}</span>
-    <button class="btn btn-sm btn-outline-secondary">Copy</button>
-  </li>
-  {% endfor %}
-</ul>
+<div class="page-header">
+  <h1 class="page-title">All Item Codes</h1>
+  <p class="page-subtitle">Click any code to copy it to your clipboard.</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body p-0">
+    <ul class="list-group list-group-flush code-list">
+      {% for code in item_codes %}
+      <li class="list-group-item d-flex justify-content-between align-items-center code-row" style="cursor:pointer;" data-code="{{ code }}">
+        <span class="code-text">{{ code }}</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary btn-copy-code">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+      </li>
+      {% else %}
+      <li class="list-group-item text-center text-muted py-4">No item codes saved yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
 
 <script>
 function copyCode(code){
   navigator.clipboard.writeText(code).then(()=>{
-    alert('Copied: '+code)
-  }).catch(()=>alert('Copy failed'))
+    if (typeof showToast === 'function') showToast('Copied: ' + code, 'success');
+    else alert('Copied: ' + code);
+  }).catch(()=> alert('Copy failed'));
 }
+
+document.querySelectorAll('.code-row').forEach(row => {
+  const code = row.getAttribute('data-code');
+  row.addEventListener('click', (e) => {
+    if (e.target.closest('.btn-copy-code')) return;
+    copyCode(code);
+  });
+  row.querySelector('.btn-copy-code')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    copyCode(code);
+  });
+});
 </script>
 {% endblock %}

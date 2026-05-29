@@ -1,17 +1,35 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>SAP Push Logs</h3>
-<table class="table table-sm">
-  <thead><tr><th>Time</th><th>Status</th><th>Request</th><th>Response</th></tr></thead>
-  <tbody>
-    {% for l in logs %}
-    <tr>
-      <td>{{l.created_at}}</td>
-      <td>{{l.status}}</td>
-      <td><pre style="max-width:300px;">{{l.request_payload}}</pre></td>
-      <td><pre style="max-width:300px;">{{l.response_payload}}</pre></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="page-header">
+  <h1 class="page-title">SAP Push Logs</h1>
+  <p class="page-subtitle">History of item code pushes and API responses.</p>
+</div>
+
+<div class="panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-modern table-hover mb-0">
+        <thead>
+          <tr><th>Time</th><th>Status</th><th>Request</th><th>Response</th></tr>
+        </thead>
+        <tbody>
+          {% for l in logs %}
+          <tr>
+            <td class="text-nowrap small">{{ l.created_at | fmt_dt }}</td>
+            <td>
+              {% set status_text = (l.status or '')|string %}
+              {% set ok = status_text|lower in ['ok', 'success'] %}
+              <span class="status-pill {{ 'active' if ok else 'inactive' }}">{{ status_text or '—' }}</span>
+            </td>
+            <td><pre class="log-payload mb-0">{{ l.request_payload | fmt_json }}</pre></td>
+            <td><pre class="log-payload mb-0">{{ l.response_payload | fmt_json }}</pre></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No SAP push logs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

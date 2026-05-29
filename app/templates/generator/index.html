@@ -1,101 +1,116 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>Item Code Generator</h3>
-<form id="genForm" class="row g-3" onsubmit="return false;">
-  <div class="col-md-3">
-    <label>Material Type</label>
-    <select id="material_type" class="form-select">
-        <option value="">Select from the drop down</option>
-      {% for m in materials %}
-        <option value="{{m.code}}">{{m.code}} - {{m.name}}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2">
-    <label>Thickness</label>
-    <input id="thickness" class="form-control" value="12">
-  </div>
-  <div class="col-md-3 position-relative">
-    <label>Pattern</label>
-    <div class="input-group">
-      <input id="pattern_input" class="form-control" placeholder="Type name or code — press Enter or click to list">
-      <input type="hidden" id="pattern_id" name="pattern_id">
-    </div>
-    <ul id="pattern_suggestions" class="list-group position-absolute" style="z-index:1050; width:100%; display:none; max-height:200px; overflow:auto;
-      top:80px;">
-    </ul>
-  </div>
-  <div class="col-md-3">
-    <label>Template</label>
-    <select id="template_id" class="form-select">
-      <option value="">Select from the drop down</option>
-      {% for t in templates %}
-        <option value="{{t.id}}">{{t.template_name}} - {{t.process_sequence}}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-1 align-self-end">
-    <button class="btn btn-primary" onclick="generate()">Generate Codes</button>
-  </div>
-</form>
+<div class="page-header">
+  <h1 class="page-title">Item Code Generator</h1>
+  <p class="page-subtitle">Generate finished-good and process item codes, then save or push to SAP.</p>
+</div>
 
-<hr/>
-<div id="preview" style="display:none;">
-  <h5>FG Item Code: <span id="fgcode"></span></h5>
-  <h6>Process Items</h6>
-  <ul id="processes"></ul>
-  <h6>Component Item Codes (BOM Chain)</h6>
-  <pre id="bomchain"></pre>
-  <button class="btn btn-success" onclick="saveLocal()">Save Item Codes</button>
-  <button class="btn btn-warning" onclick="pushSAP()">Push Item Codes to SAP</button>
+<div class="panel">
+  <div class="panel-header">Configuration</div>
+  <div class="panel-body">
+    <form id="genForm" class="row g-3" onsubmit="return false;">
+      <div class="col-md-6 col-lg-3">
+        <label class="form-label" for="material_type">Material type</label>
+        <select id="material_type" class="form-select">
+          <option value="">Select material</option>
+          {% for m in materials %}
+          <option value="{{ m.code }}">{{ m.code }} — {{ m.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6 col-lg-2">
+        <label class="form-label" for="thickness">Thickness</label>
+        <input id="thickness" class="form-control" value="12">
+      </div>
+      <div class="col-md-6 col-lg-3 position-relative">
+        <label class="form-label" for="pattern_input">Pattern</label>
+        <input id="pattern_input" class="form-control" placeholder="Type name or code">
+        <input type="hidden" id="pattern_id" name="pattern_id">
+        <ul id="pattern_suggestions" class="list-group position-absolute w-100" style="z-index:1050; display:none; max-height:200px; overflow:auto; top:100%;"></ul>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <label class="form-label" for="template_id">Template</label>
+        <select id="template_id" class="form-select">
+          <option value="">Select template</option>
+          {% for t in templates %}
+          <option value="{{ t.id }}">{{ t.template_name }} — {{ t.process_sequence }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-lg-1 d-flex align-items-end">
+        <button type="button" class="btn btn-primary w-100" onclick="generate()">
+          <i class="bi bi-lightning-charge me-1"></i> Generate
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="preview" class="preview-panel" style="display:none;">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+      <div class="text-muted small text-uppercase fw-semibold mb-1">FG item code</div>
+      <div class="fg-code" id="fgcode"></div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button type="button" class="btn btn-success" onclick="saveLocal()"><i class="bi bi-save me-1"></i> Save locally</button>
+      <button type="button" class="btn btn-warning" onclick="pushSAP()"><i class="bi bi-cloud-upload me-1"></i> Push to SAP</button>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-5">
+      <h6 class="fw-semibold mb-2">Process items</h6>
+      <ul id="processes" class="list-group list-group-flush border rounded"></ul>
+    </div>
+    <div class="col-md-7">
+      <h6 class="fw-semibold mb-2">BOM chain</h6>
+      <pre id="bomchain" class="mb-0"></pre>
+    </div>
+  </div>
 </div>
 
 <script>
-// debounce helper
 function debounce(fn, wait){
   let t;
   return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), wait); }
 }
 
-// fetch suggestions
 async function fetchSuggest(q){
-  // allow empty q to fetch top patterns
   q = q || '';
   try{
     const res = await fetch('/patterns/search?q='+encodeURIComponent(q));
     const data = await res.json();
     renderSuggestions(data.results || []);
-  }catch(e){ console.error(e); hideSuggestions(); }
+  }catch(e){ hideSuggestions(); }
 }
 
 function renderSuggestions(items){
   const ul = document.getElementById('pattern_suggestions'); ul.innerHTML='';
   if(!items.length){ hideSuggestions(); return; }
   items.forEach(it=>{
-    const li = document.createElement('li'); li.className='list-group-item list-group-item-action';
+    const li = document.createElement('li');
+    li.className='list-group-item list-group-item-action';
     li.textContent = `${it.pattern_name} (${it.pattern_code})`;
-    li.dataset.id = it.id; li.dataset.name = it.pattern_name; li.dataset.code = it.pattern_code;
-    li.onclick = ()=>{ selectSuggestion(it.id, it.pattern_name, it.pattern_code); };
+    li.onclick = ()=> selectSuggestion(it.id, it.pattern_name, it.pattern_code);
     ul.appendChild(li);
   });
   ul.style.display='block';
 }
 
 function hideSuggestions(){ document.getElementById('pattern_suggestions').style.display='none'; }
+function selectSuggestion(id, name, code){
+  document.getElementById('pattern_input').value = code;
+  document.getElementById('pattern_id').value = id;
+  hideSuggestions();
+}
 
-function selectSuggestion(id, name, code){ document.getElementById('pattern_input').value = code; document.getElementById('pattern_id').value = id; hideSuggestions(); }
-
-// create pattern via Enter if no suggestion selected
 async function createOrSelectPattern(name){
   name = name.trim(); if(!name) return null;
-  // try search for exact match first
   try{
     const res = await fetch('/patterns/search?q='+encodeURIComponent(name));
     const data = await res.json();
-    // prefer exact code match, then exact name
     const exact = (data.results||[]).find(r => (r.pattern_code && String(r.pattern_code) === name) || (r.pattern_name && r.pattern_name.toLowerCase() === name.toLowerCase()));
     if(exact){ selectSuggestion(exact.id, exact.pattern_name, exact.pattern_code); return exact; }
-    // create
     const post = await fetch('/patterns/ajax_create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pattern_name: name})});
     const body = await post.json();
     if(post.status===201 || post.status===200){ selectSuggestion(body.id, body.pattern_name, body.pattern_code); return body; }
@@ -103,12 +118,10 @@ async function createOrSelectPattern(name){
   return null;
 }
 
-// wire input
 const input = document.getElementById('pattern_input');
-input.addEventListener('input', debounce(function(e){ document.getElementById('pattern_id').value=''; fetchSuggest(this.value); }, 250));
+input.addEventListener('input', debounce(function(){ document.getElementById('pattern_id').value=''; fetchSuggest(this.value); }, 250));
 input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); createOrSelectPattern(this.value); } if(e.key==='Escape'){ hideSuggestions(); } });
-input.addEventListener('focus', function(e){ fetchSuggest(this.value); });
-
+input.addEventListener('focus', function(){ fetchSuggest(this.value); });
 
 function generate(){
   const payload = new URLSearchParams();
@@ -119,64 +132,44 @@ function generate(){
   fetch('/item-generator/generate',{method:'POST',body:payload}).then(r=>r.json()).then(d=>{
     document.getElementById('preview').style.display='block';
     document.getElementById('fgcode').innerText = d.fg_code;
-    const proc = document.getElementById('processes'); proc.innerHTML=''; d.process_items.forEach(p=>{let li=document.createElement('li');li.innerText=p;proc.appendChild(li)});
+    const proc = document.getElementById('processes'); proc.innerHTML='';
+    d.process_items.forEach(p=>{
+      const li=document.createElement('li');
+      li.className='list-group-item font-monospace small';
+      li.innerText=p;
+      proc.appendChild(li);
+    });
     document.getElementById('bomchain').innerText = JSON.stringify(d.bom_chain, null, 2);
-    window._lastPreview = {fg_code:d.fg_code, process_items:d.process_items, bom_chain:d.bom_chain, material_type:document.getElementById('material_type').value, thickness:document.getElementById('thickness').value, pattern_id:document.getElementById('pattern_id').value, template_id:document.getElementById('template_id').value}
-  })
+    window._lastPreview = {fg_code:d.fg_code, process_items:d.process_items, bom_chain:d.bom_chain, material_type:document.getElementById('material_type').value, thickness:document.getElementById('thickness').value, pattern_id:document.getElementById('pattern_id').value, template_id:document.getElementById('template_id').value};
+    document.getElementById('preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
 }
+
 function saveLocal(){
   fetch('/item-generator/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._lastPreview)})
     .then(r=>r.json())
     .then(d=>{
       if(d && (d.success || d.id)) showAlert('Item codes saved successfully', 'success');
       else showAlert('Save completed', 'success');
-    }).catch(e=>{ showAlert('Save failed','danger'); console.error(e); });
+    }).catch(()=> showAlert('Save failed','danger'));
 }
+
 function pushSAP(){
   fetch('/item-generator/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._lastPreview)})
     .then(r=>r.json())
     .then(d=>{
       if(d && d.status && d.status.toLowerCase()==='ok') showAlert('Push to SAP successful','success');
       else showAlert('Push result: '+(d.status||d.error||'unknown'), 'warning');
-    }).catch(e=>{ showAlert('Push failed','danger'); console.error(e); });
+    }).catch(()=> showAlert('Push failed','danger'));
 }
 
-// display temporary in-page alert
 function showAlert(message, type){
-  const container = document.querySelector('.container') || document.body;
-  const id = 'tmp-alert-'+Date.now();
   const div = document.createElement('div');
-  div.id = id;
-  div.className = `alert alert-${type} position-fixed`;
-  div.style.right = '20px';
-  div.style.top = '20px';
-  div.style.zIndex = 2000;
-  div.innerText = message;
-  container.appendChild(div);
-  setTimeout(()=>{ try{ div.remove(); }catch(e){} }, 3000);
+  div.className = `alert alert-${type} position-fixed shadow`;
+  div.style.cssText = 'right:20px;top:20px;z-index:2000;min-width:240px;';
+  div.innerHTML = message + '<button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>';
+  document.body.appendChild(div);
+  setTimeout(()=> div.remove(), 3500);
 }
 </script>
-
-<!-- Add Pattern Modal -->
-<div class="modal fade" id="addPatternModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Add Pattern</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label">Pattern name</label>
-          <input id="new_pattern_name" class="form-control">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" onclick="addPattern()">Create</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 {% endblock %}

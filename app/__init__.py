@@ -47,6 +47,42 @@ def create_app(config_name=None):
     def inject_site_title():
         return {'site_title': app.config.get('SITE_SETTINGS', {}).get('site_title', 'Unit 1')}
 
+    @app.template_filter('fmt_json')
+    def fmt_json(value):
+        """Pretty-print JSON/dict for display in templates."""
+        import json
+        if value is None:
+            return '—'
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except (TypeError, ValueError):
+                return value
+        try:
+            return json.dumps(value, indent=2, ensure_ascii=False, default=str)
+        except (TypeError, ValueError):
+            return str(value)
+
+    @app.template_filter('fmt_seq')
+    def fmt_seq(value):
+        """Format BOM process_sequence (list or comma-separated string)."""
+        if value is None:
+            return ''
+        if isinstance(value, str):
+            return value
+        if isinstance(value, (list, tuple)):
+            return ', '.join(str(x).strip() for x in value if str(x).strip())
+        return str(value)
+
+    @app.template_filter('fmt_dt')
+    def fmt_dt(value):
+        if not value:
+            return '—'
+        try:
+            return value.strftime('%Y-%m-%d %H:%M')
+        except AttributeError:
+            return str(value)
+
     # enforce login for most pages
     from flask import request, session, redirect
     def is_allowed_path(path):

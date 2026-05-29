@@ -1,6 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-	<h1>{{ site_title }} - Dashboard</h1>
-	<p>Welcome to the dashboard. Use the navigation above to access modules.</p>
-{% endblock %}
+<div class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+  <p class="page-subtitle">Welcome to {{ site_title }}. Choose a module to get started.</p>
+</div>
 
+<div class="module-grid">
+  <a href="/patterns/" class="module-card">
+    <div class="module-icon"><i class="bi bi-diagram-3"></i></div>
+    <h3>Patterns</h3>
+    <p>Manage pattern codes and names for item generation.</p>
+  </a>
+  <a href="/material-types/" class="module-card">
+    <div class="module-icon"><i class="bi bi-layers"></i></div>
+    <h3>Materials</h3>
+    <p>Configure material types used in BOM and codes.</p>
+  </a>
+  <a href="/bom-templates/" class="module-card">
+    <div class="module-icon"><i class="bi bi-list-nested"></i></div>
+    <h3>BOM Templates</h3>
+    <p>Define process sequences for finished goods.</p>
+  </a>
+  <a href="/item-generator/" class="module-card">
+    <div class="module-icon"><i class="bi bi-magic"></i></div>
+    <h3>Item Generator</h3>
+    <p>Generate item codes and push to SAP.</p>
+  </a>
+  <a href="/sap-logs/" class="module-card">
+    <div class="module-icon"><i class="bi bi-cloud-upload"></i></div>
+    <h3>SAP Logs</h3>
+    <p>Review SAP push history and responses.</p>
+  </a>
+  {% if session.role == 'manager' %}
+  <a href="{{ url_for('auth.users') }}" class="module-card">
+    <div class="module-icon"><i class="bi bi-people"></i></div>
+    <h3>Users</h3>
+    <p>Manage accounts and roles for your team.</p>
+  </a>
+  {% endif %}
+</div>
+{% endblock %}

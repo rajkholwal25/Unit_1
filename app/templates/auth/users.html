@@ -1,50 +1,75 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>Users</h3>
-<div class="row">
-  <div class="col-md-6">
-    <form method="post" class="row g-2">
-      <div class="col-12"><input name="email" class="form-control" placeholder="Email"></div>
-      <div class="col-12"><input name="password" class="form-control" placeholder="Password"></div>
-      <div class="col-12">
-        <select name="role" class="form-select">
-          <option value="viewer">Viewer</option>
-          <option value="planner">Planner</option>
-          <option value="manager">Manager</option>
-        </select>
+<div class="page-header">
+  <h1 class="page-title">Users</h1>
+  <p class="page-subtitle">Create accounts and manage access roles.</p>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="panel h-100">
+      <div class="panel-header">Create user</div>
+      <div class="panel-body">
+        <form method="post" class="vstack gap-3">
+          <div>
+            <label class="form-label">Email</label>
+            <input name="email" type="email" class="form-control" placeholder="user@company.com">
+          </div>
+          <div>
+            <label class="form-label">Password</label>
+            <input name="password" type="password" class="form-control" placeholder="Temporary password">
+          </div>
+          <div>
+            <label class="form-label">Role</label>
+            <select name="role" class="form-select">
+              <option value="viewer">Viewer</option>
+              <option value="planner">Planner</option>
+              <option value="manager">Manager</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i> Create user</button>
+        </form>
       </div>
-      <div class="col-12 text-end"><button class="btn btn-primary">Create User</button></div>
-    </form>
+    </div>
   </div>
-  <div class="col-md-6">
-    <table class="table table-sm">
-      <thead><tr><th>Email</th><th>Role</th><th></th></tr></thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>{{u.email}}</td>
-          <td>
-            {% if u.role == 'manager' %}
-              <span class="badge bg-danger text-capitalize">{{ u.role }}</span>
-            {% elif u.role == 'planner' %}
-              <span class="badge bg-warning text-dark text-capitalize">{{ u.role }}</span>
-            {% else %}
-              <span class="badge bg-secondary text-capitalize">{{ u.role }}</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if session.get('user_id') != u.id %}
-            <form method="post" action="{{ url_for('auth.delete_user', uid=u.id) }}" style="display:inline">
-              <button class="btn btn-sm btn-danger">Delete</button>
-            </form>
-            {% else %}
-            <span class="text-muted">You</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="col-lg-7">
+    <div class="panel h-100">
+      <div class="panel-header">Team members</div>
+      <div class="panel-body p-0">
+        <div class="table-responsive">
+          <table class="table table-modern table-hover mb-0">
+            <thead><tr><th>Email</th><th>Role</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>{{ u.email }}</td>
+                <td>
+                  {% if u.role == 'manager' %}
+                    <span class="badge badge-role bg-danger">{{ u.role }}</span>
+                  {% elif u.role == 'planner' %}
+                    <span class="badge badge-role bg-warning text-dark">{{ u.role }}</span>
+                  {% else %}
+                    <span class="badge badge-role bg-secondary">{{ u.role }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if session.get('user_id') != u.id %}
+                  <form method="post" action="{{ url_for('auth.delete_user', uid=u.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this user?')">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                  {% else %}
+                  <span class="text-muted small">You</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
