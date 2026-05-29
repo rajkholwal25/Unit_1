@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>BOM Templates</h3>
+<!-- quick process selector: click to add to sequence -->
+<div class="mb-3">
+  <div id="process_buttons_container" class="d-flex gap-2 flex-wrap mb-2"></div>
+  <div id="selected_processes" class="d-flex gap-2 flex-wrap"></div>
+</div>
+
+<form method="post" class="row g-3 mb-3" id="template_form">
+  <div class="col-md-4"><input id="template_name_input" name="template_name" class="form-control" placeholder="Template name"></div>
+  <div class="col-md-4"><input id="process_sequence_input" name="process_sequence" class="form-control" placeholder="Process sequence comma separated e.g. EMB,MET,SLT"></div>
+  <div class="col-md-2"><button class="btn btn-primary">Save</button></div>
+</form>
+<div class="row mb-3">
+  <div class="col-md-6">
+    <div class="input-group">
+      <input id="delete_template_identifier" class="form-control" placeholder="Delete by full Template Name">
+      <button class="btn btn-outline-danger" onclick="deleteTemplateByIdentifier()">Delete</button>
+    </div>
+  </div>
+</div>
+<table class="table table-sm">
+  <thead><tr><th>ID</th><th>Name</th><th>Sequence</th><th></th></tr></thead>
+  <tbody>
+    {% for t in templates %}
+    <tr data-tid="{{t.id}}">
+      <td class="col-id">{{ loop.index }}</td>
+      <td class="col-name">{{t.template_name}}</td>
+      <td class="col-seq">{{t.process_sequence}}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditTemplate({{t.id}}, '{{t.template_name|e}}', '{{t.process_sequence|join(',')|e}}')">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteTemplate({{t.id}})">Delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Edit Template Modal -->
+<div class="modal fade" id="editTemplateModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Edit BOM Template</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input id="edit_template_id" type="hidden">
+        <div class="mb-3"><label class="form-label">Template Name</label><input id="edit_template_name" class="form-control"></div>
+        <div class="mb-3"><label class="form-label">Process Sequence (comma separated)</label><input id="edit_template_seq" class="form-control"></div>
+        <div id="edit_template_error" class="text-danger" style="display:none"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" onclick="submitTemplateEdit()">Save</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Process selection UI
+const availableProcesses = ['EMB','MET','SLT','HRI','COT','ALX'];
+let selectedProcesses = [];
+
+function initProcessButtons(){
+  const container = document.getElementById('process_buttons_container');
+  if(!container) return;
+  container.innerHTML = '';
+  availableProcesses.forEach(p=>{
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-sm btn-outline-secondary';
+    btn.innerText = p;
+    btn.onclick = ()=> toggleProcess(p);
+    container.appendChild(btn);
+  });
+}
+
+function toggleProcess(code){
+  if(selectedProcesses.includes(code)) removeSelected(code); else addSelected(code);
+}
+
+function addSelected(code){
+  selectedProcesses.push(code);
+  renderSelected();
+}
+
+function removeSelected(code){
+  selectedProcesses = selectedProcesses.filter(c=>c!==code);
+  renderSelected();
+}
+
+function renderSelected(){
+  const box = document.getElementById('selected_processes');
+  if(!box) return;
+  box.innerHTML = '';
+  selectedProcesses.forEach(p=>{
+    const span = document.createElement('span');
+    span.className = 'badge bg-primary text-white py-2 px-3 me-1 position-relative';
+    span.style.cursor = 'pointer';
+    span.innerText = p;
+    const cross = document.createElement('span');
+    cross.innerHTML = '&times;';
+    cross.style.position='absolute'; cross.style.top='-6px'; cross.style.right='-6px'; cross.style.background='#fff'; cross.style.color='#000'; cross.style.borderRadius='50%'; cross.style.padding='0 6px'; cross.style.fontSize='12px'; cross.style.display='none';
+    span.appendChild(cross);
+    span.onmouseenter = ()=> cross.style.display='block';
+    span.onmouseleave = ()=> cross.style.display='none';
+    cross.onclick = (e)=>{ e.stopPropagation(); removeSelected(p); };
+    box.appendChild(span);
+  });
+  updateInputsFromSelected();
+}
+
+function updateInputsFromSelected(){
+  const seqInput = document.getElementById('process_sequence_input');
+  const nameInput = document.getElementById('template_name_input');
+  if(seqInput) seqInput.value = selectedProcesses.join(',');
+  if(nameInput) nameInput.value = selectedProcesses.length? selectedProcesses.join('→') : '';
+}
+
+function setSelectedProcesses(arr){
+  selectedProcesses = Array.isArray(arr)? arr.filter(Boolean).map(s=>String(s).toUpperCase()) : [];
+  renderSelected();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ initProcessButtons(); });
+
+function openEditTemplate(id, name, seq){
+  document.getElementById('edit_template_id').value = id;
+  // if seq provided (comma separated), use it to populate selected pills and modal fields
+  let processes = [];
+  try{
+    if(typeof seq === 'string' && seq.trim().length) processes = seq.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+  }catch(e){ processes = []; }
+  setSelectedProcesses(processes);
+  document.getElementById('edit_template_name').value = processes.length? processes.join('→') : name;
+  document.getElementById('edit_template_seq').value = processes.join(',');
+  document.getElementById('edit_template_error').style.display='none';
+  var modal = new bootstrap.Modal(document.getElementById('editTemplateModal'));
+  modal.show();
+}
+
+async function submitTemplateEdit(){
+  const id = document.getElementById('edit_template_id').value;
+  const name = document.getElementById('edit_template_name').value.trim();
+  const seq = document.getElementById('edit_template_seq').value.trim();
+  if(!name){ document.getElementById('edit_template_error').innerText='Name required'; document.getElementById('edit_template_error').style.display='block'; return; }
+  try{
+    const res = await fetch('/bom-templates/ajax_update',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id, template_name: name, process_sequence: seq})});
+    const body = await res.json();
+    if(res.status===200){
+      const row = document.querySelector(`tr[data-tid='${id}']`);
+      row.querySelector('.col-name').innerText = body.template_name;
+      row.querySelector('.col-seq').innerText = body.process_sequence;
+      var modalEl = document.getElementById('editTemplateModal'); var modal = bootstrap.Modal.getInstance(modalEl); modal.hide();
+    } else { document.getElementById('edit_template_error').innerText = body.error || 'Update failed'; document.getElementById('edit_template_error').style.display='block'; }
+  }catch(e){ document.getElementById('edit_template_error').innerText='Request failed'; document.getElementById('edit_template_error').style.display='block'; }
+}
+
+async function deleteTemplate(id){
+  if(!confirm('Delete this template? This cannot be undone.')) return;
+  try{
+    const res = await fetch('/bom-templates/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id})});
+    const body = await res.json();
+    if(res.status===200){
+      const row = document.querySelector(`tr[data-tid='${id}']`);
+      if(row) row.remove();
+    } else { alert(body.error || 'Delete failed'); }
+  }catch(e){ alert('Request failed'); }
+}
+
+async function deleteTemplateByIdentifier(){
+  const idf = document.getElementById('delete_template_identifier').value.trim();
+  if(!idf){ alert('Enter full template name to delete'); return; }
+  if(!confirm(`Delete template matching '${idf}'? This cannot be undone.`)) return;
+  try{
+    const res = await fetch('/bom-templates/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({identifier:idf})});
+    const body = await res.json();
+    if(res.status===200){
+      const removed = document.querySelector(`tr[data-tid='${body.deleted_id}']`);
+      if(removed) removed.remove();
+      alert('Deleted.');
+    } else { alert(body.error || 'Delete failed'); }
+  }catch(e){ alert('Request failed'); }
+}
+</script>
+{% endblock %}

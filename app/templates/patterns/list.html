@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Pattern Master</h3>
+<form method="post" class="row g-3 mb-3">
+  <div class="col-md-6">
+    <input type="text" name="pattern_name" class="form-control" placeholder="Pattern name">
+  </div>
+  <div class="col-md-2"><button class="btn btn-primary">Add</button></div>
+</form>
+<div class="mb-2">
+  <a class="btn btn-sm btn-outline-primary" href="/patterns/print" target="_blank">Print Patterns</a>
+</div>
+<table class="table table-sm">
+  <thead><tr><th>Code</th><th>Name</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+    {% for p in patterns %}
+    <tr data-pattern-id="{{p.id}}">
+      <td class="col-code">{{p.pattern_code}}</td>
+      <td class="col-name">{{p.pattern_name}}</td>
+      <td class="col-active">{{ 'Yes' if p.is_active else 'No' }}</td>
+      <td class="text-end"><button class="btn btn-sm btn-outline-secondary" onclick="openEdit({{p.id}}, '{{p.pattern_name|e}}', {{ 'true' if p.is_active else 'false' }})">Edit</button></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editPatternModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Edit Pattern</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input id="edit_pattern_id" type="hidden">
+        <div class="mb-3"><label class="form-label">Pattern Code (read-only)</label><input id="edit_pattern_code" class="form-control" readonly></div>
+        <div class="mb-3"><label class="form-label">Pattern Name</label><input id="edit_pattern_name" class="form-control"></div>
+        <div class="mb-3 form-check"><input id="edit_pattern_active" class="form-check-input" type="checkbox"><label class="form-check-label">Active</label></div>
+        <div id="edit_error" class="text-danger" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-primary" onclick="submitEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openEdit(id, name){
+  document.getElementById('edit_pattern_id').value = id;
+  document.getElementById('edit_pattern_name').value = name;
+  // get code from row
+  const row = document.querySelector(`tr[data-pattern-id='${id}']`);
+  const code = row.querySelector('.col-code').innerText;
+  document.getElementById('edit_pattern_code').value = code;
+  // set active checkbox if provided
+  try{ document.getElementById('edit_pattern_active').checked = arguments.length>2 ? (!!arguments[2]) : true; }catch(e){}
+  document.getElementById('edit_error').style.display='none';
+  var modal = new bootstrap.Modal(document.getElementById('editPatternModal'));
+  modal.show();
+}
+
+async function submitEdit(){
+  const id = document.getElementById('edit_pattern_id').value;
+  const name = document.getElementById('edit_pattern_name').value.trim();
+  if(!name){ document.getElementById('edit_error').innerText='Name required'; document.getElementById('edit_error').style.display='block'; return; }
+  try{
+    const is_active = document.getElementById('edit_pattern_active').checked;
+    const res = await fetch('/patterns/ajax_update', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id, pattern_name: name, is_active: is_active})});
+    const body = await res.json();
+    if(res.status===200){
+      // update row
+      const row = document.querySelector(`tr[data-pattern-id='${id}']`);
+      row.querySelector('.col-name').innerText = body.pattern_name;
+      var modalEl = document.getElementById('editPatternModal');
+      var modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    } else {
+      document.getElementById('edit_error').innerText = body.error || 'Update failed'; document.getElementById('edit_error').style.display='block';
+    }
+  }catch(e){ document.getElementById('edit_error').innerText='Request failed'; document.getElementById('edit_error').style.display='block'; }
+}
+
+// toggleActive removed; status is edited via Edit modal now.
+</script>
+{% endblock %}

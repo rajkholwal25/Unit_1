@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>All Item Codes</h3>
+<p>Click any code to copy it to clipboard.</p>
+<ul class="list-group">
+  {% for code in item_codes %}
+  <li class="list-group-item d-flex justify-content-between align-items-center" style="cursor:pointer;" onclick="copyCode('{{code}}')">
+    <span>{{code}}</span>
+    <button class="btn btn-sm btn-outline-secondary">Copy</button>
+  </li>
+  {% endfor %}
+</ul>
+
+<script>
+function copyCode(code){
+  navigator.clipboard.writeText(code).then(()=>{
+    alert('Copied: '+code)
+  }).catch(()=>alert('Copy failed'))
+}
+</script>
+{% endblock %}

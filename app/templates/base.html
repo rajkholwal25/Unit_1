@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ site_title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js" defer></script>
+    <style>
+    /* Keep navbar links on a single row on md+ screens */
+    @media (min-width: 768px) {
+      .navbar .d-md-flex { overflow-x: auto; }
+      .navbar .navbar-nav { flex-wrap: nowrap; }
+      .navbar .navbar-nav .nav-link { white-space: nowrap; }
+    }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-dark bg-dark mb-4">
+      <div class="container-fluid d-flex align-items-center">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+          <span id="siteTitle">{{ site_title }}</span>
+        </a>
+        ><div class="d-none d-md-block flex-grow-1 ms-3" style="border-bottom:1px solid rgba(255,255,255,0.12); align-self:center; height:1px;"></div>
+        {% if session.user_id %}
+        <!-- Offcanvas toggler visible only on small screens (hidden on md+) -->
+        <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Normal horizontal menu for medium+ screens -->
+        <div class="d-none d-md-flex w-100">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-row">
+            <li class="nav-item mx-2"><a class="nav-link" href="/">Dashboard</a></li>
+            <li class="nav-item mx-2"><a class="nav-link" href="/patterns/">Patterns</a></li>
+            <li class="nav-item mx-2"><a class="nav-link" href="/material-types/">Materials</a></li>
+            <li class="nav-item mx-2"><a class="nav-link" href="/bom-templates/">BOM Templates</a></li>
+            <li class="nav-item mx-2"><a class="nav-link" href="/item-generator/">Item Code Generator</a></li>
+            <li class="nav-item mx-2"><a class="nav-link" href="/sap-logs/">SAP Logs</a></li>
+          </ul>
+          <ul class="navbar-nav ms-auto align-items-center flex-row">
+            <li class="nav-item mx-2"><a class="nav-link" href="#" title="Account"><span class="badge bg-light text-dark">👤</span></a></li>
+            <li class="nav-item mx-2">
+              <span class="nav-link p-0">
+                {% if session.role == 'manager' %}
+                  <span class="badge bg-danger text-capitalize">{{ session.role }}</span>
+                {% elif session.role == 'planner' %}
+                  <span class="badge bg-warning text-dark text-capitalize">{{ session.role }}</span>
+                {% else %}
+                  <span class="badge bg-secondary text-capitalize">{{ session.role }}</span>
+                {% endif %}
+              </span>
+            </li>
+            {% if session.role == 'manager' %}
+              <li class="nav-item mx-2"><a class="nav-link" href="{{ url_for('auth.users') }}">Users</a></li>
+            {% endif %}
+            <li class="nav-item mx-2"><a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a></li>
+          </ul>
+        </div>
+
+        <!-- Offcanvas menu for small screens (hidden on md+) -->
+        <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
+          <div class="offcanvas-header bg-dark text-white">
+            <h5 class="offcanvas-title" id="mobileMenuLabel">{{ site_title }}</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body bg-dark">
+            <ul class="nav flex-column">
+              <li class="nav-item"><a class="nav-link text-white" href="/">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link text-white" href="/patterns/">Patterns</a></li>
+              <li class="nav-item"><a class="nav-link text-white" href="/material-types/">Materials</a></li>
+              <li class="nav-item"><a class="nav-link text-white" href="/bom-templates/">BOM Templates</a></li>
+              <li class="nav-item"><a class="nav-link text-white" href="/item-generator/">Item Code Generator</a></li>
+              <li class="nav-item"><a class="nav-link text-white" href="/sap-logs/">SAP Logs</a></li>
+              <li class="nav-item mt-3 d-flex align-items-center">
+                <span class="nav-link text-white">
+                  👤 <span class="ms-2">
+                    {% if session.role == 'manager' %}
+                      <span class="badge bg-danger text-capitalize">{{ session.role }}</span>
+                    {% elif session.role == 'planner' %}
+                      <span class="badge bg-warning text-dark text-capitalize">{{ session.role }}</span>
+                    {% else %}
+                      <span class="badge bg-secondary text-capitalize">{{ session.role }}</span>
+                    {% endif %}
+                  </span>
+                </span>
+              </li>
+              {% if session.role == 'manager' %}
+                <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('auth.users') }}">Users</a></li>
+              {% endif %}
+              <li class="nav-item"><a class="nav-link text-white" href="{{ url_for('auth.logout') }}">Logout</a></li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </nav>
+    <div class="container">
+      {% if session.user_id %}
+      <div id="page-back-container" style="display:none; margin-bottom:8px;">
+        <button id="page-back-btn" class="btn btn-sm btn-secondary">← Back</button>
+      </div>
+      {% endif %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat,msg in messages %}
+            <div class="alert alert-{{cat}} alert-dismissible" role="alert" data-autodismiss="true">{{msg}}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Edit site title modal -->
+    <div class="modal fade" id="editTitleModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Site Title</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input id="newSiteTitle" class="form-control" value="{{ site_title }}">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveSiteTitle()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    function openEditTitle(){
+      var modalEl = document.getElementById('editTitleModal');
+      var modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+    function saveSiteTitle(){
+      const val = document.getElementById('newSiteTitle').value.trim();
+      fetch('/settings/update', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({site_title: val})}).then(r=>r.json()).then(d=>{
+        if(d.site_title){
+          document.getElementById('siteTitle').innerText = d.site_title;
+          var modalEl = document.getElementById('editTitleModal');
+          var modal = bootstrap.Modal.getInstance(modalEl);
+          modal.hide();
+        } else if(d.error){
+          alert('Error: '+d.error)
+        }
+      }).catch(e=>{alert('Save failed')});
+    }
+    // auto-dismiss flash alerts that have data-autodismiss=true after 3 seconds
+    document.addEventListener('DOMContentLoaded', function(){
+      setTimeout(function(){
+        document.querySelectorAll('[data-autodismiss="true"]').forEach(function(el){
+          try{ el.remove(); }catch(e){}
+        });
+      }, 3000);
+      // back button logic: show when not on root and history exists
+      try{
+        const backContainer = document.getElementById('page-back-container');
+        const backBtn = document.getElementById('page-back-btn');
+        if(backBtn && backContainer){
+          backBtn.addEventListener('click', function(){ window.history.back(); });
+          const pathname = window.location.pathname || '/';
+          if(pathname !== '/' && window.history.length > 1){ backContainer.style.display = 'block'; }
+        }
+      }catch(e){ /* ignore */ }
+    });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>SAP Push Logs</h3>
+<table class="table table-sm">
+  <thead><tr><th>Time</th><th>Status</th><th>Request</th><th>Response</th></tr></thead>
+  <tbody>
+    {% for l in logs %}
+    <tr>
+      <td>{{l.created_at}}</td>
+      <td>{{l.status}}</td>
+      <td><pre style="max-width:300px;">{{l.request_payload}}</pre></td>
+      <td><pre style="max-width:300px;">{{l.response_payload}}</pre></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

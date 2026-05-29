@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Material Types</h3>
+<form method="post" class="row g-3 mb-3">
+  <div class="col-md-2"><input name="code" class="form-control" placeholder="Code"></div>
+  <div class="col-md-4"><input name="name" class="form-control" placeholder="Name"></div>
+  <div class="col-md-2"><button class="btn btn-primary">Add</button></div>
+</form>
+<div class="row mb-3">
+  <div class="col-md-6">
+    <div class="input-group">
+      <input id="delete_identifier" class="form-control" placeholder="Delete by full Code or Name">
+      <button class="btn btn-outline-danger" onclick="deleteByIdentifier()">Delete</button>
+    </div>
+  </div>
+</div>
+<table class="table table-sm">
+  <thead><tr><th>Code</th><th>Name</th><th>Active</th><th></th></tr></thead>
+  <tbody>
+    {% for m in materials %}
+    <tr data-mid="{{m.id}}">
+      <td class="col-code">{{m.code}}</td>
+      <td class="col-name">{{m.name}}</td>
+      <td class="col-active">{{ 'Yes' if m.is_active else 'No' }}</td>
+      <td class="text-end">
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditMaterial({{m.id}})">Edit</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial({{m.id}})">Delete</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Edit Material Modal -->
+<div class="modal fade" id="editMaterialModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Edit Material Type</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input id="edit_material_id" type="hidden">
+        <div class="mb-3"><label class="form-label">Code</label><input id="edit_material_code" class="form-control"></div>
+        <div class="mb-3"><label class="form-label">Name</label><input id="edit_material_name" class="form-control"></div>
+        <div class="mb-3 form-check"><input id="edit_material_active" class="form-check-input" type="checkbox"><label class="form-check-label">Active</label></div>
+        <div id="edit_material_error" class="text-danger" style="display:none"></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button><button class="btn btn-primary" onclick="submitMaterialEdit()">Save</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openEditMaterial(id, code, name, active){
+  // read values from the row to avoid escaping issues
+  const row = document.querySelector(`tr[data-mid='${id}']`);
+  const codeVal = row.querySelector('.col-code').innerText.trim();
+  const nameVal = row.querySelector('.col-name').innerText.trim();
+  const activeVal = row.querySelector('.col-active').innerText.trim().toLowerCase() === 'yes';
+  document.getElementById('edit_material_id').value = id;
+  document.getElementById('edit_material_code').value = codeVal;
+  document.getElementById('edit_material_name').value = nameVal;
+  document.getElementById('edit_material_active').checked = !!activeVal;
+  document.getElementById('edit_material_error').style.display='none';
+  var modal = new bootstrap.Modal(document.getElementById('editMaterialModal'));
+  modal.show();
+}
+
+async function submitMaterialEdit(){
+  const id = document.getElementById('edit_material_id').value;
+  const code = document.getElementById('edit_material_code').value.trim();
+  const name = document.getElementById('edit_material_name').value.trim();
+  const active = document.getElementById('edit_material_active').checked;
+  if(!code || !name){ document.getElementById('edit_material_error').innerText='Code and name required'; document.getElementById('edit_material_error').style.display='block'; return; }
+  try{
+    const res = await fetch('/material-types/ajax_update',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id, code: code, name: name, is_active: active})});
+    const body = await res.json();
+    if(res.status===200){
+      const row = document.querySelector(`tr[data-mid='${id}']`);
+      row.querySelector('.col-code').innerText = body.code;
+      row.querySelector('.col-name').innerText = body.name;
+      row.querySelector('.col-active').innerText = (body.is_active ? 'Yes' : 'No');
+      var modalEl = document.getElementById('editMaterialModal'); var modal = bootstrap.Modal.getInstance(modalEl); modal.hide();
+    } else { document.getElementById('edit_material_error').innerText = body.error || 'Update failed'; document.getElementById('edit_material_error').style.display='block'; }
+  }catch(e){ document.getElementById('edit_material_error').innerText='Request failed'; document.getElementById('edit_material_error').style.display='block'; }
+}
+
+async function deleteMaterial(id){
+  if(!confirm('Delete this material? This cannot be undone.')) return;
+  try{
+    const res = await fetch('/material-types/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id})});
+    const body = await res.json();
+    if(res.status===200){
+      const row = document.querySelector(`tr[data-mid='${id}']`);
+      if(row) row.remove();
+    } else { alert(body.error || 'Delete failed'); }
+  }catch(e){ alert('Request failed'); }
+}
+
+async function deleteByIdentifier(){
+  const idf = document.getElementById('delete_identifier').value.trim();
+  if(!idf){ alert('Enter full code or name to delete'); return; }
+  if(!confirm(`Delete entry matching '${idf}'? This cannot be undone.`)) return;
+  try{
+    const res = await fetch('/material-types/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({identifier:idf})});
+    const body = await res.json();
+    if(res.status===200){
+      // remove row if present
+      const removed = document.querySelector(`tr[data-mid='${body.deleted_id}']`);
+      if(removed) removed.remove();
+      alert('Deleted.');
+    } else { alert(body.error || 'Delete failed'); }
+  }catch(e){ alert('Request failed'); }
+}
+</script>
+{% endblock %}

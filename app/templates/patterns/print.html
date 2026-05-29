@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Pattern Codes - Print</title>
+    <style>
+      body{font-family: Arial, Helvetica, sans-serif; margin:20px}
+      h1{font-size:20px}
+      table{width:100%; border-collapse: collapse}
+      th, td{border:1px solid #333; padding:8px; text-align:left}
+      @media print{
+        button{display:none}
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pattern Codes</h1>
+    <p>Generated list of pattern codes and names.</p>
+    <table>
+      <thead>
+        <tr><th>Pattern Code</th><th>Pattern Name</th></tr>
+      </thead>
+      <tbody>
+        {% for p in patterns %}
+        <tr><td>{{p.pattern_code}}</td><td>{{p.pattern_name}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="margin-top:20px;"><button onclick="window.print()">Print</button></p>
+    <script>
+      // auto-trigger print
+      window.onload = function(){ window.print(); }
+    </script>
+  </body>
+</html>
