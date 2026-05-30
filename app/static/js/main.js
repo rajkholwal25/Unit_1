@@ -1,3 +1,12 @@
+/** Parse JSON from fetch; handles 500 HTML error pages gracefully. */
+async function parseJsonResponse(res) {
+  try {
+    return await res.json();
+  } catch {
+    return { error: res.ok ? 'Invalid server response' : 'Server error (' + res.status + ')' };
+  }
+}
+
 /** Shared UI helpers */
 function showToast(message, type) {
   type = type || 'info';

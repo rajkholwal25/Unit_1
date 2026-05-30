@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
+
+from ..core.db_errors import safe_commit_delete
 from ..extensions import db
-from ..models import BomTemplate
+from ..models import BomTemplate, GeneratedFGItem
 import json
 
 templates_bp = Blueprint('bom_templates', __name__)
@@ -68,8 +70,17 @@ def ajax_delete_template():
     else:
         return ({'error':'id or identifier required'}, 400)
     if not t:
-        return ({'error':'template not found'}, 404)
+        return jsonify({'error': 'template not found'}), 404
+    in_use = GeneratedFGItem.query.filter_by(bom_template_id=t.id).count()
+    if in_use:
+        return jsonify({
+            'error': f'Cannot delete: {in_use} generated item(s) use this template. Remove those first.',
+        }), 409
     deleted_id = t.id
-    db.session.delete(t)
-    db.session.commit()
-    return ({'deleted_id': deleted_id}, 200)
+    ok, err = safe_commit_delete(
+        t,
+        in_use_message='Cannot delete: this template is still used by generated item codes.',
+    )
+    if not ok:
+        return jsonify({'error': err}), 409
+    return jsonify({'deleted_id': deleted_id}), 200

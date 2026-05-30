@@ -1,4 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
+
+from ..core.db_errors import safe_commit_delete
 from ..extensions import db
 from ..models import MaterialType
 
@@ -70,8 +72,9 @@ def ajax_delete_material():
     else:
         return ({'error':'id or identifier required'}, 400)
     if not m:
-        return ({'error':'material not found'}, 404)
+        return jsonify({'error': 'material not found'}), 404
     deleted_id = m.id
-    db.session.delete(m)
-    db.session.commit()
-    return ({'deleted_id': deleted_id}, 200)
+    ok, err = safe_commit_delete(m)
+    if not ok:
+        return jsonify({'error': err}), 409
+    return jsonify({'deleted_id': deleted_id}), 200

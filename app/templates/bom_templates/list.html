@@ -41,7 +41,7 @@
 <div class="panel">
   <div class="panel-body p-0">
     <div class="table-responsive">
-      <table class="table table-modern table-hover mb-0">
+      <table id="bom-templates-table" class="table table-modern table-hover mb-0">
         <thead><tr><th>#</th><th>Name</th><th>Sequence</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
           {% for t in templates %}
@@ -51,7 +51,7 @@
             <td class="col-seq"><code class="small">{{ t.process_sequence | fmt_seq }}</code></td>
             <td class="text-end col-actions">
               <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="openEditTemplateFromRow(this)"><i class="bi bi-pencil"></i> Edit</button>
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTemplateFromRow(this)"><i class="bi bi-trash"></i></button>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-delete-template"><i class="bi bi-trash"></i></button>
             </td>
           </tr>
           {% else %}
@@ -82,7 +82,7 @@
 </div>
 
 <script>
-const availableProcesses = ['EMB','MET','SLT','HRI','COT','ALX'];
+const availableProcesses = ['EMB', 'MET', 'SLT'];
 let selectedProcesses = [];
 
 function initProcessButtons(){
@@ -170,19 +170,21 @@ async function submitTemplateEdit(){
   }catch(e){ document.getElementById('edit_template_error').innerText='Request failed'; document.getElementById('edit_template_error').style.display='block'; }
 }
 
-function deleteTemplateFromRow(btn){
+document.getElementById('bom-templates-table')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-delete-template');
+  if (!btn) return;
   const id = btn.closest('tr')?.getAttribute('data-tid');
   if (id) deleteTemplate(id);
-}
+});
 
 async function deleteTemplate(id){
   if(!confirm('Delete this template? This cannot be undone.')) return;
   try{
-    const res = await fetch('/bom-templates/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id})});
-    const body = await res.json();
+    const res = await fetch('/bom-templates/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:Number(id)})});
+    const body = typeof parseJsonResponse === 'function' ? await parseJsonResponse(res) : await res.json();
     if(res.status===200) document.querySelector(`tr[data-tid='${id}']`)?.remove();
     else alert(body.error || 'Delete failed');
-  }catch(e){ alert('Request failed'); }
+  }catch(e){ alert('Request failed — is the server running?'); }
 }
 
 async function deleteTemplateByIdentifier(){
@@ -191,10 +193,10 @@ async function deleteTemplateByIdentifier(){
   if(!confirm(`Delete template matching '${idf}'? This cannot be undone.`)) return;
   try{
     const res = await fetch('/bom-templates/ajax_delete',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({identifier:idf})});
-    const body = await res.json();
+    const body = typeof parseJsonResponse === 'function' ? await parseJsonResponse(res) : await res.json();
     if(res.status===200) document.querySelector(`tr[data-tid='${body.deleted_id}']`)?.remove();
     else alert(body.error || 'Delete failed');
-  }catch(e){ alert('Request failed'); }
+  }catch(e){ alert('Request failed — is the server running?'); }
 }
 </script>
 {% endblock %}

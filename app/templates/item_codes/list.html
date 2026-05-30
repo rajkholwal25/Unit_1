@@ -1,45 +1,58 @@
 {% extends 'layouts/base.html' %}
 {% block content %}
 <div class="page-header">
-  <h1 class="page-title">All Item Codes</h1>
-  <p class="page-subtitle">Click any code to copy it to your clipboard.</p>
+  <h1 class="page-title">Generated Items</h1>
+  <p class="page-subtitle">View, copy, or delete saved item codes from the generator.</p>
 </div>
 
 <div class="panel">
   <div class="panel-body p-0">
-    <ul class="list-group list-group-flush code-list">
-      {% for code in item_codes %}
-      <li class="list-group-item d-flex justify-content-between align-items-center code-row" style="cursor:pointer;" data-code="{{ code }}">
-        <span class="code-text">{{ code }}</span>
-        <button type="button" class="btn btn-sm btn-outline-secondary btn-copy-code">
-          <i class="bi bi-clipboard"></i> Copy
-        </button>
-      </li>
-      {% else %}
-      <li class="list-group-item text-center text-muted py-4">No item codes saved yet.</li>
-      {% endfor %}
-    </ul>
+    <div class="table-responsive">
+      <table id="generated-items-table" class="table table-modern table-hover mb-0">
+        <thead>
+          <tr>
+            <th>FG Item Code</th>
+            <th>Material</th>
+            <th>Thickness</th>
+            <th>Pattern</th>
+            <th>Template</th>
+            <th>Created</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr data-fg-id="{{ item.id }}" data-code="{{ item.item_code }}">
+            <td class="fw-medium font-monospace small">{{ item.item_code }}</td>
+            <td>{{ item.material_type }}</td>
+            <td>{{ item.thickness }}</td>
+            <td>{{ item.pattern }}</td>
+            <td>{{ item.template }}</td>
+            <td class="text-nowrap small text-muted">{{ item.created_at | fmt_dt }}</td>
+            <td class="text-end col-actions">
+              <button type="button" class="btn btn-sm btn-outline-secondary me-1 btn-copy-item" title="Copy code">
+                <i class="bi bi-clipboard"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-delete-item" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              No generated items saved yet. Use the
+              <a href="/item-generator/">Item Generator</a> and click “Save locally”.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+{% endblock %}
 
-<script>
-function copyCode(code){
-  navigator.clipboard.writeText(code).then(()=>{
-    if (typeof showToast === 'function') showToast('Copied: ' + code, 'success');
-    else alert('Copied: ' + code);
-  }).catch(()=> alert('Copy failed'));
-}
-
-document.querySelectorAll('.code-row').forEach(row => {
-  const code = row.getAttribute('data-code');
-  row.addEventListener('click', (e) => {
-    if (e.target.closest('.btn-copy-code')) return;
-    copyCode(code);
-  });
-  row.querySelector('.btn-copy-code')?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    copyCode(code);
-  });
-});
-</script>
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/pages/item_codes.js') }}"></script>
 {% endblock %}
