@@ -8,8 +8,8 @@
 <div class="panel">
   <div class="panel-header">Configuration</div>
   <div class="panel-body">
-    <form id="genForm" class="row g-3" onsubmit="return false;">
-      <div class="col-md-6 col-lg-3">
+    <form id="genForm" class="vstack gap-3" style="max-width: 480px;" onsubmit="return false;">
+      <div>
         <label class="form-label" for="material_type">Material type</label>
         <select id="material_type" class="form-select">
           <option value="">Select material</option>
@@ -18,17 +18,26 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-md-6 col-lg-2">
+      <div>
         <label class="form-label" for="thickness">Thickness</label>
         <input id="thickness" class="form-control" value="12">
       </div>
-      <div class="col-md-6 col-lg-3 position-relative">
+      <div class="position-relative">
         <label class="form-label" for="pattern_input">Pattern</label>
         <input id="pattern_input" class="form-control" placeholder="Type name or code">
         <input type="hidden" id="pattern_id" name="pattern_id">
         <ul id="pattern_suggestions" class="list-group position-absolute w-100" style="z-index:1050; display:none; max-height:200px; overflow:auto; top:100%;"></ul>
       </div>
-      <div class="col-md-6 col-lg-3">
+      <div>
+        <label class="form-label" for="coating">Coating</label>
+        <select id="coating" class="form-select">
+          <option value="">Select coating</option>
+          {% for c in coatings %}
+          <option value="{{ c.code }}">{{ c.code }} — {{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
         <label class="form-label" for="template_id">Template</label>
         <select id="template_id" class="form-select">
           <option value="">Select template</option>
@@ -37,9 +46,9 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-12 col-lg-1 d-flex align-items-end">
-        <button type="button" class="btn btn-primary w-100" onclick="generate()">
-          <i class="bi bi-lightning-charge me-1"></i> Generate
+      <div>
+        <button type="button" class="btn btn-primary" onclick="generate()">
+          <i class="bi bi-lightning-charge me-1"></i> Generate item code
         </button>
       </div>
     </form>
@@ -124,12 +133,20 @@ input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDef
 input.addEventListener('focus', function(){ fetchSuggest(this.value); });
 
 function generate(){
+  const coating = document.getElementById('coating').value;
+  if (!document.getElementById('material_type').value || !document.getElementById('pattern_id').value ||
+      !document.getElementById('template_id').value || !coating) {
+    showAlert('Please select material, pattern, coating, and template', 'warning');
+    return;
+  }
   const payload = new URLSearchParams();
   payload.append('material_type', document.getElementById('material_type').value);
   payload.append('thickness', document.getElementById('thickness').value);
   payload.append('pattern_id', document.getElementById('pattern_id').value);
+  payload.append('coating', coating);
   payload.append('template_id', document.getElementById('template_id').value);
   fetch('/item-generator/generate',{method:'POST',body:payload}).then(r=>r.json()).then(d=>{
+    if (d.error) { showAlert(d.error, 'danger'); return; }
     document.getElementById('preview').style.display='block';
     document.getElementById('fgcode').innerText = d.fg_code;
     const proc = document.getElementById('processes'); proc.innerHTML='';
@@ -140,9 +157,18 @@ function generate(){
       proc.appendChild(li);
     });
     document.getElementById('bomchain').innerText = JSON.stringify(d.bom_chain, null, 2);
-    window._lastPreview = {fg_code:d.fg_code, process_items:d.process_items, bom_chain:d.bom_chain, material_type:document.getElementById('material_type').value, thickness:document.getElementById('thickness').value, pattern_id:document.getElementById('pattern_id').value, template_id:document.getElementById('template_id').value};
+    window._lastPreview = {
+      fg_code: d.fg_code,
+      process_items: d.process_items,
+      bom_chain: d.bom_chain,
+      material_type: document.getElementById('material_type').value,
+      thickness: document.getElementById('thickness').value,
+      coating: coating,
+      pattern_id: document.getElementById('pattern_id').value,
+      template_id: document.getElementById('template_id').value,
+    };
     document.getElementById('preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  });
+  }).catch(()=> showAlert('Generate failed', 'danger'));
 }
 
 function saveLocal(){

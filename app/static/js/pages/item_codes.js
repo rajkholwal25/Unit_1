@@ -29,7 +29,7 @@
         document.querySelector(`tr[data-fg-id='${id}']`)?.remove();
         if (!table.querySelector('tbody tr[data-fg-id]')) {
           table.querySelector('tbody').innerHTML =
-            '<tr><td colspan="7" class="text-center text-muted py-4">No generated items saved yet.</td></tr>';
+            '<tr><td colspan="8" class="text-center text-muted py-4">No generated items saved yet.</td></tr>';
         }
         if (typeof showToast === 'function') showToast('Item deleted', 'success');
       } else {

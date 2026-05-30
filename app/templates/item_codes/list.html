@@ -14,6 +14,7 @@
             <th>FG Item Code</th>
             <th>Material</th>
             <th>Thickness</th>
+            <th>Coating</th>
             <th>Pattern</th>
             <th>Template</th>
             <th>Created</th>
@@ -26,6 +27,7 @@
             <td class="fw-medium font-monospace small">{{ item.item_code }}</td>
             <td>{{ item.material_type }}</td>
             <td>{{ item.thickness }}</td>
+            <td>{{ item.coating }}</td>
             <td>{{ item.pattern }}</td>
             <td>{{ item.template }}</td>
             <td class="text-nowrap small text-muted">{{ item.created_at | fmt_dt }}</td>
@@ -40,7 +42,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="7" class="text-center text-muted py-4">
+            <td colspan="8" class="text-center text-muted py-4">
               No generated items saved yet. Use the
               <a href="/item-generator/">Item Generator</a> and click “Save locally”.
             </td>

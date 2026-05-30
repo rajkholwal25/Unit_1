@@ -8,7 +8,7 @@
   --color-primary: #4f46e5;
   --color-primary-hover: #4338ca;
   --color-primary-soft: #eef2ff;
-  --sidebar-width: 260px;
+  --sidebar-width: 280px;
   --radius: 12px;
   --radius-sm: 8px;
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
@@ -49,11 +49,13 @@ body {
   bottom: 0;
   z-index: 1040;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
 }
 
 .app-sidebar-brand {
   padding: 1.25rem 1.25rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .app-sidebar-brand a {
@@ -81,8 +83,13 @@ body {
 
 .app-sidebar-nav {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.75rem 0.625rem;
+  min-height: 0;
 }
 
 .app-sidebar-nav .nav-link {
@@ -95,6 +102,9 @@ body {
   align-items: center;
   gap: 0.625rem;
   margin-bottom: 2px;
+  width: 100%;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: background var(--transition), color var(--transition);
 }
 
@@ -118,6 +128,7 @@ body {
 .app-sidebar-footer {
   padding: 1rem 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .app-sidebar-footer .user-email {

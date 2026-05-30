@@ -22,6 +22,7 @@ def _build_item_rows():
             'item_code': fg.item_code,
             'material_type': fg.material_type,
             'thickness': fg.thickness,
+            'coating': fg.coating or '—',
             'pattern': pattern.pattern_name if pattern else '—',
             'template': template.template_name if template else '—',
             'process_count': process_count,

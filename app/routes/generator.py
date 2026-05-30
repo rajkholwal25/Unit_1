@@ -1,38 +1,64 @@
-from flask import Blueprint, render_template, request, jsonify, current_app, flash, redirect, url_for
+from flask import Blueprint, jsonify, render_template, request, current_app
+
 from ..extensions import db
-from ..models import Pattern, MaterialType, BomTemplate, GeneratedFGItem, GeneratedProcessItem, BomStructure, SapPushLog
+from ..models import Pattern, MaterialType, CoatingType, BomTemplate, GeneratedFGItem, GeneratedProcessItem, BomStructure, SapPushLog
 from ..services.item_code_generator import ItemCodeGeneratorService
 from ..services.bom_generation import BomGenerationService
 from ..services.sap_push_service import SapPushService
-from datetime import datetime
 
 generator_bp = Blueprint('generator', __name__)
+
+
+def _active_coating_codes():
+    return {
+        c.code.upper()
+        for c in CoatingType.query.filter_by(is_active=True).all()
+    }
+
 
 @generator_bp.route('/', methods=['GET'])
 def index():
     materials = MaterialType.query.filter_by(is_active=True).all()
+    coatings = CoatingType.query.filter_by(is_active=True).order_by(CoatingType.code).all()
     patterns = Pattern.query.order_by(Pattern.pattern_name).all()
     templates = BomTemplate.query.all()
-    return render_template('generator/index.html', materials=materials, patterns=patterns, templates=templates)
+    return render_template(
+        'generator/index.html',
+        materials=materials,
+        coatings=coatings,
+        patterns=patterns,
+        templates=templates,
+    )
+
 
 @generator_bp.route('/generate', methods=['POST'])
 def generate():
     data = request.form
     material = data.get('material_type')
     thickness = data.get('thickness')
+    coating = (data.get('coating') or '').strip().upper()
     pattern_id = data.get('pattern_id')
     template_id = data.get('template_id')
-    # basic validation
-    if not all([material, thickness, pattern_id, template_id]):
-        return jsonify({'error':'invalid input'}), 400
+    if not all([material, thickness, coating, pattern_id, template_id]):
+        return jsonify({'error': 'invalid input'}), 400
+    if coating not in _active_coating_codes():
+        return jsonify({'error': 'invalid or inactive coating'}), 400
     pattern = Pattern.query.get(int(pattern_id))
     template = BomTemplate.query.get(int(template_id))
-    fg_code = ItemCodeGeneratorService.generate_fg_code(material, thickness, pattern.pattern_code)
+    if not pattern or not template:
+        return jsonify({'error': 'pattern or template not found'}), 404
+    fg_code = ItemCodeGeneratorService.generate_fg_code(
+        material, thickness, pattern.pattern_code, coating
+    )
     processes = template.process_sequence
     process_items = [f"{fg_code}-{p}" for p in processes]
-    # generate hierarchy
     bom_chain = BomGenerationService.generate_chain(fg_code, processes)
-    return jsonify({'fg_code':fg_code,'process_items':process_items,'bom_chain':bom_chain})
+    return jsonify({
+        'fg_code': fg_code,
+        'process_items': process_items,
+        'bom_chain': bom_chain,
+        'coating': coating,
+    })
 
 @generator_bp.route('/save', methods=['POST'])
 def save_local():
@@ -45,6 +71,7 @@ def save_local():
     if fg:
         fg.material_type = payload.get('material_type') or fg.material_type
         fg.thickness = payload.get('thickness') or fg.thickness
+        fg.coating = payload.get('coating') or fg.coating
         fg.pattern_id = payload.get('pattern_id') or fg.pattern_id
         fg.bom_template_id = payload.get('template_id') or fg.bom_template_id
         db.session.add(fg)
@@ -52,7 +79,14 @@ def save_local():
         # remove existing process items for this FG and re-add
         GeneratedProcessItem.query.filter_by(fg_item_id=fg.id).delete(synchronize_session=False)
     else:
-        fg = GeneratedFGItem(item_code=fg_code, material_type=payload.get('material_type',''), thickness=payload.get('thickness',''), pattern_id=payload.get('pattern_id'), bom_template_id=payload.get('template_id'))
+        fg = GeneratedFGItem(
+            item_code=fg_code,
+            material_type=payload.get('material_type', ''),
+            thickness=payload.get('thickness', ''),
+            coating=payload.get('coating', ''),
+            pattern_id=payload.get('pattern_id'),
+            bom_template_id=payload.get('template_id'),
+        )
         db.session.add(fg)
         db.session.flush()
 

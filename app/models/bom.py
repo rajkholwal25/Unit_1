@@ -18,6 +18,7 @@ class GeneratedFGItem(db.Model):
     item_code = db.Column(db.String(128), unique=True, nullable=False)
     material_type = db.Column(db.String(32), nullable=False)
     thickness = db.Column(db.String(32), nullable=False)
+    coating = db.Column(db.String(16), nullable=True)
     pattern_id = db.Column(db.Integer, db.ForeignKey('patterns.id'))
     bom_template_id = db.Column(db.Integer, db.ForeignKey('bom_templates.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
