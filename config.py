@@ -51,6 +51,8 @@ class Config:
     SAP_MATERIAL_TYPE_FG = os.getenv('SAP_MATERIAL_TYPE_FG', _default_fg_mt)
     SAP_MATERIAL_TYPE_COMPONENT = os.getenv('SAP_MATERIAL_TYPE_COMPONENT', _default_comp_mt)
     SAP_PRICING_UNIT = int(os.getenv('SAP_PRICING_UNIT', '-1'))
+    SAP_HSN_CODE = os.getenv('SAP_HSN_CODE', '3921.90.94')
+    SAP_CHAPTER_ID = os.getenv('SAP_CHAPTER_ID', '')
     SAP_ITEM_TAX_RATE = int(os.getenv('SAP_ITEM_TAX_RATE', '18'))
     SAP_GST_TAX_CATEGORY = os.getenv('SAP_GST_TAX_CATEGORY', 'gtc_Regular')
 

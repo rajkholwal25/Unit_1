@@ -28,14 +28,34 @@ def sap_item_uom_fields(config):
     }
 
 
-def sap_item_tax_fields(config):
+def resolve_sap_chapter_id(config, client) -> int:
+    """
+    HSN on Item Master = ChapterID (AbsEntry in IndiaHsn / OCHP).
+    Default HSN 3921.90.94 → AbsEntry 72 (resolved from SAP if possible).
+    """
+    if config.get('SAP_CHAPTER_ID') not in (None, ''):
+        return int(config['SAP_CHAPTER_ID'])
+    hsn_code = (config.get('SAP_HSN_CODE') or '3921.90.94').strip()
+    if client and hsn_code:
+        esc = str(hsn_code).replace("'", "''")
+        data = client.get(f"/b1s/v1/IndiaHsn?$filter=ChapterID eq '{esc}'&$top=1")
+        rows = (data or {}).get('value') or []
+        if rows:
+            return int(rows[0]['AbsEntry'])
+    return 72
+
+
+def sap_item_tax_fields(config, *, chapter_id: int = None):
     rate = config.get('SAP_ITEM_TAX_RATE', 18)
-    return {
+    fields = {
         'U_TaxRate': int(rate) if rate is not None else 18,
         'GSTRelevnt': 'tYES',
         'GSTTaxCategory': config.get('SAP_GST_TAX_CATEGORY', 'gtc_Regular'),
         'TaxType': 'tt_Yes',
     }
+    if chapter_id is not None and int(chapter_id) >= 0:
+        fields['ChapterID'] = int(chapter_id)
+    return fields
 
 
 def resolve_is_fg(item_code: str, fg_code: str, process_items) -> bool:
@@ -92,7 +112,9 @@ def sap_ui_material_type_label(material_type: str, config) -> str:
     return label
 
 
-def sap_item_master_fields(config, *, is_fg: bool = None, items_group_code: int = None):
+def sap_item_master_fields(
+    config, *, is_fg: bool = None, items_group_code: int = None, chapter_id: int = None,
+):
     if items_group_code is None:
         items_group_code = sap_fg_items_group(config) if is_fg else sap_component_items_group(config)
     material_type = sap_material_type_for_group(config, items_group_code)
@@ -100,22 +122,25 @@ def sap_item_master_fields(config, *, is_fg: bool = None, items_group_code: int 
         'MaterialType': material_type,
         'PricingUnit': int(config.get('SAP_PRICING_UNIT', -1)),
         **sap_item_uom_fields(config),
-        **sap_item_tax_fields(config),
+        **sap_item_tax_fields(config, chapter_id=chapter_id),
     }
 
 
-def sap_uom_preview_meta(config):
+def sap_uom_preview_meta(config, chapter_id=None):
     uom = sap_item_uom_fields(config)
-    tax = sap_item_tax_fields(config)
+    tax = sap_item_tax_fields(config, chapter_id=chapter_id)
     code = (config.get('SAP_UOM_CODE') or UOM_CODE_KGS).strip().upper()
     pack = config.get('SAP_PACK_UOM_CODE', 'Role')
+    hsn = config.get('SAP_HSN_CODE', '3921.90.94')
     return {
         'code': code,
         'fields': {**uom, **tax},
         'note': (
             f'Manual UoM (group {uom["UoMGroupEntry"]}): inventory/sales/purchase = {code}, '
             f'packaging = {pack}. FG = Finished Goods, components = Raw Material. '
-            f'Tax: {tax["GSTTaxCategory"]}, rate {tax["U_TaxRate"]}%. Pricing: primary currency.'
+            f'HSN {hsn} (ChapterID {tax.get("ChapterID", "—")}), '
+            f'Tax category {tax["GSTTaxCategory"]}, rate {tax["U_TaxRate"]}%. '
+            f'Pricing: primary currency.'
         ),
     }
 
@@ -134,6 +159,19 @@ class SapPushService:
 
         fg_group = int(config.get('SAP_FG_ITEMS_GROUP', 100))
         comp_group = int(config.get('SAP_COMPONENT_ITEMS_GROUP', 107))
+        chapter_id = resolve_sap_chapter_id(config, None)
+        if config.get('SAP_BASE_URL'):
+            try:
+                preview_client = SapServiceLayerClient(
+                    config.get('SAP_BASE_URL'),
+                    config.get('SAP_USER'),
+                    config.get('SAP_PASSWORD'),
+                    company_db=config.get('SAP_COMPANY_DB'),
+                    verify_ssl=config.get('SAP_SSL_VERIFY', True),
+                )
+                chapter_id = resolve_sap_chapter_id(config, preview_client)
+            except Exception:
+                pass
 
         def build(item_code, item_name, group, sales, warehouse):
             return {
@@ -147,7 +185,7 @@ class SapPushService:
                 'PlanningSystem': 'bop_MRP',
                 'ManageBatchNumbers': 'tYES',
                 'ManageSerialNumbers': 'tNO',
-                **sap_item_master_fields(config, items_group_code=group),
+                **sap_item_master_fields(config, items_group_code=group, chapter_id=chapter_id),
                 'ItemWarehouseInfoCollection': [{'WarehouseCode': warehouse}],
             }
 
@@ -186,7 +224,7 @@ class SapPushService:
                     WarehouseMappingService.for_process(proc),
                 ),
             })
-        uom_meta = sap_uom_preview_meta(config)
+        uom_meta = sap_uom_preview_meta(config, chapter_id=chapter_id)
         return {
             'api': 'SAP Business One Service Layer — Item Master only (BOM not sent)',
             'unit_of_measure': uom_meta['code'],
@@ -217,6 +255,7 @@ class SapPushService:
         )
         self.fg_group = int(config.get('SAP_FG_ITEMS_GROUP', 100))
         self.component_group = int(config.get('SAP_COMPONENT_ITEMS_GROUP', 107))
+        self.chapter_id = resolve_sap_chapter_id(config, self.client)
 
     def _item_exists(self, item_code):
         try:
@@ -244,7 +283,9 @@ class SapPushService:
             'PlanningSystem': 'bop_MRP',
             'ManageBatchNumbers': 'tYES',
             'ManageSerialNumbers': 'tNO',
-            **sap_item_master_fields(self.config, items_group_code=items_group_code),
+            **sap_item_master_fields(
+                self.config, items_group_code=items_group_code, chapter_id=self.chapter_id,
+            ),
             'ItemWarehouseInfoCollection': [{'WarehouseCode': warehouse}],
         }
 
@@ -252,7 +293,9 @@ class SapPushService:
         """Item group + matching material type + UoM/tax (fixes swapped General tab values)."""
         return {
             'ItemsGroupCode': items_group_code,
-            **sap_item_master_fields(self.config, items_group_code=items_group_code),
+            **sap_item_master_fields(
+                self.config, items_group_code=items_group_code, chapter_id=self.chapter_id,
+            ),
         }
 
     def _items_group_for_role(self, is_fg: bool) -> int:
@@ -264,10 +307,12 @@ class SapPushService:
         if self._item_exists(item_code):
             self.client.patch(self.client.item_path(item_code), sync)
             label = sap_material_type_label(sync.get('MaterialType', ''))
+            hsn = self.config.get('SAP_HSN_CODE', '3921.90.94')
             return {
                 'status': 'updated',
                 'reason': (
-                    f'group {items_group_code} + Material Type ({label}) + UoM synced'
+                    f'group {items_group_code} + Material Type ({label}) + '
+                    f'HSN {hsn} + Tax {sync.get("GSTTaxCategory")} synced'
                 ),
                 'ItemCode': item_code,
                 'ItemsGroupCode': items_group_code,
