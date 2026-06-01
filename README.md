@@ -17,7 +17,14 @@ flask db upgrade
 python app.py
 ```
 
-Open http://127.0.0.1:5000 — default login: `manager@test.com` / `test@123`
+Open http://127.0.0.1:5000 — default login is created on first run (see `app/core/bootstrap.py`).
+
+## Deploy
+
+1. Set production `.env` (never commit `.env`).
+2. `pip install -r requirements.txt`
+3. `flask db upgrade`
+4. Run with gunicorn/waitress or `python app.py` behind your process manager.
 
 ## Project structure
 
@@ -28,8 +35,7 @@ Unit_1/
 ├── settings.json          # Site title (editable in UI)
 ├── requirements.txt
 ├── migrations/            # Alembic DB migrations
-├── logs/                  # Application log files
-├── scripts/               # One-off scripts (e.g. init_db)
+├── logs/                  # Application log files (gitignored)
 └── app/
     ├── __init__.py        # Application factory (create_app)
     ├── extensions.py      # SQLAlchemy, Migrate
@@ -57,12 +63,15 @@ Unit_1/
     │   ├── generator.py
     │   ├── sap_logs.py
     │   ├── item_codes.py
+    │   ├── coating_types.py
     │   └── settings.py
     ├── services/          # Business logic & SAP client
     │   ├── bom_generation.py
     │   ├── item_code_generator.py
     │   ├── sap_client.py
     │   ├── sap_push_service.py
+    │   ├── sap_item_sync_service.py
+    │   ├── item_master_service.py
     │   └── warehouse_mapping.py
     ├── templates/
     │   ├── layouts/       # base.html

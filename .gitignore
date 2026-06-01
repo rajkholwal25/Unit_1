@@ -1,5 +1,25 @@
 .env
+.env.local
 __pycache__/
-*.pyc
-instance/
+*.py[cod]
+*$py.class
+.Python
 .venv/
+venv/
+instance/
+*.egg-info/
+dist/
+build/
+
+# Logs and local runtime
+logs/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Cursor / local assets (not for deploy)
+assets/
