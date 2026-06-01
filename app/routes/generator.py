@@ -1,10 +1,20 @@
 from flask import Blueprint, jsonify, render_template, request, current_app
 
 from ..extensions import db
-from ..models import Pattern, MaterialType, CoatingType, BomTemplate, GeneratedFGItem, GeneratedProcessItem, BomStructure, SapPushLog
+from ..models import (
+    Pattern,
+    MaterialType,
+    CoatingType,
+    BomTemplate,
+    GeneratedFGItem,
+    GeneratedProcessItem,
+    BomStructure,
+    SapPushLog,
+)
 from ..services.item_code_generator import ItemCodeGeneratorService
 from ..services.bom_generation import BomGenerationService
 from ..services.sap_push_service import SapPushService
+from ..services.item_master_service import sync_from_generator_save, mark_sap_pushed
 
 generator_bp = Blueprint('generator', __name__)
 
@@ -53,30 +63,44 @@ def generate():
     processes = template.process_sequence
     process_items = [f"{fg_code}-{p}" for p in processes]
     bom_chain = BomGenerationService.generate_chain(fg_code, processes)
+    gen_payload = {
+        'fg_code': fg_code,
+        'process_items': process_items,
+        'material_type': material,
+        'thickness': thickness,
+        'coating': coating,
+    }
+    sap_preview = SapPushService.preview_item_payloads(gen_payload, current_app.config)
     return jsonify({
         'fg_code': fg_code,
         'process_items': process_items,
-        'bom_chain': bom_chain,
         'coating': coating,
+        'bom_chain': bom_chain,
+        'sap_item_payloads': sap_preview,
     })
 
 @generator_bp.route('/save', methods=['POST'])
 def save_local():
     payload = request.json
     fg_code = payload.get('fg_code')
+    template_id = payload.get('template_id')
     if not fg_code:
-        return jsonify({'error':'fg_code required'}), 400
-    # upsert FG item: if exists, update fields; otherwise create
-    fg = GeneratedFGItem.query.filter_by(item_code=fg_code).first()
+        return jsonify({'error': 'fg_code required'}), 400
+    if not template_id:
+        return jsonify({'error': 'template_id required'}), 400
+
+    template_id = int(template_id)
+    fg = GeneratedFGItem.query.filter_by(
+        item_code=fg_code,
+        bom_template_id=template_id,
+    ).first()
     if fg:
         fg.material_type = payload.get('material_type') or fg.material_type
         fg.thickness = payload.get('thickness') or fg.thickness
         fg.coating = payload.get('coating') or fg.coating
         fg.pattern_id = payload.get('pattern_id') or fg.pattern_id
-        fg.bom_template_id = payload.get('template_id') or fg.bom_template_id
         db.session.add(fg)
         db.session.flush()
-        # remove existing process items for this FG and re-add
         GeneratedProcessItem.query.filter_by(fg_item_id=fg.id).delete(synchronize_session=False)
     else:
         fg = GeneratedFGItem(
@@ -85,20 +109,21 @@ def save_local():
             thickness=payload.get('thickness', ''),
             coating=payload.get('coating', ''),
             pattern_id=payload.get('pattern_id'),
-            bom_template_id=payload.get('template_id'),
+            bom_template_id=template_id,
         )
         db.session.add(fg)
         db.session.flush()
 
     for pi in payload.get('process_items', []):
-        gp = GeneratedProcessItem(fg_item_id=fg.id, process_code=pi.split('-')[-1], item_code=pi)
+        gp = GeneratedProcessItem(
+            fg_item_id=fg.id,
+            process_code=pi.split('-')[-1],
+            item_code=pi,
+        )
         db.session.add(gp)
 
-    # build bom_structures: accept 'bom_chain' (list of dicts parent/child/process) or 'bom_pairs'
-    # delete existing structures where this FG is the top parent
-    BomStructure.query.filter_by(parent_item_code=fg_code).delete(synchronize_session=False)
+    BomStructure.query.filter_by(generated_fg_id=fg.id).delete(synchronize_session=False)
     chain = payload.get('bom_chain') or payload.get('bom_pairs') or []
-    # if chain is list of tuples (parent, child, seq), normalize
     for node in chain:
         if isinstance(node, dict):
             parent = node.get('parent')
@@ -109,22 +134,60 @@ def save_local():
             parent, child, seq = node[0], node[1], node[2]
         else:
             continue
-        b = BomStructure(parent_item_code=parent, child_item_code=child, process_sequence=seq)
+        b = BomStructure(
+            generated_fg_id=fg.id,
+            parent_item_code=parent,
+            child_item_code=child,
+            process_sequence=seq,
+        )
         db.session.add(b)
 
+    new_codes = sync_from_generator_save(payload, fg.id, current_app.config)
     db.session.commit()
-    return jsonify({'status':'saved','fg_id': fg.id})
+    template = BomTemplate.query.get(template_id)
+    msg = f'Saved {fg_code} / {template.template_name if template else template_id}'
+    if new_codes:
+        msg += f'. New in Item Master: {", ".join(new_codes)}'
+    else:
+        msg += '. All codes already in Item Master (no duplicates).'
+    return jsonify({'status': 'saved', 'fg_id': fg.id, 'new_item_codes': new_codes, 'message': msg})
 
 @generator_bp.route('/push', methods=['POST'])
 def push_to_sap():
-    payload = request.json
+    """Push FG + component codes to SAP Item Master only (no BOM)."""
+    payload = request.json or {}
+    if not current_app.config.get('SAP_BASE_URL'):
+        return jsonify({
+            'error': (
+                'SAP is not configured. Set SAP_SERVICE_LAYER_URL, SAP_COMPANY_DB, '
+                'SAP_USERNAME, and SAP_PASSWORD in your .env file.'
+            ),
+        }), 400
     client = SapPushService(current_app.config)
     try:
-        log = client.push_full_bom(payload)
-        # store log
-        l = SapPushLog(request_payload=payload, response_payload=log.get('responses'), status=log.get('status'))
+        log = client.push_item_master(payload)
+        template_id = payload.get('template_id')
+        fg = None
+        if template_id:
+            fg = GeneratedFGItem.query.filter_by(
+                item_code=payload.get('fg_code'),
+                bom_template_id=int(template_id),
+            ).first()
+        sync_from_generator_save(payload, fg.id if fg else None, current_app.config)
+        pushed_codes = [
+            r.get('item')
+            for r in (log.get('responses') or [])
+            if r.get('item') and r.get('status') in ('created', 'updated', 'skipped')
+        ]
+        mark_sap_pushed(pushed_codes)
+        l = SapPushLog(
+            request_payload=payload,
+            response_payload=log,
+            status=log.get('status', 'completed'),
+        )
         db.session.add(l)
         db.session.commit()
-        return jsonify({'status':'ok','log':log})
+        return jsonify({'status': 'ok', 'log': log})
     except Exception as e:
-        return jsonify({'error':str(e)}), 500
+        current_app.logger.exception('SAP push failed')
+        return jsonify({'error': str(e)}), 500

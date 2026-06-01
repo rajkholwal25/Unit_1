@@ -2,6 +2,7 @@
 
 from .bom import BomStructure, BomTemplate, GeneratedFGItem, GeneratedProcessItem
 from .coating import CoatingType
+from .item_master import ItemMaster
 from .material import MaterialType
 from .pattern import Pattern
 from .sap import SapPushLog
@@ -15,6 +16,7 @@ __all__ = [
     'BomTemplate',
     'GeneratedFGItem',
     'GeneratedProcessItem',
+    'ItemMaster',
     'BomStructure',
     'SapPushLog',
 ]

@@ -13,9 +13,12 @@ class BomTemplate(db.Model):
 
 class GeneratedFGItem(db.Model):
     __tablename__ = 'generated_fg_items'
+    __table_args__ = (
+        db.UniqueConstraint('item_code', 'bom_template_id', name='uq_fg_item_code_template'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
-    item_code = db.Column(db.String(128), unique=True, nullable=False)
+    item_code = db.Column(db.String(128), nullable=False, index=True)
     material_type = db.Column(db.String(32), nullable=False)
     thickness = db.Column(db.String(32), nullable=False)
     coating = db.Column(db.String(16), nullable=True)
@@ -38,6 +41,7 @@ class BomStructure(db.Model):
     __tablename__ = 'bom_structures'
 
     id = db.Column(db.Integer, primary_key=True)
+    generated_fg_id = db.Column(db.Integer, db.ForeignKey('generated_fg_items.id'), nullable=True)
     parent_item_code = db.Column(db.String(128), nullable=False)
     child_item_code = db.Column(db.String(128), nullable=False)
     process_sequence = db.Column(db.JSON, nullable=True)
