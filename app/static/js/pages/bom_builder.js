@@ -55,7 +55,10 @@
       '<td>' + esc(String(r.yield_loss_pct ?? 2)) + '%</td>' +
       '<td class="small text-muted">' + esc((r.created_at || '').replace('T', ' ').slice(0, 19) || '—') + '</td>' +
       '<td class="text-end">' +
-      '<button type="button" class="btn btn-sm btn-outline-secondary btn-view-bom">View</button>' +
+      '<button type="button" class="btn btn-sm btn-outline-secondary me-1 btn-view-bom">View</button>' +
+      '<button type="button" class="btn btn-sm btn-outline-danger me-1 btn-del-local" title="Delete locally">Local</button>' +
+      '<button type="button" class="btn btn-sm btn-outline-danger me-1 btn-del-sap" title="Delete BOM from SAP (ProductTrees)">SAP</button>' +
+      '<button type="button" class="btn btn-sm btn-danger btn-del-both" title="Delete local + SAP BOM">Both</button>' +
       '</td></tr>'
     ).join('');
   }
@@ -394,9 +397,53 @@
 
   document.getElementById('created-boms-tbody')?.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-view-bom');
-    if (!btn) return;
-    const tr = btn.closest('tr[data-fg-id]');
+    const tr = e.target.closest('tr[data-fg-id]');
     if (!tr) return;
-    viewCreatedBom(tr.getAttribute('data-fg-id'));
+    const fgId = tr.getAttribute('data-fg-id');
+    if (btn) {
+      viewCreatedBom(fgId);
+      return;
+    }
+    const delLocal = e.target.closest('.btn-del-local');
+    const delSap = e.target.closest('.btn-del-sap');
+    const delBoth = e.target.closest('.btn-del-both');
+    if (!delLocal && !delSap && !delBoth) return;
+    const mode = delBoth ? 'both' : delSap ? 'sap' : 'local';
+    const msg =
+      mode === 'local' ? 'Delete this BOM locally only?' :
+      mode === 'sap' ? 'Delete this BOM from SAP only? (Items are NOT deleted)' :
+      'Delete locally AND delete BOM from SAP? (Items are NOT deleted)';
+    if (!confirm(msg)) return;
+    fetch('/bom-builder/created/' + encodeURIComponent(fgId) + '/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    }).then(async (r) => {
+      const ct = (r.headers.get('content-type') || '').toLowerCase();
+      let payload;
+      if (ct.includes('application/json')) {
+        payload = await r.json();
+      } else {
+        const text = await r.text();
+        payload = {
+          error: text
+            ? ('Request failed (HTTP ' + r.status + ', non-JSON response)')
+            : ('Request failed (HTTP ' + r.status + ')'),
+        };
+        // If we got redirected to login/session page, prompt refresh.
+        if (r.redirected) payload.error = 'Session expired — refresh the page and try again.';
+      }
+      return { ok: r.ok, status: r.status, payload };
+    }).then(({ ok, status, payload }) => {
+      if (!ok) {
+        toast(payload.error || ('Delete failed (HTTP ' + status + ')'), 'danger');
+        return;
+      }
+      toast('Deleted: ' + mode);
+      // Refresh list + hide detail panel
+      const dp = document.getElementById('created-detail-panel');
+      if (dp) dp.style.display = 'none';
+      loadCreatedBoms();
+    }).catch(() => toast('Delete failed — refresh page once', 'danger'));
   });
 })();

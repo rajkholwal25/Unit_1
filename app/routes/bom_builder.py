@@ -27,6 +27,7 @@ from ..services.item_master_service import sync_from_generator_save, mark_sap_pu
 from ..utils.thickness import parse_thickness
 from ..services.sap_item_sync_service import SapItemSyncService
 from ..services.bom_generation import warehouse_for_parent, RM_WAREHOUSE
+from ..services.generated_items import delete_generated_fg_item
 
 bom_builder_bp = Blueprint('bom_builder', __name__)
 
@@ -116,11 +117,15 @@ def raw_materials_search():
     if q and not results and current_app.config.get('SAP_BASE_URL'):
         try:
             svc = SapItemSyncService(current_app.config)
-            chunk = svc.list_items(skip=0, top=50, search=q)
             uom = (current_app.config.get('SAP_UOM_CODE') or 'KGS').strip().upper()
-            for row in chunk.get('items') or []:
-                # Private helper is fine here; keeps Item Master as SAP mirror.
-                svc._upsert_from_sap(row, uom)  # noqa: SLF001
+            # First try exact ItemCode fetch (fast for codes like RMC0000001).
+            exact = svc.get_item(q)
+            if exact:
+                svc._upsert_from_sap(exact, uom)  # noqa: SLF001
+            else:
+                chunk = svc.list_items(skip=0, top=50, search=q)
+                for row in chunk.get('items') or []:
+                    svc._upsert_from_sap(row, uom)  # noqa: SLF001
             db.session.commit()
             results = search_raw_materials(fg_code, process_items, q)
         except Exception:
@@ -190,6 +195,48 @@ def created_bom_detail(fg_id: int):
     })
 
 
+@bom_builder_bp.route('/created/<int:fg_id>/delete', methods=['POST'])
+def created_bom_delete(fg_id: int):
+    """
+    Delete created BOM:
+    - local: remove saved variant (GeneratedFGItem + structures + process items)
+    - sap: delete ProductTrees for all parent nodes in this BOM (BOM only, not items)
+    """
+    mode = (request.get_json() or {}).get('mode') or 'local'
+    mode = str(mode).lower().strip()
+    if mode not in ('local', 'sap', 'both'):
+        return jsonify({'error': 'mode must be local|sap|both'}), 400
+
+    fg = GeneratedFGItem.query.get(fg_id)
+    if not fg:
+        return jsonify({'error': 'BOM not found'}), 404
+
+    sap_result = None
+    if mode in ('sap', 'both'):
+        if not current_app.config.get('SAP_BASE_URL'):
+            return jsonify({'error': 'SAP is not configured in .env'}), 400
+        # Delete ProductTrees for every parent in the BOM chain.
+        parent_codes = sorted({
+            r.parent_item_code
+            for r in BomStructure.query.filter_by(generated_fg_id=fg.id).all()
+            if r.parent_item_code
+        })
+        try:
+            sap_result = SapPushService(current_app.config).delete_bom_trees(parent_codes)
+        except Exception as exc:
+            current_app.logger.exception('SAP BOM delete failed')
+            return jsonify({'error': str(exc)}), 502
+
+    local_result = None
+    if mode in ('local', 'both'):
+        ok, err = delete_generated_fg_item(fg)
+        if not ok:
+            return jsonify({'error': err or 'Local delete failed'}), 400
+        local_result = {'status': 'deleted', 'fg_id': fg_id}
+
+    return jsonify({'status': 'ok', 'mode': mode, 'sap': sap_result, 'local': local_result})
+
+
 @bom_builder_bp.route('/preview', methods=['POST'])
 def preview_bom():
     data = request.get_json() or {}
@@ -221,7 +268,19 @@ def save_local():
     if not rm:
         return jsonify({'error': 'raw_material_item_code required'}), 400
     if not item_exists(rm):
-        return jsonify({'error': f'"{rm}" not in Item Master — sync from SAP first'}), 400
+        # Try pulling the item from SAP and upserting into local mirror.
+        if current_app.config.get('SAP_BASE_URL'):
+            try:
+                svc = SapItemSyncService(current_app.config)
+                uom = (current_app.config.get('SAP_UOM_CODE') or 'KGS').strip().upper()
+                exact = svc.get_item(rm)
+                if exact:
+                    svc._upsert_from_sap(exact, uom)  # noqa: SLF001
+                    db.session.commit()
+            except Exception:
+                pass
+        if not item_exists(rm):
+            return jsonify({'error': f'"{rm}" not in Item Master — sync from SAP first'}), 400
 
     template_id = int(template_id)
     thickness = parse_thickness(payload.get('thickness'))

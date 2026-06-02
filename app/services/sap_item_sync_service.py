@@ -122,7 +122,7 @@ class SapItemSyncService:
                 codes.add(c)
         return sorted(codes)
 
-    def sync_all(self, *, max_pages=40, page_size=100):
+    def sync_all(self, *, max_pages=200, page_size=100):
         """Pull SAP Item Master into local catalog (upsert)."""
         synced = 0
         skip = 0

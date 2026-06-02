@@ -439,9 +439,13 @@ class SapPushService:
             'Warehouse': parent_warehouse,
             'ProductTreeLines': [line],
         }
+        # SAP Service Layer PATCH on ProductTrees can append to ProductTreeLines,
+        # leading to duplicate lines on repeated pushes. For idempotency, delete
+        # existing tree and recreate it.
         if self._product_tree_exists(parent_code):
-            self.client.patch(self.client.product_tree_path(parent_code), payload)
-            return {'status': 'updated', 'tree_code': parent_code, 'child': child_code}
+            self.client.delete(self.client.product_tree_path(parent_code))
+            result = self.client.post('/b1s/v1/ProductTrees', payload)
+            return {'status': 'recreated', 'tree_code': parent_code, 'child': child_code, 'response': result}
         result = self.client.post('/b1s/v1/ProductTrees', payload)
         return {'status': 'created', 'tree_code': parent_code, 'child': child_code, 'response': result}
 
@@ -462,6 +466,7 @@ class SapPushService:
             'status': 'completed',
             'summary': {
                 'created': sum(1 for r in results if r.get('status') == 'created'),
+                'recreated': sum(1 for r in results if r.get('status') == 'recreated'),
                 'updated': sum(1 for r in results if r.get('status') == 'updated'),
                 'total': len(results),
             },
@@ -522,4 +527,29 @@ class SapPushService:
                 },
             },
             'bom': bom_log,
+        }
+
+    def delete_bom_trees(self, tree_codes: list):
+        """
+        Delete ProductTrees (BOM) in SAP for given parent item codes.
+        Does NOT delete items from SAP.
+        """
+        results = []
+        deleted = 0
+        missing = 0
+        for code in tree_codes or []:
+            c = (code or '').strip()
+            if not c:
+                continue
+            ok = self.client.delete(self.client.product_tree_path(c))
+            if ok:
+                deleted += 1
+                results.append({'tree_code': c, 'status': 'deleted'})
+            else:
+                missing += 1
+                results.append({'tree_code': c, 'status': 'not_found'})
+        return {
+            'status': 'completed',
+            'summary': {'deleted': deleted, 'not_found': missing, 'total': len(results)},
+            'trees': results,
         }

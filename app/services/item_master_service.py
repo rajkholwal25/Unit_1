@@ -117,6 +117,12 @@ def delete_for_fg(fg):
     """Item Master is kept for inventory — deleting a saved BOM does not remove catalog items."""
     if not fg:
         return
+    # GeneratedFGItem is referenced by ItemMaster.generated_fg_id (FK).
+    # When deleting a saved BOM variant, keep catalog rows but detach the FK.
+    ItemMaster.query.filter_by(generated_fg_id=fg.id).update(
+        {'generated_fg_id': None},
+        synchronize_session=False,
+    )
 
 
 def delete_catalog_items(item_codes):
