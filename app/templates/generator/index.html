@@ -20,7 +20,7 @@
       </div>
       <div>
         <label class="form-label" for="thickness">Thickness</label>
-        <input id="thickness" class="form-control" value="12">
+        <input id="thickness" type="number" class="form-control" value="12" min="0" step="0.001" required>
       </div>
       <div class="position-relative">
         <label class="form-label" for="pattern_input">Pattern</label>
@@ -135,9 +135,14 @@ input.addEventListener('focus', function(){ fetchSuggest(this.value); });
 
 function generate(){
   const coating = document.getElementById('coating').value;
+  const thicknessVal = parseFloat(document.getElementById('thickness').value, 10);
   if (!document.getElementById('material_type').value || !document.getElementById('pattern_id').value ||
       !document.getElementById('template_id').value || !coating) {
     showAlert('Please select material, pattern, coating, and template', 'warning');
+    return;
+  }
+  if (Number.isNaN(thicknessVal) || thicknessVal < 0) {
+    showAlert('Thickness must be a valid number (0 or greater)', 'warning');
     return;
   }
   const payload = new URLSearchParams();
@@ -167,7 +172,7 @@ function generate(){
       process_items: d.process_items,
       bom_chain: d.bom_chain,
       material_type: document.getElementById('material_type').value,
-      thickness: document.getElementById('thickness').value,
+      thickness: parseFloat(document.getElementById('thickness').value, 10),
       coating: coating,
       pattern_id: document.getElementById('pattern_id').value,
       template_id: document.getElementById('template_id').value,

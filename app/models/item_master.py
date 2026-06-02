@@ -15,7 +15,7 @@ class ItemMaster(db.Model):
     parent_fg_code = db.Column(db.String(128), nullable=True, index=True)
     process_code = db.Column(db.String(32), nullable=True)
     material_type = db.Column(db.String(32), nullable=True)
-    thickness = db.Column(db.String(32), nullable=True)
+    thickness = db.Column(db.Numeric(10, 3), nullable=True)
     coating = db.Column(db.String(16), nullable=True)
     pattern_id = db.Column(db.Integer, db.ForeignKey('patterns.id'), nullable=True)
     bom_template_id = db.Column(db.Integer, db.ForeignKey('bom_templates.id'), nullable=True)

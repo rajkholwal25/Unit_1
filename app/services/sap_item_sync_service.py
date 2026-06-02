@@ -73,8 +73,14 @@ class SapItemSyncService:
         params = [f'$select={ITEM_SELECT}', f'$orderby=ItemCode', f'$skip={int(skip)}', f'$top={int(top)}']
         term = (search or '').strip()
         if term:
-            esc = SapServiceLayerClient.escape_item_code(term).replace("'", "''")
-            params.append(f"$filter=contains(ItemCode,'{esc}') or contains(ItemName,'{esc}')")
+            # SAP Service Layer OData filters are typically case-sensitive. Use tolower() for
+            # case-insensitive search across ItemCode and ItemName.
+            esc = SapServiceLayerClient.escape_item_code(term.lower()).replace("'", "''")
+            params.append(
+                "$filter="
+                f"contains(tolower(ItemCode),'{esc}') or "
+                f"contains(tolower(ItemName),'{esc}')"
+            )
         path = f"/b1s/v1/Items?{'&'.join(params)}"
         data = self.client.get(path) or {}
         rows = [sap_item_row_dict(x, self.config) for x in data.get('value', [])]

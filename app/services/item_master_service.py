@@ -4,6 +4,7 @@ from datetime import datetime
 
 from ..extensions import db
 from ..models import ItemMaster
+from ..utils.thickness import parse_thickness, thickness_display
 from .sap_push_service import UOM_CODE_KGS
 from .warehouse_mapping import WarehouseMappingService
 
@@ -42,12 +43,13 @@ def sync_from_generator_save(payload, fg_id, config=None):
         return []
 
     material = payload.get('material_type', '')
-    thickness = payload.get('thickness', '')
+    thickness = parse_thickness(payload.get('thickness'))
     coating = payload.get('coating', '')
     uom = _uom_code(config)
     fg_group = int((config or {}).get('SAP_FG_ITEMS_GROUP', 100))
     comp_group = int((config or {}).get('SAP_COMPONENT_ITEMS_GROUP', 107))
-    fg_name = f'{material} {thickness} {coating} FG'.strip()
+    th_label = thickness_display(thickness) if thickness is not None else ''
+    fg_name = f'{material} {th_label} {coating} FG'.strip()
     added = []
 
     if not item_exists(fg_code):

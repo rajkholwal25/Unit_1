@@ -1,3 +1,4 @@
+from ..utils.thickness import parse_thickness, thickness_display
 from .sap_client import SapServiceLayerClient
 from .warehouse_mapping import WarehouseMappingService
 
@@ -152,10 +153,11 @@ class SapPushService:
     def preview_item_payloads(generate_payload, config):
         """Build the exact JSON bodies that will be POSTed to SAP Item Master (no API call)."""
         material = generate_payload.get('material_type', '')
-        thickness = generate_payload.get('thickness', '')
+        thickness = parse_thickness(generate_payload.get('thickness'))
         coating = generate_payload.get('coating', '')
         fg_code = generate_payload.get('fg_code', '')
-        fg_name = generate_payload.get('fg_name') or f'{material} {thickness} {coating} FG'.strip()
+        th_label = thickness_display(thickness) if thickness is not None else ''
+        fg_name = generate_payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
 
         fg_group = int(config.get('SAP_FG_ITEMS_GROUP', 100))
         comp_group = int(config.get('SAP_COMPONENT_ITEMS_GROUP', 107))
@@ -362,9 +364,10 @@ class SapPushService:
 
         process_items = list(payload.get('process_items') or [])
         material = payload.get('material_type', '')
-        thickness = payload.get('thickness', '')
+        thickness = parse_thickness(payload.get('thickness'))
         coating = payload.get('coating', '')
-        fg_name = payload.get('fg_name') or f'{material} {thickness} {coating} FG'.strip()
+        th_label = thickness_display(thickness) if thickness is not None else ''
+        fg_name = payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
 
         results = []
 
@@ -396,13 +399,127 @@ class SapPushService:
             'responses': results,
         }
 
-    # Legacy BOM push — kept for reference; not used by default flow.
-    def push_bom(self, tree_code, child_items):
+    def push_item_if_missing(self, item_code, item_name, *, is_fg=False, warehouse=None):
+        """Create item only when not in SAP; skip when already exists."""
+        if self._item_exists(item_code):
+            return {
+                'status': 'skipped',
+                'item': item_code,
+                'reason': 'already exists in SAP',
+            }
+        result = self.push_item(item_code, item_name, is_fg=is_fg, warehouse=warehouse)
+        result['item'] = item_code
+        return result
+
+    def _product_tree_exists(self, tree_code: str) -> bool:
+        try:
+            return self.client.get(self.client.product_tree_path(tree_code)) is not None
+        except Exception:
+            return False
+
+    def upsert_product_tree(
+        self,
+        parent_code: str,
+        child_code: str,
+        quantity: float,
+        *,
+        parent_warehouse: str,
+        child_warehouse: str,
+    ):
+        line = {
+            'ItemCode': child_code,
+            'Quantity': float(quantity),
+            'Warehouse': child_warehouse,
+            'IssueMethod': 'im_Manual',
+        }
         payload = {
-            'TreeCode': tree_code,
+            'TreeCode': parent_code,
             'TreeType': 'iProductionTree',
             'Quantity': 1,
-            'Warehouse': WarehouseMappingService.for_process('FG'),
-            'ProductTreeLines': child_items,
+            'Warehouse': parent_warehouse,
+            'ProductTreeLines': [line],
         }
-        return self.client.post('/b1s/v1/ProductTrees', payload)
+        if self._product_tree_exists(parent_code):
+            self.client.patch(self.client.product_tree_path(parent_code), payload)
+            return {'status': 'updated', 'tree_code': parent_code, 'child': child_code}
+        result = self.client.post('/b1s/v1/ProductTrees', payload)
+        return {'status': 'created', 'tree_code': parent_code, 'child': child_code, 'response': result}
+
+    def push_bom_lines(self, lines: list):
+        if not lines:
+            raise ValueError('No BOM lines — select raw material and save first.')
+        results = []
+        for row in sorted(lines, key=lambda x: x.get('sort_order', 0), reverse=True):
+            res = self.upsert_product_tree(
+                row['parent'],
+                row['child'],
+                row['quantity'],
+                parent_warehouse=row.get('parent_warehouse') or WarehouseMappingService.for_process('FG'),
+                child_warehouse=row.get('child_warehouse') or WarehouseMappingService.for_process('RM'),
+            )
+            results.append({'parent': row['parent'], 'child': row['child'], **res})
+        return {
+            'status': 'completed',
+            'summary': {
+                'created': sum(1 for r in results if r.get('status') == 'created'),
+                'updated': sum(1 for r in results if r.get('status') == 'updated'),
+                'total': len(results),
+            },
+            'trees': results,
+        }
+
+    def ensure_rm_in_sap(self, item_code: str):
+        if not self._item_exists(item_code):
+            raise ValueError(
+                f'Raw material "{item_code}" not in SAP. Sync Item Master from SAP first.',
+            )
+
+    def push_items_and_bom(self, payload: dict, bom_lines: list):
+        """
+        Missing FG/process items → create in SAP.
+        Existing items → skip item push.
+        Always push / update multi-level production BOM.
+        """
+        fg_code = payload.get('fg_code')
+        if not fg_code:
+            raise ValueError('fg_code is required')
+
+        process_items = list(payload.get('process_items') or [])
+        material = payload.get('material_type', '')
+        thickness = parse_thickness(payload.get('thickness'))
+        coating = payload.get('coating', '')
+        th_label = thickness_display(thickness) if thickness is not None else ''
+        fg_name = payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
+
+        item_results = []
+        item_results.append({
+            'type': 'fg',
+            **self.push_item_if_missing(
+                fg_code, fg_name, is_fg=True,
+            ),
+        })
+        for pi in process_items:
+            proc = pi.split('-')[-1] if '-' in pi else ''
+            comp_name = payload.get('item_names', {}).get(pi) or f'{pi} {proc}'.strip()
+            item_results.append({
+                'type': 'component',
+                **self.push_item_if_missing(pi, comp_name, is_fg=False),
+            })
+
+        rm = (payload.get('raw_material_item_code') or '').strip()
+        if rm:
+            self.ensure_rm_in_sap(rm)
+
+        bom_log = self.push_bom_lines(bom_lines)
+        return {
+            'status': 'completed',
+            'items': {
+                'responses': item_results,
+                'summary': {
+                    'created': sum(1 for r in item_results if r.get('status') == 'created'),
+                    'skipped': sum(1 for r in item_results if r.get('status') == 'skipped'),
+                    'total': len(item_results),
+                },
+            },
+            'bom': bom_log,
+        }

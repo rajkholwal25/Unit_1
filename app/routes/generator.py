@@ -15,6 +15,7 @@ from ..services.item_code_generator import ItemCodeGeneratorService
 from ..services.bom_generation import BomGenerationService
 from ..services.sap_push_service import SapPushService
 from ..services.item_master_service import sync_from_generator_save, mark_sap_pushed
+from ..utils.thickness import parse_thickness
 
 generator_bp = Blueprint('generator', __name__)
 
@@ -45,21 +46,24 @@ def index():
 def generate():
     data = request.form
     material = data.get('material_type')
-    thickness = data.get('thickness')
+    thickness = parse_thickness(data.get('thickness'))
     coating = (data.get('coating') or '').strip().upper()
     pattern_id = data.get('pattern_id')
     template_id = data.get('template_id')
-    if not all([material, thickness, coating, pattern_id, template_id]):
-        return jsonify({'error': 'invalid input'}), 400
+    if not all([material, thickness is not None, coating, pattern_id, template_id]):
+        return jsonify({'error': 'invalid input — thickness must be a number'}), 400
     if coating not in _active_coating_codes():
         return jsonify({'error': 'invalid or inactive coating'}), 400
     pattern = Pattern.query.get(int(pattern_id))
     template = BomTemplate.query.get(int(template_id))
     if not pattern or not template:
         return jsonify({'error': 'pattern or template not found'}), 404
-    fg_code = ItemCodeGeneratorService.generate_fg_code(
-        material, thickness, pattern.pattern_code, coating
-    )
+    try:
+        fg_code = ItemCodeGeneratorService.generate_fg_code(
+            material, thickness, pattern.pattern_code, coating
+        )
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
     processes = template.process_sequence
     process_items = [f"{fg_code}-{p}" for p in processes]
     bom_chain = BomGenerationService.generate_chain(fg_code, processes)
@@ -94,19 +98,26 @@ def save_local():
         item_code=fg_code,
         bom_template_id=template_id,
     ).first()
+    thickness = parse_thickness(payload.get('thickness'))
+    if thickness is None and payload.get('thickness') not in (None, ''):
+        return jsonify({'error': 'thickness must be a number'}), 400
+
     if fg:
         fg.material_type = payload.get('material_type') or fg.material_type
-        fg.thickness = payload.get('thickness') or fg.thickness
+        if thickness is not None:
+            fg.thickness = thickness
         fg.coating = payload.get('coating') or fg.coating
         fg.pattern_id = payload.get('pattern_id') or fg.pattern_id
         db.session.add(fg)
         db.session.flush()
         GeneratedProcessItem.query.filter_by(fg_item_id=fg.id).delete(synchronize_session=False)
     else:
+        if thickness is None:
+            return jsonify({'error': 'thickness is required'}), 400
         fg = GeneratedFGItem(
             item_code=fg_code,
             material_type=payload.get('material_type', ''),
-            thickness=payload.get('thickness', ''),
+            thickness=thickness,
             coating=payload.get('coating', ''),
             pattern_id=payload.get('pattern_id'),
             bom_template_id=template_id,

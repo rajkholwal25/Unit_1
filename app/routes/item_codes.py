@@ -3,6 +3,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 from ..models import BomTemplate, GeneratedFGItem, GeneratedProcessItem, ItemMaster, Pattern
 from ..services.generated_items import delete_generated_fg_item
 from ..services.item_master_service import item_exists, search_items
+from ..utils.thickness import thickness_display
 from ..services.sap_item_sync_service import SapItemSyncService
 
 item_codes_bp = Blueprint('item_codes', __name__)
@@ -27,7 +28,7 @@ def _row_dict(row):
         'parent_fg_code': row.parent_fg_code or '—',
         'process_code': row.process_code or '—',
         'material_type': row.material_type or '—',
-        'thickness': row.thickness or '—',
+        'thickness': thickness_display(row.thickness),
         'coating': row.coating or '—',
         'pattern': pattern.pattern_name if pattern else '—',
         'template': template.template_name if template else '—',

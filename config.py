@@ -55,6 +55,7 @@ class Config:
     SAP_CHAPTER_ID = os.getenv('SAP_CHAPTER_ID', '')
     SAP_ITEM_TAX_RATE = int(os.getenv('SAP_ITEM_TAX_RATE', '18'))
     SAP_GST_TAX_CATEGORY = os.getenv('SAP_GST_TAX_CATEGORY', 'gtc_Regular')
+    BOM_YIELD_LOSS_PCT = float(os.getenv('BOM_YIELD_LOSS_PCT', '2'))
 
 class ProdConfig(Config):
     pass

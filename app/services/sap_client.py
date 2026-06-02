@@ -36,6 +36,9 @@ class SapServiceLayerClient:
     def item_path(self, item_code):
         return f"/b1s/v1/Items('{self.escape_item_code(item_code)}')"
 
+    def product_tree_path(self, tree_code):
+        return f"/b1s/v1/ProductTrees('{self.escape_item_code(tree_code)}')"
+
     def get(self, path):
         url = f'{self.base}{path}'
         resp = self.s.get(url, verify=self.verify_ssl, timeout=30)

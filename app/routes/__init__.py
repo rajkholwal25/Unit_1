@@ -7,6 +7,7 @@ def register_blueprints(app):
     from .dashboard import dashboard_bp
     from .coating_types import coating_bp
     from .generator import generator_bp
+    from .bom_builder import bom_builder_bp
     from .item_codes import item_codes_bp
     from .material_types import material_bp
     from .patterns import patterns_bp
@@ -20,6 +21,7 @@ def register_blueprints(app):
     app.register_blueprint(coating_bp, url_prefix='/coating-types')
     app.register_blueprint(templates_bp, url_prefix='/bom-templates')
     app.register_blueprint(generator_bp, url_prefix='/item-generator')
+    app.register_blueprint(bom_builder_bp, url_prefix='/bom-builder')
     app.register_blueprint(sap_logs_bp, url_prefix='/sap-logs')
     app.register_blueprint(item_codes_bp, url_prefix='/item-codes')
     app.register_blueprint(settings_bp, url_prefix='/settings')
