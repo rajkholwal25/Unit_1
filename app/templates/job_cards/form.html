@@ -63,30 +63,8 @@
     <div class="card mb-3">
         <div class="card-body">
             <div class="section-title">Header — Customer &amp; SAP</div>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Job Type</label>
-                    <select class="form-select" name="job_type_cat" id="job_type_cat" required>
-                        <option value="Mono" selected>Mono</option>
-                        <option value="Rigid">Rigid</option>
-                        <option value="Commercial">Commercial</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Series</label>
-                    <select class="form-select" name="job_series" id="job_series" required>
-                        <option value="Normal" selected>Normal</option>
-                        <option value="Rejection">Rejection</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3 d-none" id="rejection_ref_wrap">
-                    <label class="form-label text-danger">Original Job No (Load Data) <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <input type="text" class="form-control form-control-sm" name="original_job_no" id="rejection_original_job_no" placeholder="e.g. 1001234">
-                        <button class="btn btn-sm btn-outline-danger" type="button" id="btn_load_rejection">Load</button>
-                    </div>
-                </div>
-            </div>
+            <input type="hidden" name="job_type_cat" id="job_type_cat" value="Mono">
+            <input type="hidden" name="job_series" id="job_series" value="Normal">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="customer_display" class="form-label">Customer <span class="text-danger">*</span></label>

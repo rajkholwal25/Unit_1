@@ -30,7 +30,7 @@
   <div class="edit-flow-hero">
     <h1><i class="bi bi-pencil-square me-2 text-primary"></i>Edit job</h1>
     <div class="sub">
-      Customer, job category, and series cannot be changed after the job is created.
+      Customer cannot be changed after the job is created.
       You can update New/Repeat, priority, delivery date, remarks, carton dimensions (L × W × H), and detail-line material/print fields.
       BOM-only values (FG codes, qty, ups, element, raw mat, sheets, wastage) stay read-only here — use <strong>Edit BOM</strong> on the job view to change those.
     </div>
@@ -42,17 +42,9 @@
     <div class="card mb-3 shadow-sm">
       <div class="card-body">
         <div class="section-title">Header — Customer &amp; SAP</div>
-        <p class="text-muted small mb-3">Customer, job category, series, and SO remain locked. New/Repeat can be corrected here.</p>
+        <p class="text-muted small mb-3">Customer and SO remain locked. New/Repeat can be corrected here.</p>
         <div class="row g-3">
-          <div class="col-md-3">
-            <label class="form-label text-muted small">Job category</label>
-            <div class="form-control bg-light">{{ job.job_type_cat or 'Mono' }}</div>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label text-muted small">Series</label>
-            <div class="form-control bg-light">{{ job.job_series or 'Normal' }}</div>
-          </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             {% set current_kind = (header_lines[0].job_type if header_lines else 'new')|lower %}
             <label class="form-label">New / Repeat</label>
             <select class="form-select" name="job_kind" id="job_kind">
@@ -60,7 +52,7 @@
               <option value="repeat" {% if current_kind == 'repeat' %}selected{% endif %}>Repeat</option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Original job no.</label>
             <input type="text" class="form-control" name="original_job_no" id="original_job_no"
                    value="{{ job.original_job_no or '' }}"

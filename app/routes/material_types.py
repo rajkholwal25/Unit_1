@@ -8,26 +8,27 @@ material_bp = Blueprint('material_types', __name__)
 
 @material_bp.route('/', methods=['GET','POST'])
 def list_materials():
+    if request.method == 'GET':
+        return redirect(url_for('fg_components.index', tab='materials'))
     if request.method == 'POST':
         code = request.form.get('code','').strip().upper()
         name = request.form.get('name','').strip()
         if not code:
             flash('Code required','danger')
-            return redirect(url_for('material_types.list_materials'))
+            return redirect(url_for('fg_components.index', tab='materials'))
         # make name optional; default to code if not provided
         if not name:
             name = code
         existing = MaterialType.query.filter_by(code=code).first()
         if existing:
             flash('Material type already exists','warning')
-            return redirect(url_for('material_types.list_materials'))
+            return redirect(url_for('fg_components.index', tab='materials'))
         m = MaterialType(code=code, name=name)
         db.session.add(m)
         db.session.commit()
         flash('Material type added','success')
-        return redirect(url_for('material_types.list_materials'))
-    materials = MaterialType.query.order_by(MaterialType.code).all()
-    return render_template('material_types/list.html', materials=materials)
+        return redirect(url_for('fg_components.index', tab='materials'))
+    return redirect(url_for('fg_components.index', tab='materials'))
 
 
 @material_bp.route('/ajax_update', methods=['POST'])

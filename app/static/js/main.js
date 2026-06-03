@@ -1,3 +1,13 @@
+/** CSRF header for JSON fetch (Flask-WTF reads X-CSRFToken). */
+function csrfHeaders(extra) {
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) {
+    headers['X-CSRFToken'] = meta.getAttribute('content');
+  }
+  return headers;
+}
+
 /** Parse JSON from fetch; handles 500 HTML error pages gracefully. */
 async function parseJsonResponse(res) {
   try {

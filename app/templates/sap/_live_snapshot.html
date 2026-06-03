@@ -1,0 +1,107 @@
+{% set mirror = sap_snapshot.mirror if sap_snapshot.mirror else {} %}
+<div class="card border-0 shadow-sm mb-3" id="sap-live-data">
+  <div class="card-header bg-white border-bottom py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="fw-semibold"><i class="bi bi-cloud-check me-1"></i>SAP B1 — live data</div>
+      <div class="text-muted small mb-0">
+        Company: <span class="font-monospace">{{ sap_snapshot.company_db or '—' }}</span>
+        {% if sap_snapshot.fetched_at %}
+        · Updated {{ sap_snapshot.fetched_at[:19].replace('T', ' ') }} UTC
+        {% endif %}
+      </div>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      {% if sap_snapshot.connected %}
+      <span class="badge text-bg-success">Connected</span>
+      {% else %}
+      <span class="badge text-bg-danger">Not connected</span>
+      {% endif %}
+      <button type="button" class="btn btn-sm btn-outline-primary" id="btnRefreshSapLive" data-url="{{ url_for('sap_api.manufacturing_snapshot') }}">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh from SAP
+      </button>
+    </div>
+  </div>
+  <div class="card-body">
+    {% if sap_snapshot.error %}
+    <div class="alert alert-danger small mb-3">{{ sap_snapshot.error }}</div>
+    {% endif %}
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <div class="border rounded p-3 h-100 bg-light-subtle">
+          <div class="text-muted small">Local mirror (from SAP)</div>
+          <div class="mt-1"><strong>{{ mirror.get('customers', 0) }}</strong> customers</div>
+          <div><strong>{{ mirror.get('items', 0) }}</strong> items</div>
+          <div class="text-muted small mt-2">
+            Customers synced: {{ mirror.get('last_customer_sync_at', '')[:16].replace('T', ' ') if mirror.get('last_customer_sync_at') else 'never' }}<br>
+            Items synced: {{ mirror.get('last_item_sync_at', '')[:16].replace('T', ' ') if mirror.get('last_item_sync_at') else 'never' }}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="text-muted small mb-2">Use <strong>New Job</strong> to pull customers, open SO lines, and raw materials from SAP. Mirror tables speed up search.</div>
+        <a href="{{ url_for('jobs.new_job') }}" class="btn btn-sm btn-primary me-2"><i class="bi bi-plus-lg me-1"></i>New job from SAP</a>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-sm btn-outline-secondary">All jobs</a>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="fw-semibold small mb-2">Production orders in SAP (latest {{ sap_snapshot.production_orders|length }})</div>
+        <div class="table-responsive border rounded" style="max-height: 320px;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>PO #</th>
+                <th>FG item</th>
+                <th class="text-end">Qty</th>
+                <th>WH</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for po in sap_snapshot.production_orders %}
+              <tr>
+                <td class="font-monospace">{{ po.doc_num or po.doc_entry or '—' }}</td>
+                <td class="small">{{ po.item_no or '—' }}<br><span class="text-muted">{{ po.item_name or '' }}</span></td>
+                <td class="text-end">{{ po.planned_qty or '—' }}</td>
+                <td class="small">{{ po.warehouse or '—' }}</td>
+                <td><span class="badge text-bg-light border">{{ po.status or '—' }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-muted text-center py-3 small">{% if sap_snapshot.connected %}No production orders in SAP.{% else %}Connect to SAP to load data.{% endif %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="fw-semibold small mb-2">Open sales orders in SAP (latest {{ sap_snapshot.open_sales_orders|length }})</div>
+        <div class="table-responsive border rounded" style="max-height: 320px;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>SO #</th>
+                <th>Customer</th>
+                <th>CardCode</th>
+                <th>Due</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for so in sap_snapshot.open_sales_orders %}
+              <tr>
+                <td class="font-monospace">{{ so.so_no or so.doc_num or '—' }}</td>
+                <td class="small">{{ so.card_name or '—' }}</td>
+                <td class="small font-monospace">{{ so.card_code or '—' }}</td>
+                <td class="small text-muted">{{ (so.doc_due_date or so.doc_date or '')[:10] }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-muted text-center py-3 small">{% if sap_snapshot.connected %}No open sales orders found.{% else %}Connect to SAP to load data.{% endif %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

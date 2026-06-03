@@ -1,0 +1,44 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-2">
+  <div>
+    <h1 class="page-title">FG Components</h1>
+    <p class="page-subtitle">Materials, patterns, and coatings used when building FG item codes (FG Generator).</p>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item" role="presentation">
+    <a class="nav-link{% if tab == 'materials' %} active{% endif %}" href="{{ url_for('fg_components.index', tab='materials') }}" role="tab">
+      <i class="bi bi-layers me-1"></i> Materials
+    </a>
+  </li>
+  <li class="nav-item" role="presentation">
+    <a class="nav-link{% if tab == 'patterns' %} active{% endif %}" href="{{ url_for('fg_components.index', tab='patterns') }}" role="tab">
+      <i class="bi bi-diagram-3 me-1"></i> Patterns
+    </a>
+  </li>
+  <li class="nav-item" role="presentation">
+    <a class="nav-link{% if tab == 'coatings' %} active{% endif %}" href="{{ url_for('fg_components.index', tab='coatings') }}" role="tab">
+      <i class="bi bi-droplet me-1"></i> Coatings
+    </a>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade{% if tab == 'materials' %} show active{% endif %}" id="tab-materials" role="tabpanel">
+    {% include 'fg_components/_materials_panel.html' %}
+  </div>
+  <div class="tab-pane fade{% if tab == 'patterns' %} show active{% endif %}" id="tab-patterns" role="tabpanel">
+    {% include 'fg_components/_patterns_panel.html' %}
+  </div>
+  <div class="tab-pane fade{% if tab == 'coatings' %} show active{% endif %}" id="tab-coatings" role="tabpanel">
+    {% include 'fg_components/_coatings_panel.html' %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/pages/material_types.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pages/coating_types.js') }}"></script>
+{% endblock %}

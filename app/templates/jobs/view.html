@@ -210,14 +210,6 @@
             <dt>Customer code</dt>
             <dd>{{ job.sap_customer_code or '—' }}</dd>
           </div>
-          <div class="col-6">
-            <dt>Category</dt>
-            <dd>{{ job.job_type_cat or '—' }}</dd>
-          </div>
-          <div class="col-6">
-            <dt>Series</dt>
-            <dd>{{ job.job_series or '—' }}</dd>
-          </div>
           {% if job.assigned_planner %}
           <div class="col-6">
             <dt>Planner</dt>

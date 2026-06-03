@@ -1090,6 +1090,9 @@ def list_jobs():
         status_filter=status_filter,
         customer_filter=customer_filter,
         priority_filter=priority_filter,
+        list_endpoint='jobs.list_jobs',
+        page_title='Jobs',
+        status_choices=('open', 'staged', 'released', 'closed', 'cancelled'),
     )
 
 

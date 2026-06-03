@@ -10,51 +10,58 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    {% if session.user_id and csrf_token is defined %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js" defer></script>
     {% block extra_head %}{% endblock %}
   </head>
   <body class="{% if session.user_id %}app-authenticated{% else %}app-guest{% endif %}">
     {% if session.user_id %}
-    <div class="app-shell">
-      <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
-      <aside class="app-sidebar" id="appSidebar">
-        <div class="app-sidebar-brand">
-          <a href="/">
+    <div class="app-shell app-shell-topnav">
+      <header class="app-topnav" id="appTopnav">
+        <div class="app-topnav-inner">
+          <a class="app-topnav-brand" href="/">
             <span class="brand-icon"><i class="bi bi-box-seam"></i></span>
-            <span id="siteTitle">{{ site_title }}</span>
+            <span class="brand-text" id="siteTitle">{{ site_title }}</span>
           </a>
-        </div>
-        <nav class="app-sidebar-nav nav flex-column">
-          {% set nav_items = [
-            ('/', 'Dashboard', 'bi-grid-1x2'),
-            ('/manufacturing/', 'Manufacturing', 'bi-briefcase'),
-            ('/jobs/', 'Jobs', 'bi-list-task'),
-            ('/patterns/', 'Patterns', 'bi-diagram-3'),
-            ('/material-types/', 'Materials', 'bi-layers'),
-            ('/coating-types/', 'Coatings', 'bi-droplet'),
-            ('/item-generator/', 'Item Generator', 'bi-magic'),
-            ('/sap-logs/', 'SAP Logs', 'bi-cloud-upload')
-          ] %}
-          {% for href, label, icon in nav_items %}
-          <a class="nav-link{% if request.path == href or (href != '/' and request.path.startswith(href)) %} active{% endif %}" href="{{ href }}">
-            <i class="bi {{ icon }}"></i>
-            {{ label }}
-          </a>
-          {% endfor %}
-          {% if session.role in ('manager', 'admin') %}
-          <a class="nav-link{% if request.path.startswith('/users') %} active{% endif %}" href="{{ url_for('auth.users') }}">
-            <i class="bi bi-people"></i>
-            Users
-          </a>
-          {% endif %}
-        </nav>
-        <div class="app-sidebar-footer">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="rounded-circle d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-25" style="width:32px;height:32px;">
-              <i class="bi bi-person-fill text-white"></i>
-            </span>
-            <div>
+          <button type="button" class="app-topnav-toggle btn btn-sm" id="topnavToggle" aria-label="Toggle menu" aria-expanded="false">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="app-topnav-menu" id="topnavMenu">
+            <nav class="app-topnav-links" aria-label="Main">
+              {% set nav_items = [
+                ('/', 'Dashboard', 'bi-grid-1x2'),
+                ('/manufacturing/', 'Manufacturing', 'bi-briefcase'),
+                ('/fg-components/', 'FG Components', 'bi-puzzle'),
+                ('/item-generator/', 'FG Generator', 'bi-magic'),
+                ('/sap-logs/', 'SAP Logs', 'bi-journal-text')
+              ] %}
+              {% for href, label, icon in nav_items %}
+              <a class="app-topnav-link{% if request.path == href or (href != '/' and request.path.startswith(href)) %} active{% endif %}" href="{{ href }}">
+                <i class="bi {{ icon }}"></i>
+                <span>{{ label }}</span>
+              </a>
+              {% endfor %}
+            </nav>
+            <div class="app-topnav-dropdown dropdown">
+              <button type="button" class="app-topnav-link dropdown-toggle{% if request.path.startswith('/sap') %} active{% endif %}" id="sapIntegrationDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
+                <i class="bi bi-cloud-arrow-up"></i>
+                <span>SAP Integration</span>
+              </button>
+              <ul class="dropdown-menu app-topnav-dropdown-menu" aria-labelledby="sapIntegrationDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('sap.status') }}"><i class="bi bi-activity me-2"></i>Connection status</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('sap.index', _anchor='sap-sync') }}"><i class="bi bi-arrow-repeat me-2"></i>Sync customers</a></li>
+              </ul>
+            </div>
+            {% if session.role in ('manager', 'admin') %}
+            <a class="app-topnav-link app-topnav-link--users{% if request.path.startswith('/users') %} active{% endif %}" href="{{ url_for('auth.users') }}">
+              <i class="bi bi-people"></i>
+              <span>Users</span>
+            </a>
+            {% endif %}
+            <div class="app-topnav-user">
               {% if session.role in ('manager', 'admin') %}
                 <span class="badge badge-role bg-danger">{{ session.role }}</span>
               {% elif session.role == 'planner' %}
@@ -62,32 +69,29 @@
               {% else %}
                 <span class="badge badge-role bg-secondary">{{ session.role }}</span>
               {% endif %}
+              <a class="app-topnav-signout" href="{{ url_for('auth.logout') }}" title="Sign out">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="d-none d-sm-inline">Sign out</span>
+              </a>
             </div>
           </div>
-          <a class="nav-link px-0 text-danger-emphasis" href="{{ url_for('auth.logout') }}" style="color:#fca5a5!important;">
-            <i class="bi bi-box-arrow-right me-1"></i> Sign out
-          </a>
         </div>
-      </aside>
+      </header>
 
-      <div class="app-main">
-        <header class="app-topbar">
-          <div class="d-flex align-items-center gap-2">
-            <button type="button" class="sidebar-toggle btn btn-sm" id="sidebarToggle" aria-label="Toggle menu">
-              <i class="bi bi-list fs-5"></i>
+      <div class="app-pagebar">
+        <div class="d-flex align-items-center gap-2">
+          <div id="page-back-container" style="display:none;">
+            <button type="button" id="page-back-btn" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Back
             </button>
-            <div id="page-back-container" style="display:none;">
-              <button type="button" id="page-back-btn" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back
-              </button>
-            </div>
           </div>
-          <div class="text-muted small d-none d-md-block">
-            {% block topbar_hint %}{% endblock %}
-          </div>
-        </header>
+        </div>
+        <div class="text-muted small d-none d-md-block">
+          {% block topbar_hint %}{% endblock %}
+        </div>
+      </div>
 
-        <main class="app-content">
+      <main class="app-content">
     {% endif %}
 
     {% include 'partials/flash_messages.html' %}
@@ -95,7 +99,6 @@
 
     {% if session.user_id %}
         </main>
-      </div>
     </div>
     {% endif %}
 
@@ -144,13 +147,13 @@
         .catch(() => alert('Save failed'));
     }
 
-    function toggleSidebar(show) {
-      const sidebar = document.getElementById('appSidebar');
-      const backdrop = document.getElementById('sidebarBackdrop');
-      if (!sidebar) return;
-      const open = typeof show === 'boolean' ? show : !sidebar.classList.contains('show');
-      sidebar.classList.toggle('show', open);
-      if (backdrop) backdrop.classList.toggle('show', open);
+    function toggleTopnavMenu(show) {
+      const menu = document.getElementById('topnavMenu');
+      const toggle = document.getElementById('topnavToggle');
+      if (!menu) return;
+      const open = typeof show === 'boolean' ? show : !menu.classList.contains('show');
+      menu.classList.toggle('show', open);
+      if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -160,8 +163,18 @@
         });
       }, 4000);
 
-      const toggle = document.getElementById('sidebarToggle');
-      if (toggle) toggle.addEventListener('click', () => toggleSidebar());
+      const topToggle = document.getElementById('topnavToggle');
+      if (topToggle) topToggle.addEventListener('click', () => toggleTopnavMenu());
+      document.getElementById('topnavMenu')?.querySelectorAll('a.app-topnav-link').forEach(function (link) {
+        link.addEventListener('click', function () {
+          if (window.matchMedia('(max-width: 991.98px)').matches) toggleTopnavMenu(false);
+        });
+      });
+      document.getElementById('topnavMenu')?.querySelectorAll('.app-topnav-dropdown-menu .dropdown-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+          if (window.matchMedia('(max-width: 991.98px)').matches) toggleTopnavMenu(false);
+        });
+      });
 
       const backContainer = document.getElementById('page-back-container');
       const backBtn = document.getElementById('page-back-btn');

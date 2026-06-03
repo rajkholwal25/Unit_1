@@ -7,16 +7,18 @@ patterns_bp = Blueprint('patterns', __name__)
 
 @patterns_bp.route('/', methods=['GET','POST'])
 def list_patterns():
+    if request.method == 'GET':
+        return redirect(url_for('fg_components.index', tab='patterns'))
     if request.method == 'POST':
         name = request.form.get('pattern_name','').strip()
         if not name:
             flash('Pattern name required','danger')
-            return redirect(url_for('patterns.list_patterns'))
+            return redirect(url_for('fg_components.index', tab='patterns'))
         # case-insensitive duplicate prevention
         existing = Pattern.query.filter(db.func.lower(Pattern.pattern_name)==name.lower()).first()
         if existing:
             flash('Pattern already exists','warning')
-            return redirect(url_for('patterns.list_patterns'))
+            return redirect(url_for('fg_components.index', tab='patterns'))
         # generate code (start at 1001)
         last = Pattern.query.order_by(Pattern.id.desc()).first()
         next_code = int(last.pattern_code) + 1 if last and last.pattern_code.isdigit() else 1001
@@ -24,9 +26,8 @@ def list_patterns():
         db.session.add(p)
         db.session.commit()
         flash('Pattern created','success')
-        return redirect(url_for('patterns.list_patterns'))
-    patterns = Pattern.query.order_by(Pattern.created_at.desc()).all()
-    return render_template('patterns/list.html', patterns=patterns)
+        return redirect(url_for('fg_components.index', tab='patterns'))
+    return redirect(url_for('fg_components.index', tab='patterns'))
 
 
 @patterns_bp.route('/ajax_create', methods=['POST'])

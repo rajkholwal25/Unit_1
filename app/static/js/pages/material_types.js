@@ -38,7 +38,7 @@
     try {
       const res = await fetch('/material-types/ajax_update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: typeof csrfHeaders === 'function' ? csrfHeaders() : { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, code, name, is_active: active }),
       });
       const body = await parseJson(res);
@@ -65,7 +65,7 @@
     try {
       const res = await fetch('/material-types/ajax_delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: typeof csrfHeaders === 'function' ? csrfHeaders() : { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: Number(id) }),
       });
       const body = await parseJson(res);
@@ -81,7 +81,7 @@
   }
 
   async function deleteByIdentifier() {
-    const idf = document.getElementById('delete_identifier').value.trim();
+    const idf = (document.getElementById('material_delete_identifier') || document.getElementById('delete_identifier'))?.value.trim();
     if (!idf) {
       alert('Enter full code or name to delete');
       return;
@@ -90,7 +90,7 @@
     try {
       const res = await fetch('/material-types/ajax_delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: typeof csrfHeaders === 'function' ? csrfHeaders() : { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: idf }),
       });
       const body = await parseJson(res);
@@ -120,6 +120,7 @@
     }
   });
 
-  document.getElementById('btn-delete-by-identifier')?.addEventListener('click', deleteByIdentifier);
+  (document.getElementById('btn-material-delete-by-identifier') || document.getElementById('btn-delete-by-identifier'))
+    ?.addEventListener('click', deleteByIdentifier);
   document.getElementById('btn-save-material')?.addEventListener('click', submitEdit);
 })();

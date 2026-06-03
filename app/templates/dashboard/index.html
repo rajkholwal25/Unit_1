@@ -6,35 +6,25 @@
 </div>
 
 <div class="module-grid">
-  <a href="/patterns/" class="module-card">
-    <div class="module-icon"><i class="bi bi-diagram-3"></i></div>
-    <h3>Patterns</h3>
-    <p>Manage pattern codes and names for item generation.</p>
-  </a>
-  <a href="/material-types/" class="module-card">
-    <div class="module-icon"><i class="bi bi-layers"></i></div>
-    <h3>Materials</h3>
-    <p>Configure material types used in BOM and codes.</p>
-  </a>
-  <a href="/coating-types/" class="module-card">
-    <div class="module-icon"><i class="bi bi-droplet"></i></div>
-    <h3>Coatings</h3>
-    <p>Manage coating types used in item code generation.</p>
+  <a href="/fg-components/" class="module-card">
+    <div class="module-icon"><i class="bi bi-puzzle"></i></div>
+    <h3>FG Components</h3>
+    <p>Materials, patterns, and coatings for FG item codes (used in FG Generator).</p>
   </a>
   <a href="/item-generator/" class="module-card">
     <div class="module-icon"><i class="bi bi-magic"></i></div>
-    <h3>Item Generator</h3>
-    <p>Create new FG codes (material, thickness, pattern, coating) and push to SAP — do this before Sales Order and Job Card.</p>
+    <h3>FG Generator</h3>
+    <p>Create FG item codes only (material, thickness, pattern, coating). Embossing, metalisation, and slitting codes are created when you save a job and BOM.</p>
+  </a>
+  <a href="{{ url_for('sap.index') }}" class="module-card">
+    <div class="module-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+    <h3>SAP Integration</h3>
+    <p>Connection status, sync customers/items mirror, and live PO/SO data from SAP B1.</p>
   </a>
   <a href="/manufacturing/" class="module-card">
     <div class="module-icon"><i class="bi bi-briefcase"></i></div>
     <h3>Manufacturing</h3>
-    <p>Jobs, production orders, staging & release (Unit 2 flow).</p>
-  </a>
-  <a href="/jobs/" class="module-card">
-    <div class="module-icon"><i class="bi bi-list-task"></i></div>
-    <h3>All Jobs</h3>
-    <p>List and manage manufacturing jobs.</p>
+    <p>Manufacturing jobs — filter by customer, status, and priority.</p>
   </a>
   <a href="/sap-logs/" class="module-card">
     <div class="module-icon"><i class="bi bi-cloud-upload"></i></div>

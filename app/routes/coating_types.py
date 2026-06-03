@@ -9,24 +9,25 @@ coating_bp = Blueprint('coating_types', __name__)
 
 @coating_bp.route('/', methods=['GET', 'POST'])
 def list_coatings():
+    if request.method == 'GET':
+        return redirect(url_for('fg_components.index', tab='coatings'))
     if request.method == 'POST':
         code = request.form.get('code', '').strip().upper()
         name = request.form.get('name', '').strip()
         if not code:
             flash('Code required', 'danger')
-            return redirect(url_for('coating_types.list_coatings'))
+            return redirect(url_for('fg_components.index', tab='coatings'))
         if not name:
             name = code
         if CoatingType.query.filter_by(code=code).first():
             flash('Coating type already exists', 'warning')
-            return redirect(url_for('coating_types.list_coatings'))
+            return redirect(url_for('fg_components.index', tab='coatings'))
         db.session.add(CoatingType(code=code, name=name))
         db.session.commit()
         flash('Coating type added', 'success')
-        return redirect(url_for('coating_types.list_coatings'))
+        return redirect(url_for('fg_components.index', tab='coatings'))
 
-    coatings = CoatingType.query.order_by(CoatingType.code).all()
-    return render_template('coating_types/list.html', coatings=coatings)
+    return redirect(url_for('fg_components.index', tab='coatings'))
 
 
 @coating_bp.route('/ajax_update', methods=['POST'])

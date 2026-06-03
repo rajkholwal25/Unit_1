@@ -27,7 +27,7 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if not current_user.is_admin:
             flash('Access denied. Admin privileges required.', 'danger')
-            return redirect(url_for('mfg_dashboard.index'))
+            return redirect(url_for('dashboard.index'))
         return f(*args, **kwargs)
     return decorated
 

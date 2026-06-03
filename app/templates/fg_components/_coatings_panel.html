@@ -1,0 +1,93 @@
+<div class="panel">
+  <div class="panel-header">Add coating</div>
+  <div class="panel-body">
+    <form method="post" action="{{ url_for('fg_components.index', tab='coatings') }}" class="toolbar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="_tab" value="coatings">
+      <div>
+        <label class="form-label">Code</label>
+        <input name="code" class="form-control" placeholder="e.g. TR">
+      </div>
+      <div class="flex-grow-1">
+        <label class="form-label">Name</label>
+        <input name="name" class="form-control" placeholder="Display name">
+      </div>
+      <div>
+        <label class="form-label d-block invisible">Add</label>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add</button>
+      </div>
+    </form>
+    <div class="toolbar mt-2 pt-2 border-top">
+      <div class="flex-grow-1">
+        <label class="form-label">Delete by code or name</label>
+        <input id="coating_delete_identifier" class="form-control" placeholder="Full code or name">
+      </div>
+      <div>
+        <label class="form-label d-block invisible">Del</label>
+        <button type="button" id="btn-coating-delete-by-identifier" class="btn btn-outline-danger">
+          <i class="bi bi-trash me-1"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table id="coatings-table" class="table table-modern table-hover mb-0">
+        <thead><tr><th>Code</th><th>Name</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          {% for c in coatings %}
+          <tr data-cid="{{ c.id }}">
+            <td class="col-code fw-medium">{{ c.code }}</td>
+            <td class="col-name">{{ c.name }}</td>
+            <td class="col-active">
+              {% if c.is_active %}
+                <span class="status-pill active"><i class="bi bi-check-circle-fill"></i> Active</span>
+              {% else %}
+                <span class="status-pill inactive">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-end col-actions">
+              <button type="button" class="btn btn-sm btn-outline-secondary me-1 btn-edit-coating">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger btn-delete-coating">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No coating types defined yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editCoatingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit coating</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input id="edit_coating_id" type="hidden">
+        <div class="mb-3"><label class="form-label">Code</label><input id="edit_coating_code" class="form-control"></div>
+        <div class="mb-3"><label class="form-label">Name</label><input id="edit_coating_name" class="form-control"></div>
+        <div class="form-check">
+          <input id="edit_coating_active" class="form-check-input" type="checkbox">
+          <label class="form-check-label">Active</label>
+        </div>
+        <div id="edit_coating_error" class="text-danger small mt-2" style="display:none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="btn-save-coating" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
