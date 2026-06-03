@@ -1456,3 +1456,228 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
 2026-06-03 14:00:46,383 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
 2026-06-03 14:01:12,968 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
 2026-06-03 14:01:12,969 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 14:07:48,368 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 2, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'PET-12-1009-TR-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '3808', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '3885', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Metalisation', 'process_code': 'MET', 'cards': [{'card_idx': 0, 'item_name': 'PET-12-1009-TR-MET', 'wareh [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1934]
+2026-06-03 14:07:51,895 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-13 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1467]
+2026-06-03 14:07:52,211 INFO: [SAP-PUSH] Step seq=10 item_no=PET-12-1009-TR-EMB header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 3885.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1490]
+2026-06-03 14:07:52 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-EMB qty=3808.0 wh=FBD-EMB
+2026-06-03 14:07:52 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-03 14:07:52 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-13 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-03 14:07:55 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141407 DocNum=693
+2026-06-03 14:07:55,412 INFO: [SAP-PUSH] Step seq=20 item_no=PET-12-1009-TR-MET header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-1009-TR-EMB', 'PlannedQuantity': 3808.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-1009-TR-EMB'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1490]
+2026-06-03 14:07:55 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-MET qty=3734.0 wh=FBD-MTL
+2026-06-03 14:07:55 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-03 14:07:55 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-13 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-03 14:07:55 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141408 DocNum=694
+2026-06-03 14:07:55,721 INFO: [SAP-PUSH] Step seq=30 item_no=PET-12-1009-TR-SLT header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-1009-TR-MET', 'PlannedQuantity': 3734.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-1009-TR-MET'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1490]
+2026-06-03 14:07:55 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-SLT qty=3660.0 wh=FBD-SLT
+2026-06-03 14:07:55 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-03 14:07:55 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-13 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-03 14:07:55 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141409 DocNum=695
+2026-06-03 14:07:56 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 14:07:56 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 14:07:56 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 14:07:56 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 14:07:56 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 14:07:56 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 14:07:56 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 14:11:28 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:11:28 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:11:28 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:11:28 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:11:28 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:11:29 [ERROR] jobcard.sap: SAP request failed: GET /Items('PET-12-1009-TR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-03 14:17:27 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:17:27 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:17:27 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:17:27 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:17:27 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-03 14:17:27 [ERROR] jobcard.sap: SAP request failed: GET /Items('PET-12-1009-TR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
