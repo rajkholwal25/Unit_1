@@ -31,14 +31,28 @@
           </button>
           <div class="app-topnav-menu" id="topnavMenu">
             <nav class="app-topnav-links" aria-label="Main">
-              {% set nav_items = [
+              {% set nav_items_before = [
                 ('/', 'Dashboard', 'bi-grid-1x2'),
                 ('/manufacturing/', 'Manufacturing', 'bi-briefcase'),
+              ] %}
+              {% set nav_items_after = [
                 ('/fg-components/', 'FG Components', 'bi-puzzle'),
                 ('/item-generator/', 'FG Generator', 'bi-magic'),
                 ('/sap-logs/', 'SAP Logs', 'bi-journal-text')
               ] %}
-              {% for href, label, icon in nav_items %}
+              {% for href, label, icon in nav_items_before %}
+              <a class="app-topnav-link{% if request.path == href or (href != '/' and request.path.startswith(href)) %} active{% endif %}" href="{{ href }}">
+                <i class="bi {{ icon }}"></i>
+                <span>{{ label }}</span>
+              </a>
+              {% endfor %}
+              {% if current_user.is_admin or current_user.can_edit_job_card() %}
+              <a class="app-topnav-link app-topnav-link--new-job{% if request.path.startswith('/jobs/new') %} active{% endif %}" href="{{ url_for('jobs.new_job') }}">
+                <i class="bi bi-plus-lg"></i>
+                <span>New Job</span>
+              </a>
+              {% endif %}
+              {% for href, label, icon in nav_items_after %}
               <a class="app-topnav-link{% if request.path == href or (href != '/' and request.path.startswith(href)) %} active{% endif %}" href="{{ href }}">
                 <i class="bi {{ icon }}"></i>
                 <span>{{ label }}</span>
@@ -55,15 +69,15 @@
                 <li><a class="dropdown-item" href="{{ url_for('sap.index', _anchor='sap-sync') }}"><i class="bi bi-arrow-repeat me-2"></i>Sync customers</a></li>
               </ul>
             </div>
-            {% if session.role in ('manager', 'admin') %}
+            {% if current_user.is_admin %}
             <a class="app-topnav-link app-topnav-link--users{% if request.path.startswith('/users') %} active{% endif %}" href="{{ url_for('auth.users') }}">
               <i class="bi bi-people"></i>
               <span>Users</span>
             </a>
             {% endif %}
             <div class="app-topnav-user">
-              {% if session.role in ('manager', 'admin') %}
-                <span class="badge badge-role bg-danger">{{ session.role }}</span>
+              {% if current_user.is_admin %}
+                <span class="badge badge-role bg-danger" title="Full admin access">{% if session.role == 'manager' %}Manager{% else %}{{ session.role|title }}{% endif %}</span>
               {% elif session.role == 'planner' %}
                 <span class="badge badge-role bg-warning text-dark">{{ session.role }}</span>
               {% else %}

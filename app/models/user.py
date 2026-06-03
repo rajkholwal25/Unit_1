@@ -5,10 +5,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..extensions import db
 
+# Unit 1: ``manager`` has the same app permissions as ``admin`` (see ``User.is_admin``).
 USER_ROLES = ('admin', 'manager', 'planner', 'operator', 'quality', 'viewer')
 USER_ROLE_LABELS = {
     'admin': 'Admin',
-    'manager': 'Manager',
+    'manager': 'Manager (Admin)',
     'planner': 'Planner',
     'operator': 'Operator',
     'quality': 'Quality',
@@ -48,6 +49,7 @@ class User(UserMixin, db.Model):
 
     @property
     def is_admin(self):
+        """Unit 1: manager role is full admin (SAP sync, users, jobs, delete, etc.)."""
         return self.role in ('admin', 'manager')
 
     def is_manager(self):

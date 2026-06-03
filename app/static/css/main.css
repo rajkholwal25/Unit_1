@@ -233,6 +233,10 @@ body {
   flex-shrink: 0;
 }
 
+.app-topnav-link--new-job {
+  flex-shrink: 0;
+}
+
 .app-pagebar {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -316,7 +320,8 @@ body {
     display: none !important;
   }
 
-  .app-topnav-link--users {
+  .app-topnav-link--users,
+  .app-topnav-link--new-job {
     width: 100%;
     padding: 0.55rem 0.75rem;
   }

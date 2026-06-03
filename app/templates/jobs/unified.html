@@ -6,10 +6,10 @@
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h2 class="mb-0 fw-semibold"><i class="bi bi-briefcase me-2"></i>{{ page_title|default('Jobs') }}</h2>
-  <div class="d-flex flex-wrap gap-2">
-    {% if current_user.has_role('admin', 'planner') %}
-    <a href="{{ url_for('jobs.new_job') }}" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-circle me-1"></i>New job
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    {% if current_user.is_admin or current_user.can_edit_job_card() %}
+    <a href="{{ url_for('jobs.new_job') }}" class="btn btn-primary{% if list_endpoint != 'mfg_dashboard.index' %} btn-sm{% endif %}">
+      <i class="bi bi-plus-lg me-1"></i>New Job
     </a>
     {% endif %}
   </div>

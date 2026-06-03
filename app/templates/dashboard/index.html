@@ -14,7 +14,7 @@
   <a href="/item-generator/" class="module-card">
     <div class="module-icon"><i class="bi bi-magic"></i></div>
     <h3>FG Generator</h3>
-    <p>Create FG item codes only (material, thickness, pattern, coating). Embossing, metalisation, and slitting codes are created when you save a job and BOM.</p>
+    <p>Create FG item codes only (material, thickness, pattern, coating). Embossing, Metalisation, and Slitting codes are created when you save a job and BOM.</p>
   </a>
   <a href="{{ url_for('sap.index') }}" class="module-card">
     <div class="module-icon"><i class="bi bi-cloud-arrow-up"></i></div>
@@ -31,7 +31,7 @@
     <h3>SAP Logs</h3>
     <p>Review SAP push history.</p>
   </a>
-  {% if session.role in ('manager', 'admin') %}
+  {% if current_user.is_admin %}
   <a href="{{ url_for('auth.users') }}" class="module-card">
     <div class="module-icon"><i class="bi bi-people"></i></div>
     <h3>Users</h3>

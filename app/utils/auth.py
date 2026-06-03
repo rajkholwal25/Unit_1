@@ -4,14 +4,16 @@ from flask_login import current_user
 
 
 def _role_allowed(user_role: str, allowed: tuple[str, ...]) -> bool:
-    """Unit 1 ``manager`` maps to full manufacturing access (admin + planner + operator)."""
+    """Unit 1: ``manager`` is treated as admin everywhere this helper is used."""
     if not user_role:
         return False
     allowed_set = set(allowed)
     if user_role == 'manager':
-        return bool(allowed_set & {'admin', 'planner', 'operator', 'quality', 'manager'})
+        if 'admin' in allowed_set or 'manager' in allowed_set:
+            return True
+        return bool(allowed_set & {'planner', 'operator', 'quality'})
     if user_role == 'admin':
-        return bool(allowed_set & {'admin', 'planner', 'operator', 'quality'})
+        return bool(allowed_set & {'admin', 'planner', 'operator', 'quality', 'manager'})
     return user_role in allowed_set
 
 
