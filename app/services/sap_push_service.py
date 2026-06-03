@@ -1,5 +1,6 @@
 from ..utils.thickness import parse_thickness, thickness_display
 from .sap_client import SapServiceLayerClient
+from .unit1_item_naming import resolve_fg_display_name, unit1_process_item_description
 from .warehouse_mapping import WarehouseMappingService
 
 UOM_CODE_KGS = 'KGS'
@@ -146,6 +147,17 @@ def sap_uom_preview_meta(config, chapter_id=None):
     }
 
 
+def _enrich_process_item_names(payload: dict) -> None:
+    """Ensure component ItemNames use pattern name + process label (ItemCode unchanged)."""
+    names = dict(payload.get('item_names') or {})
+    for pi in payload.get('process_items') or []:
+        code = (pi or '').strip()
+        if code and code not in names:
+            names[code] = unit1_process_item_description(code)
+    if names:
+        payload['item_names'] = names
+
+
 class SapPushService:
     """Push generated item codes to SAP B1 Item Master (BOM is created manually in SAP)."""
 
@@ -157,7 +169,7 @@ class SapPushService:
         coating = generate_payload.get('coating', '')
         fg_code = generate_payload.get('fg_code', '')
         th_label = thickness_display(thickness) if thickness is not None else ''
-        fg_name = generate_payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
+        fg_name = resolve_fg_display_name(generate_payload) or generate_payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
 
         fg_group = int(config.get('SAP_FG_ITEMS_GROUP', 100))
         comp_group = int(config.get('SAP_COMPONENT_ITEMS_GROUP', 107))
@@ -220,7 +232,7 @@ class SapPushService:
                 'endpoint': 'POST /b1s/v1/Items',
                 'payload': build(
                     pi,
-                    f'{pi} {proc}'.strip(),
+                    unit1_process_item_description(pi),
                     comp_group,
                     False,
                     WarehouseMappingService.for_process(proc),
@@ -306,15 +318,20 @@ class SapPushService:
     def push_item(self, item_code, item_name, *, is_fg=False, warehouse=None):
         items_group_code = self._items_group_for_role(is_fg)
         sync = self._sync_fields(items_group_code)
+        display_name = (item_name or '').strip()[:100]
         if self._item_exists(item_code):
-            self.client.patch(self.client.item_path(item_code), sync)
+            patch_body = dict(sync)
+            if display_name and display_name.casefold() != (item_code or '').strip().casefold():
+                patch_body['ItemName'] = display_name
+            self.client.patch(self.client.item_path(item_code), patch_body)
             label = sap_material_type_label(sync.get('MaterialType', ''))
             hsn = self.config.get('SAP_HSN_CODE', '3921.90.94')
+            name_note = ' + ItemName synced' if 'ItemName' in patch_body else ''
             return {
                 'status': 'updated',
                 'reason': (
                     f'group {items_group_code} + Material Type ({label}) + '
-                    f'HSN {hsn} + Tax {sync.get("GSTTaxCategory")} synced'
+                    f'HSN {hsn} + Tax {sync.get("GSTTaxCategory")} synced{name_note}'
                 ),
                 'ItemCode': item_code,
                 'ItemsGroupCode': items_group_code,
@@ -363,11 +380,12 @@ class SapPushService:
             raise ValueError('fg_code is required')
 
         process_items = list(payload.get('process_items') or [])
+        _enrich_process_item_names(payload)
         material = payload.get('material_type', '')
         thickness = parse_thickness(payload.get('thickness'))
         coating = payload.get('coating', '')
         th_label = thickness_display(thickness) if thickness is not None else ''
-        fg_name = payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
+        fg_name = resolve_fg_display_name(payload) or payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
 
         results = []
 
@@ -378,7 +396,7 @@ class SapPushService:
 
         for pi in process_items:
             proc = pi.split('-')[-1] if '-' in pi else ''
-            comp_name = payload.get('item_names', {}).get(pi) or f'{pi} {proc}'.strip()
+            comp_name = payload.get('item_names', {}).get(pi) or unit1_process_item_description(pi)
             comp_result = self.push_item(
                 pi, comp_name, is_fg=resolve_is_fg(pi, fg_code, process_items),
             )
@@ -400,13 +418,14 @@ class SapPushService:
         }
 
     def push_item_if_missing(self, item_code, item_name, *, is_fg=False, warehouse=None):
-        """Create item only when not in SAP; skip when already exists."""
+        """Create when missing; when present, sync group/UoM and refresh ItemName."""
         if self._item_exists(item_code):
-            return {
-                'status': 'skipped',
-                'item': item_code,
-                'reason': 'already exists in SAP',
-            }
+            result = self.push_item(item_code, item_name, is_fg=is_fg, warehouse=warehouse)
+            result['item'] = item_code
+            if result.get('status') == 'updated':
+                result['status'] = 'skipped'
+                result['reason'] = 'already exists in SAP (ItemName refreshed if changed)'
+            return result
         result = self.push_item(item_code, item_name, is_fg=is_fg, warehouse=warehouse)
         result['item'] = item_code
         return result
@@ -490,11 +509,12 @@ class SapPushService:
             raise ValueError('fg_code is required')
 
         process_items = list(payload.get('process_items') or [])
+        _enrich_process_item_names(payload)
         material = payload.get('material_type', '')
         thickness = parse_thickness(payload.get('thickness'))
         coating = payload.get('coating', '')
         th_label = thickness_display(thickness) if thickness is not None else ''
-        fg_name = payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
+        fg_name = resolve_fg_display_name(payload) or payload.get('fg_name') or f'{material} {th_label} {coating} FG'.strip()
 
         item_results = []
         item_results.append({
@@ -505,7 +525,7 @@ class SapPushService:
         })
         for pi in process_items:
             proc = pi.split('-')[-1] if '-' in pi else ''
-            comp_name = payload.get('item_names', {}).get(pi) or f'{pi} {proc}'.strip()
+            comp_name = payload.get('item_names', {}).get(pi) or unit1_process_item_description(pi)
             item_results.append({
                 'type': 'component',
                 **self.push_item_if_missing(pi, comp_name, is_fg=False),

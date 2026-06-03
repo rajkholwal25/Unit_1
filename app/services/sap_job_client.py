@@ -385,16 +385,38 @@ class SAPClient:
         raw = os.getenv(env_key, default)
         return [x.strip() for x in str(raw).split(',') if x.strip()]
 
+    @staticmethod
+    def _line_field_value(ln: dict, field_name: str):
+        """Read a line property; Service Layer UDF keys may differ only by case (e.g. ``U_width``)."""
+        if not ln or not field_name:
+            return None
+        if field_name in ln:
+            return ln[field_name]
+        want = str(field_name).lower()
+        for key, val in ln.items():
+            if str(key).lower() == want:
+                return val
+        return None
+
+    @staticmethod
+    def _parse_numeric_udf_value(val) -> Optional[float]:
+        if val in (None, ''):
+            return None
+        text = str(val).strip().replace(',', '')
+        if not text:
+            return None
+        try:
+            return float(text)
+        except (TypeError, ValueError):
+            return None
+
     @classmethod
     def _line_dimension_float(cls, ln: dict, env_key: str, default: str) -> Optional[float]:
         for field in cls._so_udf_field_names(env_key, default):
-            val = ln.get(field)
-            if val in (None, ''):
-                continue
-            try:
-                return float(str(val).strip())
-            except (TypeError, ValueError):
-                continue
+            val = cls._line_field_value(ln, field)
+            parsed = cls._parse_numeric_udf_value(val)
+            if parsed is not None:
+                return parsed
         return None
 
     def patch_sales_order_line_dimensions(
@@ -405,7 +427,7 @@ class SAPClient:
         """PATCH RDR1 UDF width/height on open sales order lines."""
         width_fields = self._so_udf_field_names(
             'SAP_JOB_CARD_HEADER_WIDTH_FIELDS',
-            'U_Wid,U_Width,U_CartonWidth,Width',
+            'U_width,U_Wid,U_Width,U_CartonWidth,Width',
         )
         height_fields = self._so_udf_field_names(
             'SAP_JOB_CARD_HEADER_HEIGHT_FIELDS',
@@ -440,6 +462,41 @@ class SAPClient:
                     pass
             if len(payload) <= 1:
                 continue
+            updates.append(payload)
+
+        if not updates:
+            return {}
+
+        return self.patch(
+            f'/Orders({int(doc_entry)})',
+            {'DocumentLines': updates},
+        )
+
+    def patch_sales_order_line_quantities(
+        self,
+        doc_entry: int,
+        line_updates: List[dict],
+    ) -> dict:
+        """PATCH RDR1 ``Quantity`` on open sales order lines."""
+        updates: list[dict] = []
+        for row in line_updates or []:
+            if not isinstance(row, dict):
+                continue
+            try:
+                line_num_i = int(row.get('LineNum', row.get('line_num')))
+            except (TypeError, ValueError):
+                continue
+            qty = row.get('quantity', row.get('Quantity'))
+            if qty in (None, ''):
+                continue
+            try:
+                qty_f = float(str(qty).strip().replace(',', ''))
+            except (TypeError, ValueError):
+                continue
+            payload: dict = {'LineNum': line_num_i, 'Quantity': qty_f}
+            item_code = (row.get('ItemCode') or row.get('item_code') or '').strip()
+            if item_code:
+                payload['ItemCode'] = item_code
             updates.append(payload)
 
         if not updates:
@@ -1252,7 +1309,7 @@ class SAPClient:
             width_mm = self._line_dimension_float(
                 ln,
                 'SAP_JOB_CARD_HEADER_WIDTH_FIELDS',
-                'U_Wid,U_Width,U_CartonWidth,Width',
+                'U_width,U_Wid,U_WID,U_Width,U_WIDTH,U_CartonWidth,Width,CartonWidth',
             )
             height_mm = self._line_dimension_float(
                 ln,
@@ -1266,8 +1323,11 @@ class SAPClient:
                 'supplier_cat_num': str(supplier_cat_num).strip() if supplier_cat_num is not None else '',
                 'quantity': qty,
                 'dispatch_qty': qty,
+                'sap_quantity': qty,
                 'carton_width_mm': width_mm,
                 'carton_height_mm': height_mm,
+                'sap_carton_width_mm': width_mm,
+                'sap_carton_height_mm': height_mm,
             })
         return out
 
@@ -1819,13 +1879,13 @@ class SAPClient:
         try:
             row = self.fetch_item(code)
             existing = str(row.get('ItemName') or '').strip()
-            # Items created earlier with ItemName == ItemCode (e.g. BOM input verify) never get fixed on output.
-            placeholder = (not existing) or (existing.casefold() == code.casefold())
-            if name and name.strip() != code and placeholder:
+            new_name = (name or '').strip()[:100]
+            # ItemCode unchanged; refresh ItemName when we have a proper display name.
+            if new_name and new_name.casefold() != code.casefold() and new_name != existing:
                 k = code.replace("'", "''")
                 try:
-                    self.patch(f"/Items('{k}')", {'ItemName': name[:100]})
-                    _log.info('SAP Item %s: updated placeholder ItemName', code)
+                    self.patch(f"/Items('{k}')", {'ItemName': new_name})
+                    _log.info('SAP Item %s: ItemName updated', code)
                 except SAPClientError as pe:
                     _log.warning('SAP Item %s: could not patch ItemName: %s', code, pe)
             return {'created': False, 'item_code': code}

@@ -714,6 +714,53 @@ def _sync_selected_fg_job_refs_to_sap(
             pass
 
 
+def _sync_selected_so_quantities_to_sap(selected_lines: list[dict]) -> list[str]:
+    """Push edited quantity from job form back to open SO RDR1 lines when changed."""
+    if not selected_lines:
+        return []
+
+    warnings: list[str] = []
+    client = SAPClient()
+    updates_by_doc: dict[int, list[dict]] = defaultdict(list)
+
+    try:
+        for row in selected_lines or []:
+            if not isinstance(row, dict):
+                continue
+            doc_entry = _safe_int(row.get('doc_entry'))
+            line_num = _safe_int(row.get('line_num'))
+            item_code = str(row.get('fg_code') or '').strip()
+            if doc_entry is None or line_num is None or not item_code:
+                continue
+            qty = _safe_float(row.get('quantity'))
+            if qty is None:
+                continue
+            sap_qty = _safe_float(row.get('sap_quantity'))
+            if sap_qty is None:
+                sap_qty = _safe_float(row.get('dispatch_qty'))
+            if sap_qty is not None and abs(qty - sap_qty) <= 0.0001:
+                continue
+            updates_by_doc[doc_entry].append({
+                'LineNum': line_num,
+                'ItemCode': item_code,
+                'quantity': qty,
+            })
+
+        for doc_entry, payloads in updates_by_doc.items():
+            try:
+                client.patch_sales_order_line_quantities(doc_entry, payloads)
+            except SAPClientError as e:
+                msg = f'Order {doc_entry}: could not update quantity ({str(e)[:180]})'
+                current_app.logger.warning('[SAP-SO-SYNC] %s', msg)
+                warnings.append(msg)
+        return warnings
+    finally:
+        try:
+            client.logout()
+        except Exception:
+            pass
+
+
 def _sync_selected_so_dimensions_to_sap(selected_lines: list[dict]) -> list[str]:
     """Push width/height from job form back to open SO RDR1 lines when changed."""
     if not selected_lines:
@@ -812,33 +859,27 @@ def _synthetic_display_name_for_process_item_code(
     detail_line: Optional[JobDetailLine],
     item_code: str,
 ) -> str:
-    """Human-readable name for FG…-ELEM-TAIL process items (prev-step outputs, multi-FG BOM)."""
-    code = (item_code or '').strip()
-    if not code or not code.upper().startswith('FG'):
-        return ''
-    fg_key = extract_fg_num(code)
-    hdr = None
-    for hl in job.header_lines.order_by(JobHeaderLine.line_no).all():
-        if extract_fg_num(hl.sap_fg_item_code or '') == fg_key:
-            hdr = hl
-            break
-    if not hdr:
-        return ''
+    """Human-readable SAP name, e.g. PET-12-Rectangle-TR-EMB Embossing."""
+    from app.services.unit1_item_naming import unit1_process_item_description
     from app.services.unit1_processes import unit1_fg_base_code
 
-    fg_full = (hdr.sap_fg_item_name_snap or hdr.sap_fg_item_code or fg_key).strip()
-    base = unit1_fg_base_code(hdr.sap_fg_item_code or code)
-    tail = code.upper()
-    if tail.startswith(base.upper() + '-'):
-        proc_tail = code[len(base) + 1 :]
-    else:
-        proc_tail = code.split('-')[-1]
-    tail_map = _build_process_tail_label_map()
-    tail_key = proc_tail.upper().replace(' ', '')
-    proc_label = tail_map.get(tail_key) or tail_map.get(tail_key.split('-')[-1])
-    if not proc_label:
-        proc_label = proc_tail.replace('-', ' ').title()
-    return f'{fg_full}-{proc_label}'[:100].strip()
+    code = (item_code or '').strip()
+    if not code:
+        return ''
+    desc = unit1_process_item_description(code)
+    if desc and desc != code:
+        return desc[:100]
+    base = unit1_fg_base_code(code)
+    if code.upper() == base.upper():
+        return ''
+    hdr = None
+    for hl in job.header_lines.order_by(JobHeaderLine.line_no).all():
+        if unit1_fg_base_code(hl.sap_fg_item_code or '') == base:
+            hdr = hl
+            break
+    if hdr:
+        return unit1_process_item_description(code)[:100]
+    return ''
 
 
 def _process_item_code(fg_code: str, element_name: str, process_code: str) -> str:
@@ -2079,10 +2120,16 @@ def new_job():
                             ).strip()
                             step.production_order_remarks = po_rm[:254] if po_rm else None
 
-                            # For Item Name: FG Name(full) - element name(3 char) - process name
                             fg_full_name = (card_hdr.sap_fg_item_name_snap or card_hdr.sap_fg_item_code or 'FG').strip()
-                            proc_full_name = (process_name or process_code or 'PROC').strip()
-                            output_item_name = (fg_full_name[:100] if is_fg_step else f"{fg_full_name}-{proc_full_name}"[:100])
+                            if is_fg_step:
+                                output_item_name = fg_full_name[:100]
+                            elif output_item_code:
+                                from app.services.unit1_item_naming import unit1_process_item_description
+
+                                output_item_name = unit1_process_item_description(output_item_code)[:100]
+                            else:
+                                proc_full_name = (process_name or process_code or 'PROC').strip()
+                                output_item_name = f'{fg_full_name}-{proc_full_name}'[:100]
 
                             if sap_client and (not is_fg_step) and output_item_code:
                                 sap_client.ensure_item_exists(
@@ -2210,6 +2257,18 @@ def new_job():
                         e,
                     )
                     fg_sync_warnings = [f'FG-to-job sync failed: {str(e)[:180]}']
+                try:
+                    qty_warnings = _sync_selected_so_quantities_to_sap(selected_lines)
+                    fg_sync_warnings = (fg_sync_warnings or []) + (qty_warnings or [])
+                except Exception as e:
+                    current_app.logger.exception(
+                        '[SAP-SO-SYNC] SO quantity sync failed for job %s: %s',
+                        job.job_no,
+                        e,
+                    )
+                    fg_sync_warnings = (fg_sync_warnings or []) + [
+                        f'SO quantity sync failed: {str(e)[:180]}'
+                    ]
                 try:
                     dim_warnings = _sync_selected_so_dimensions_to_sap(selected_lines)
                     fg_sync_warnings = (fg_sync_warnings or []) + (dim_warnings or [])
@@ -2936,9 +2995,9 @@ def _ensure_bom_routing_items_in_sap(job: JobMaster, bom: Bom, sap: SAPClient) -
         out_code = (step.output_item_code or '').strip()
         if not out_code:
             continue
-        pm = ProcessMaster.query.filter_by(process_code=pcode).first()
-        proc_name = ((pm.name if pm else None) or pcode or 'PROC').strip()
-        out_name = f'{fg_name[:100]}-{proc_name}'[:100]
+        from app.services.unit1_item_naming import unit1_process_item_description
+
+        out_name = unit1_process_item_description(out_code)[:100] or out_code
         try:
             sap.ensure_item_exists(
                 out_code[:50],

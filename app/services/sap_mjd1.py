@@ -902,7 +902,10 @@ def _normalize_job_card_selected_line(row: Dict[str, Any], client: SAPClient) ->
     qty_fields = _csv_list('SAP_JOB_CARD_HEADER_QTY_FIELDS', 'U_DispatchQty,Quantity,PlannedQty')
     ups_fields = _csv_list('SAP_JOB_CARD_HEADER_UPS_FIELDS', 'U_UPS,UPS')
     len_fields = _csv_list('SAP_JOB_CARD_HEADER_LENGTH_FIELDS', 'U_Length,U_CartonLength,Length')
-    width_fields = _csv_list('SAP_JOB_CARD_HEADER_WIDTH_FIELDS', 'U_Width,U_CartonWidth,Width')
+    width_fields = _csv_list(
+        'SAP_JOB_CARD_HEADER_WIDTH_FIELDS',
+        'U_width,U_Wid,U_WID,U_Width,U_WIDTH,U_CartonWidth,Width,CartonWidth',
+    )
     height_fields = _csv_list('SAP_JOB_CARD_HEADER_HEIGHT_FIELDS', 'U_Height,U_CartonHeight,Height')
 
     so_no = _first_text(row, so_fields)

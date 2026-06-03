@@ -177,7 +177,7 @@ class Config:
     ).strip()
     SAP_JOB_CARD_HEADER_WIDTH_FIELDS = os.getenv(
         'SAP_JOB_CARD_HEADER_WIDTH_FIELDS',
-        'U_Wid,U_Width,U_CartonWidth,Width',
+        'U_width,U_Wid,U_Width,U_CartonWidth,Width',
     ).strip()
     SAP_JOB_CARD_HEADER_HEIGHT_FIELDS = os.getenv(
         'SAP_JOB_CARD_HEADER_HEIGHT_FIELDS',

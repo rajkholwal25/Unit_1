@@ -1711,3 +1711,409 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
 2026-06-03 15:32:55,289 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
 2026-06-03 15:56:42,833 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
 2026-06-03 15:56:42,836 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 16:49:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 16:49:44 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 16:49:44 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 16:49:44 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 16:49:44 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 16:49:44 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 16:49:44 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 17:12:47,803 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:12:47,806 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:12:58,842 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:12:58,847 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:13:02,055 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:13:02,056 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:13:05,295 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:13:05,296 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:13:10,737 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:13:10,739 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:13:16,878 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:13:16,880 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:13:27,391 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:13:27,392 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:15:36,397 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:15:36,398 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:15:41,691 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:15:41,692 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:15:51,806 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:15:51,808 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:16:03,017 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:16:03,019 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:18:15,622 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:18:15,624 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:23:50,131 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:23:50,133 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:24:29,478 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:24:29,479 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:24:57 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:24:58 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:24:59 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:24:59 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:24:59 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:24:59 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:24:59 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 17:27:30,099 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:27:30,100 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:27:31 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:32 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 17:27:44,489 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:27:44,490 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:27:45 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:46 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:46 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:46 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:46 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:46 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:27:47 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 17:28:03,040 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:28:03,041 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:28:11,995 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:28:11,996 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:28:13 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:14 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:14 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:14 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:14 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:14 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:14 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 17:28:40 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:42 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-03 17:28:42 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-03 17:30:43,784 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:30:43,785 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-03 17:30:52,166 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-03 17:30:52,168 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]

@@ -9,6 +9,7 @@ from ..models import (
     SapPushLog,
 )
 from ..services.item_code_generator import ItemCodeGeneratorService
+from ..services.unit1_item_naming import resolve_fg_display_name
 from ..services.sap_push_service import SapPushService
 from ..services.item_master_service import sync_from_generator_save, mark_sap_pushed
 from ..utils.thickness import parse_thickness
@@ -53,19 +54,25 @@ def generate():
         fg_code = ItemCodeGeneratorService.generate_fg_code(
             material, thickness, pattern.pattern_code, coating
         )
+        fg_name = ItemCodeGeneratorService.generate_fg_display_name(
+            material, thickness, pattern.pattern_name, coating
+        )
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
 
     gen_payload = {
         'fg_code': fg_code,
+        'fg_name': fg_name,
         'process_items': [],
         'material_type': material,
         'thickness': thickness,
         'coating': coating,
+        'pattern_id': int(pattern_id),
     }
     sap_preview = SapPushService.preview_item_payloads(gen_payload, current_app.config)
     return jsonify({
         'fg_code': fg_code,
+        'fg_name': fg_name,
         'process_items': [],
         'coating': coating,
         'bom_chain': [],

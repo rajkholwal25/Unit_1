@@ -354,6 +354,10 @@ def push_sap():
         return jsonify({'error': 'No BOM lines'}), 400
 
     payload['raw_material_item_code'] = fg.raw_material_item_code or rm
+    payload.setdefault('material_type', fg.material_type)
+    payload.setdefault('thickness', fg.thickness)
+    payload.setdefault('coating', fg.coating)
+    payload.setdefault('pattern_id', fg.pattern_id)
     if not payload.get('process_items'):
         payload['process_items'] = [
             r.item_code for r in GeneratedProcessItem.query.filter_by(fg_item_id=fg.id).all()

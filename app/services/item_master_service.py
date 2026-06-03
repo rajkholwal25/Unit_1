@@ -6,6 +6,7 @@ from ..extensions import db
 from ..models import ItemMaster
 from ..utils.thickness import parse_thickness, thickness_display
 from .sap_push_service import UOM_CODE_KGS
+from .unit1_item_naming import resolve_fg_display_name, unit1_process_item_description
 from .warehouse_mapping import WarehouseMappingService
 
 
@@ -48,8 +49,7 @@ def sync_from_generator_save(payload, fg_id, config=None):
     uom = _uom_code(config)
     fg_group = int((config or {}).get('SAP_FG_ITEMS_GROUP', 100))
     comp_group = int((config or {}).get('SAP_COMPONENT_ITEMS_GROUP', 107))
-    th_label = thickness_display(thickness) if thickness is not None else ''
-    fg_name = f'{material} {th_label} {coating} FG'.strip()
+    fg_name = resolve_fg_display_name(payload) or f'{material} {thickness_display(thickness) if thickness is not None else ""} {coating} FG'.strip()
     added = []
 
     if not item_exists(fg_code):
@@ -80,7 +80,7 @@ def sync_from_generator_save(payload, fg_id, config=None):
             added.append(pi)
         _upsert_row(
             item_code=pi,
-            item_name=f'{pi} {proc}'.strip()[:128],
+            item_name=unit1_process_item_description(pi)[:128],
             item_type='component',
             parent_fg_code=fg_code,
             process_code=proc,

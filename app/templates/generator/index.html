@@ -49,8 +49,10 @@
 <div id="preview" class="preview-panel" style="display:none;">
   <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
     <div>
-      <div class="text-muted small text-uppercase fw-semibold mb-1">FG item code</div>
+      <div class="text-muted small text-uppercase fw-semibold mb-1">FG item code (ItemCode)</div>
       <div class="fg-code" id="fgcode"></div>
+      <div class="text-muted small text-uppercase fw-semibold mb-1 mt-2">FG name (ItemName)</div>
+      <div class="fg-code text-body" id="fgname" style="font-size:1.1rem;font-weight:600;"></div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <button type="button" class="btn btn-success" onclick="saveLocal()"><i class="bi bi-save me-1"></i> Save locally</button>
@@ -147,6 +149,7 @@ function generate(){
     if (d.error) { showAlert(d.error, 'danger'); return; }
     document.getElementById('preview').style.display='block';
     document.getElementById('fgcode').innerText = d.fg_code;
+    document.getElementById('fgname').innerText = d.fg_name || d.fg_code;
     const sap = d.sap_item_payloads || {};
     const uom = sap.unit_of_measure ? `Unit: ${sap.unit_of_measure} (kilograms). ` : '';
     document.getElementById('sap-preview-note').innerText =
@@ -154,6 +157,7 @@ function generate(){
     document.getElementById('sap-payloads').innerText = JSON.stringify(sap, null, 2);
     window._lastPreview = {
       fg_code: d.fg_code,
+      fg_name: d.fg_name || d.fg_code,
       process_items: [],
       bom_chain: [],
       material_type: document.getElementById('material_type').value,

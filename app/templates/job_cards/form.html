@@ -124,30 +124,24 @@
                                         <th>FG name</th>
                                         <th style="width: 10rem;">FG ItemCode</th>
                                         <th style="width: 9rem;">Qty (KGS)</th>
-                                        <th style="width: 8rem;">Width (mm) <span class="text-danger">*</span></th>
-                                        <th style="width: 8rem;">H (mm)</th>
+                                        <th style="width: 8rem;">Width (mm)</th>
                                         <th style="width: 3rem;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="sapSelectedLinesBody"></tbody>
                             </table>
                         </div>
-                        <div class="text-muted small mt-1">Film orders: enter <strong>width (mm)</strong> per line (length not required).</div>
+                        <div class="text-muted small mt-1">Film orders: <strong>qty</strong> and <strong>width (mm)</strong> load from the SO; you can edit both here — changes sync back to SAP when you create the job.</div>
                         <div class="text-muted small mt-2" id="sapSelectedLinesHint">No lines selected yet.</div>
                     </div>
                 </div>
             </div>
             {% endif %}
 
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label class="form-label" id="job_kind_label">New / repeat</label>
-                    <select class="form-select" name="job_kind" id="job_kind">
-                        <option value="new" {{ 'selected' if not job_card or job_card.job_kind == 'new' }}>New</option>
-                        <option value="repeat" {{ 'selected' if job_card and job_card.job_kind == 'repeat' }}>Repeat</option>
-                    </select>
-                </div>
-            </div>
+            <input type="hidden" name="job_kind" id="job_kind"
+                   value="{{ 'repeat' if job_card and job_card.job_kind == 'repeat' else 'new' }}">
+            <input type="hidden" name="priority" id="priority"
+                   value="{{ job_card.priority if job_card and job_card.priority else 'normal' }}">
 
             <!-- Repeat Jobs Section -->
             <div id="repeat_jobs_section" class="border rounded p-3 mb-3 bg-light d-none">
@@ -180,14 +174,6 @@
                 </div>
             </div>
             <div class="row align-items-end">
-                <div class="col-md-3 col-lg-2 mb-3">
-                    <label class="form-label">Priority</label>
-                    <select class="form-select" name="priority" id="priority">
-                        <option value="normal" {{ 'selected' if job_card and job_card.priority == 'normal' }}>Normal</option>
-                        <option value="low" {{ 'selected' if job_card and job_card.priority == 'low' }}>Low</option>
-                        <option value="urgent" {{ 'selected' if job_card and job_card.priority == 'urgent' }}>Urgent</option>
-                    </select>
-                </div>
                 <div class="col-md-3 col-lg-2 mb-3">
                     <label class="form-label">Delivery date <span class="text-danger">*</span></label>
                     <input type="date" class="form-control" name="delivery_date" id="delivery_date"
@@ -375,10 +361,11 @@
                                 <th scope="col">FG code</th>
                                 <th scope="col">FG name</th>
                                 <th scope="col" class="text-end">Qty</th>
+                                <th scope="col" class="text-end">Width (mm)</th>
                             </tr>
                         </thead>
                         <tbody id="sapSoTableBody">
-                            <tr><td colspan="6" class="text-muted small py-3 text-center">Select a customer first.</td></tr>
+                            <tr><td colspan="7" class="text-muted small py-3 text-center">Select a customer first.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -671,6 +658,22 @@
     return [row.doc_entry || '', row.line_num || '', row.fg_code || ''].join('|');
   }
 
+  function resolveRowWidthMm(row) {
+    if (!row || typeof row !== 'object') return null;
+    var keys = [
+      'carton_width_mm', 'sap_carton_width_mm', 'width_mm', 'width',
+      'Width', 'U_width', 'U_Width', 'U_Wid', 'U_CartonWidth', 'CartonWidth'
+    ];
+    for (var i = 0; i < keys.length; i++) {
+      var v = row[keys[i]];
+      if (v == null || v === '') continue;
+      var n = parseFloat(v);
+      if (!isNaN(n) && n > 0) return n;
+    }
+    return null;
+  }
+  window.resolveRowWidthMm = resolveRowWidthMm;
+
   function normalizeSelectedLineRow(row, headerIdx) {
     if (!row || typeof row !== 'object') return null;
     const fgNameRaw = String(
@@ -691,6 +694,13 @@
       fg_name: fgName || fgCode || 'FG',
       supplier_cat_num: supplierCatNum,
     });
+    var w = resolveRowWidthMm(out);
+    if (w != null) {
+      out.carton_width_mm = w;
+      if (out.sap_carton_width_mm == null || out.sap_carton_width_mm === '') {
+        out.sap_carton_width_mm = w;
+      }
+    }
     if (headerIdx != null) out.__header_idx = headerIdx;
     return out;
   }
@@ -811,7 +821,20 @@
         });
       }
       merged.quantity = anyQty ? totalQ : null;
-      if (winner.carton_width_mm != null) merged.carton_width_mm = winner.carton_width_mm;
+      var mergedW = resolveRowWidthMm(winner);
+      if (mergedW == null) {
+        grp.forEach(function (r) {
+          if (mergedW != null) return;
+          mergedW = resolveRowWidthMm(r);
+        });
+      }
+      if (mergedW != null) {
+        merged.carton_width_mm = mergedW;
+        merged.sap_carton_width_mm = mergedW;
+      } else if (winner.carton_width_mm != null) {
+        merged.carton_width_mm = winner.carton_width_mm;
+        if (winner.sap_carton_width_mm != null) merged.sap_carton_width_mm = winner.sap_carton_width_mm;
+      }
       if (winner.carton_height_mm != null) merged.carton_height_mm = winner.carton_height_mm;
       if (winner.sap_carton_width_mm != null) merged.sap_carton_width_mm = winner.sap_carton_width_mm;
       if (winner.sap_carton_height_mm != null) merged.sap_carton_height_mm = winner.sap_carton_height_mm;
@@ -1053,6 +1076,13 @@
       });
       selectedHint.textContent = selectedLines.length + ' line(s) selected.';
       selectedLines.forEach(function (r, idx) {
+        var lineW = r.carton_width_mm != null && r.carton_width_mm !== '' ? r.carton_width_mm : resolveRowWidthMm(r);
+        if (lineW != null && (r.carton_width_mm == null || r.carton_width_mm === '')) {
+          r.carton_width_mm = lineW;
+        }
+        if (lineW != null && (r.sap_carton_width_mm == null || r.sap_carton_width_mm === '')) {
+          r.sap_carton_width_mm = lineW;
+        }
         const tr = document.createElement('tr');
         tr.innerHTML =
           '<td>' + esc(r.so_no || '') + '</td>' +
@@ -1060,8 +1090,7 @@
           '<td>' + esc(r.fg_name || '') + '</td>' +
           '<td>' + esc(r.supplier_cat_num || '') + '</td>' +
           '<td><input type="number" step="0.01" min="0" class="form-control form-control-sm" data-i="' + idx + '" data-k="quantity" value="' + esc(r.quantity != null ? r.quantity : '') + '"></td>' +
-          '<td><input type="number" step="0.01" min="0" class="form-control form-control-sm" data-i="' + idx + '" data-k="carton_width_mm" value="' + esc(r.carton_width_mm != null ? r.carton_width_mm : '') + '" required></td>' +
-          '<td><input type="number" step="0.01" min="0" class="form-control form-control-sm" data-i="' + idx + '" data-k="carton_height_mm" value="' + esc(r.carton_height_mm != null ? r.carton_height_mm : '') + '"></td>' +
+          '<td><input type="number" step="0.01" min="0" class="form-control form-control-sm" data-i="' + idx + '" data-k="carton_width_mm" value="' + esc(lineW != null ? lineW : '') + '"></td>' +
           '<td><button type="button" class="btn btn-sm btn-outline-danger" data-rm="' + idx + '"><i class="bi bi-trash"></i></button></td>';
         selectedBody.appendChild(tr);
       }   );
@@ -1100,7 +1129,7 @@
     const k = t.getAttribute('data-k');
     if (isNaN(i)) return;
 
-    const sequence = ['quantity', 'carton_width_mm', 'carton_height_mm'];
+    const sequence = ['quantity', 'carton_width_mm'];
     const currentIdx = sequence.indexOf(k);
     
     if (currentIdx >= 0 && currentIdx < sequence.length - 1) {
@@ -1224,6 +1253,7 @@
               fg_name: fg.fg_name || '',
               supplier_cat_num: fg.supplier_cat_num || '',
               quantity: fg.quantity != null ? fg.quantity : fg.dispatch_qty,
+              sap_quantity: fg.quantity != null ? fg.quantity : fg.dispatch_qty,
               line_num: fg.line_num,
               carton_width_mm: w,
               carton_height_mm: h,
@@ -1307,8 +1337,8 @@
       }
     }
     if (!mergedRows.length) {
-      soTbody.innerHTML =
-        '<tr><td colspan="6" class="text-muted small py-3 text-center">No open sales order lines</td></tr>';
+        soTbody.innerHTML =
+        '<tr><td colspan="7" class="text-muted small py-3 text-center">No open sales order lines</td></tr>';
       return;
     }
     const q = (soFilter && soFilter.value || '').trim().toLowerCase();
@@ -1334,10 +1364,11 @@
             ? 'No open sales order lines'
             : 'No matches';
       soTbody.innerHTML =
-        '<tr><td colspan="6" class="text-muted small py-3 text-center">' + esc(emptyMsg) + '</td></tr>';
+        '<tr><td colspan="7" class="text-muted small py-3 text-center">' + esc(emptyMsg) + '</td></tr>';
       return;
     }
     list.forEach(function (r, idx) {
+      var rowW = resolveRowWidthMm(r);
       const tr = document.createElement('tr');
       const k = lineKey(r);
       tr.innerHTML =
@@ -1346,7 +1377,8 @@
         '<td>' + esc(r.so_no || '') + '</td>' +
         '<td>' + esc(r.fg_code || '') + '</td>' +
         '<td>' + esc(r.fg_name || '') + '</td>' +
-        '<td class="text-end">' + esc(r.quantity != null ? r.quantity : '') + '</td>';
+        '<td class="text-end">' + esc(r.quantity != null ? r.quantity : '') + '</td>' +
+        '<td class="text-end">' + esc(rowW != null ? rowW : '') + '</td>';
       soTbody.appendChild(tr);
     });
   }
@@ -1372,10 +1404,10 @@
         soErr.textContent = '';
       }
       if (!customerSelected()) {
-        soTbody.innerHTML = '<tr><td colspan="6" class="text-muted small py-3 text-center">Select a customer first.</td></tr>';
+        soTbody.innerHTML = '<tr><td colspan="7" class="text-muted small py-3 text-center">Select a customer first.</td></tr>';
         return;
       }
-      soTbody.innerHTML = '<tr><td colspan="6" class="text-muted small py-3 text-center">Loading…</td></tr>';
+      soTbody.innerHTML = '<tr><td colspan="7" class="text-muted small py-3 text-center">Loading…</td></tr>';
       pullSoRowsFromApi(false)
         .then(function (res) {
           if (!res.ok) {
@@ -1384,7 +1416,7 @@
               soErr.textContent = msg;
               soErr.classList.remove('d-none');
             }
-            soTbody.innerHTML = '<tr><td colspan="6" class="text-danger small py-3 text-center">' + esc(msg) + '</td></tr>';
+            soTbody.innerHTML = '<tr><td colspan="7" class="text-danger small py-3 text-center">' + esc(msg) + '</td></tr>';
             return;
           }
           soRows = res.rows;
@@ -1395,7 +1427,7 @@
           });
         })
         .catch(function () {
-          soTbody.innerHTML = '<tr><td colspan="6" class="text-danger small py-3 text-center">Request failed</td></tr>';
+          soTbody.innerHTML = '<tr><td colspan="7" class="text-danger small py-3 text-center">Request failed</td></tr>';
         });
     });
   }
@@ -1485,6 +1517,8 @@
             usedStubIdx[stubIdx] = true;
             var sw = row.carton_width_mm != null ? row.carton_width_mm : stub.carton_width_mm;
             var sh = row.carton_height_mm != null ? row.carton_height_mm : stub.carton_height_mm;
+            var linkQty = row.quantity != null ? row.quantity : stub.quantity;
+            var sapQty = row.sap_quantity != null ? row.sap_quantity : (row.quantity != null ? row.quantity : stub.sap_quantity);
             selectedLines[stubIdx] = Object.assign({}, stub, {
               so_no: row.so_no || '',
               doc_entry: row.doc_entry,
@@ -1493,6 +1527,8 @@
               fg_code: row.fg_code || stub.fg_code || '',
               fg_name: row.fg_name || stub.fg_name || '',
               supplier_cat_num: row.supplier_cat_num || stub.supplier_cat_num || '',
+              quantity: linkQty,
+              sap_quantity: sapQty,
               carton_width_mm: sw,
               carton_height_mm: sh,
               sap_carton_width_mm: row.sap_carton_width_mm != null ? row.sap_carton_width_mm : sw,
@@ -1512,6 +1548,7 @@
               supplier_cat_num: row.supplier_cat_num || '',
               ups: null,
               quantity: row.quantity != null ? row.quantity : null,
+              sap_quantity: row.quantity != null ? row.quantity : null,
               carton_length_mm: null,
               carton_width_mm: nw,
               carton_height_mm: nh,
@@ -3005,12 +3042,12 @@
         }
       }
       const missingWidth = selLines.some(function(r) {
-        const w = r.carton_width_mm;
+        const w = (typeof resolveRowWidthMm === 'function') ? resolveRowWidthMm(r) : r.carton_width_mm;
         return w == null || w === '' || isNaN(parseFloat(w)) || parseFloat(w) <= 0;
       });
       if (missingWidth) {
         e.preventDefault();
-        alert('Please enter width (mm) for each selected FG line.');
+        alert('Width (mm) is required on each line — load from SO via Browse or enter a value.');
         return;
       }
       

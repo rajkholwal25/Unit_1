@@ -679,21 +679,17 @@ def persist_bom_payload_block(
         return w[:20]
 
     def _looks_like_job_process_output(code_u: str) -> bool:
-        """True if code matches our intermediate process output pattern (FGxxx-ELM-PROC...)."""
+        """True if code is a Unit 1 process output (FG base + known process suffix)."""
+        from app.services.unit1_processes import UNIT1_PROCESS_CODE_SUFFIXES, unit1_fg_base_code
+
         c = (code_u or '').strip().upper()
-        if not c.startswith('FG') or '-' not in c:
+        if not c or '-' not in c:
             return False
-        # Expected: FG#######-EEE-TAIL...
-        parts = c.split('-', 2)
-        if len(parts) < 3:
+        base = unit1_fg_base_code(c)
+        if not base or base == c:
             return False
-        fg_part, el_part, tail = parts[0], parts[1], parts[2]
-        if not fg_part or not el_part or not tail:
-            return False
-        if len(el_part) < 2:
-            return False
-        # Tail must at least look like a process code (letters/digits/+/-)
-        return bool(re.match(r'^[A-Z0-9][A-Z0-9+\-]{1,}$', tail))
+        tail = c[len(base) + 1 :] if c.startswith(base + '-') else c.split('-')[-1]
+        return tail.split('-')[-1] in UNIT1_PROCESS_CODE_SUFFIXES
 
     def _payload_req_item_code(req: dict[str, Any]) -> str:
         raw_item = str(req.get('sap_item_code') or '').strip()
@@ -857,9 +853,14 @@ def persist_bom_payload_block(
 
             fg_full_name = (card_hdr.sap_fg_item_name_snap or card_hdr.sap_fg_item_code or 'FG').strip()
             proc_full_name = (process_name or process_code or 'PROC').strip()
-            output_item_name = (
-                fg_full_name[:100] if is_fg_step else f'{fg_full_name}-{proc_full_name}'[:100]
-            )
+            if is_fg_step:
+                output_item_name = fg_full_name[:100]
+            elif step.output_item_code:
+                from app.services.unit1_item_naming import unit1_process_item_description
+
+                output_item_name = unit1_process_item_description(step.output_item_code)[:100]
+            else:
+                output_item_name = f'{fg_full_name}-{proc_full_name}'[:100]
 
             if sap_client and (not is_fg_step) and output_item_code:
                 try:

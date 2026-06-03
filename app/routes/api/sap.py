@@ -536,6 +536,8 @@ def mirror_merged_fg_lines():
                     h = fl.get('carton_height_mm')
                     fl['sap_carton_width_mm'] = w
                     fl['sap_carton_height_mm'] = h
+                    q = fl.get('quantity')
+                    fl['sap_quantity'] = q
                     lines.append(fl)
         finally:
             client.logout()
