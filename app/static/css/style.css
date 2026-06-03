@@ -1,0 +1,134 @@
+body {
+    background-color: #f4f6f9;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.main-content {
+    margin-top: 64px;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card {
+    border-left: 4px solid;
+}
+
+.stat-card.open { border-left-color: #6c757d; }
+.stat-card.staged { border-left-color: #0d6efd; }
+.stat-card.released { border-left-color: #ffc107; }
+.stat-card.closed { border-left-color: #198754; }
+.stat-card.draft { border-left-color: #6c757d; }
+.stat-card.approved { border-left-color: #0d6efd; }
+.stat-card.in-production { border-left-color: #ffc107; }
+.stat-card.completed { border-left-color: #198754; }
+.stat-card.cancelled { border-left-color: #dc3545; }
+.stat-card.total { border-left-color: #0dcaf0; }
+
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-card .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-open { background-color: #6c757d; }
+.badge-staged { background-color: #0d6efd; }
+.badge-released { background-color: #ffc107; color: #000; }
+.badge-closed { background-color: #198754; }
+/* legacy job card statuses (history rows) */
+.badge-draft { background-color: #6c757d; }
+.badge-approved { background-color: #0d6efd; }
+.badge-in_production { background-color: #ffc107; color: #000; }
+.badge-completed { background-color: #198754; }
+.badge-cancelled { background-color: #dc3545; }
+
+.badge-low { background-color: #6c757d; }
+.badge-medium { background-color: #0d6efd; }
+.badge-high { background-color: #fd7e14; }
+.badge-urgent { background-color: #dc3545; }
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.page-header h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.login-card .card-header {
+    background: transparent;
+    border: none;
+    text-align: center;
+    padding: 2rem 2rem 1rem;
+}
+
+.login-card .card-body {
+    padding: 1rem 2rem 2rem;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+}
+
+.sap-synced {
+    color: #198754;
+}
+
+.sap-not-synced {
+    color: #6c757d;
+}
+
+.material-row {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}

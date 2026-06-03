@@ -1,0 +1,869 @@
+{% extends "base.html" %}
+{% block title %}Print — {{ job.job_no }}{% endblock %}
+
+{% macro fmt_num(v) -%}
+  {# number formatting for slips:
+     - remove trailing zeros: 10.00 -> 10, 10.50 -> 10.5
+     - remove leading zero before decimal: 0.5 -> .5, -0.5 -> -.5 #}
+  {%- if v is none -%}—{%- else -%}
+    {%- set s = (v|string) -%}
+    {%- if '.' in s -%}
+      {%- set s = s.rstrip('0').rstrip('.') -%}
+    {%- endif -%}
+    {%- if s.startswith('-0.') -%}-{{ s[2:] }}
+    {%- elif s.startswith('0.') -%}{{ s[1:] }}
+    {%- else -%}{{ s }}
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro detail_elements_block(dl) %}
+    <div class="mt-2">
+      <div class="slip-meta mb-1"><strong>Line {{ dl.detail_no }}</strong> — {{ dl.element_name or '—' }}</div>
+      <table class="slip-table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Item code / Mill / grade</th>
+            <th style="width: 18%;">Size (mm)</th>
+            <th style="width: 10%;">Thickness/GSM</th>
+            <th style="width: 12%;">Sheets</th>
+            <th style="width: 12%;">Wastage</th>
+            <th style="width: 14%;">Total sheets</th>
+            <th style="width: 12%;">Die no</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div><strong>{{ dl.raw_material_item_code or '—' }}</strong></div>
+              <div class="muted">{{ dl.mill or '—' }}{% if dl.paper_brand %} / {{ 'GBD' if dl.paper_brand == 'DGB' else dl.paper_brand }}{% endif %}</div>
+            </td>
+            <td class="text-center">
+              {% if dl.sheet_length %}{{ fmt_num(dl.sheet_length) }} × {{ fmt_num(dl.sheet_width) }}{% else %}—{% endif %}
+            </td>
+            <td class="text-center">{{ dl.gsm or '—' }}</td>
+            {% set _waste = (dl.wastage_sheets or 0) %}
+            {% set _gross = (dl.total_sheets if dl.total_sheets is not none else None) %}
+            {% set _net = (_gross - _waste) if (_gross is not none and _waste is not none) else None %}
+            <td class="text-end">{{ _net if _net is not none else '—' }}</td>
+            <td class="text-end">{{ _waste or 0 }}</td>
+            <td class="text-end">{{ _gross if _gross is not none else '—' }}</td>
+            <td class="text-center">{{ dl.die_no or '—' }}</td>
+          </tr>
+          <tr>
+            <th>Front colours</th>
+            <td colspan="6">{{ dl.front_colours or '—' }}</td>
+          </tr>
+          <tr>
+            <th>Back colours</th>
+            <td colspan="6">{{ dl.back_colours or '—' }}</td>
+          </tr>
+          <tr>
+            <th>Process sequence</th>
+            <td colspan="6">
+              {% set seq = process_seq_by_detail_no.get(dl.detail_no) %}
+              {{ seq if seq else '—' }}
+            </td>
+          </tr>
+          <tr>
+            <th>Special instructions</th>
+            <td colspan="6">{{ dl.special_instructions or '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+{% endmacro %}
+
+{% block content %}
+<div class="d-print-none mb-3">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Job Cards</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.view_job', job_id=job.id) }}">{{ job.job_no }}</a></li>
+      <li class="breadcrumb-item active">Print slips</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+    <div>
+      <h5 class="fw-semibold mb-1">Print slips — {{ job.job_no }}</h5>
+      <div class="text-muted small">
+        Customer: <strong>{{ job.sap_customer_name_snap or '—' }}</strong>
+        {% if job.sap_so_number_snap %}· SO: <strong>{{ job.sap_so_number_snap }}</strong>{% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="printSlip('slip-1')">
+        <i class="bi bi-printer me-1"></i>Print slip 1 (job info)
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="printSlip('slip-2')">
+        <i class="bi bi-printer me-1"></i>Print slip 2 (checklist)
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="printSlip('slip-3')">
+        <i class="bi bi-printer me-1"></i>Print slip 3 (detail)
+      </button>
+      <button class="btn btn-primary btn-sm" type="button" onclick="printAllSlips()">
+        <i class="bi bi-printer-fill me-1"></i>Print all
+      </button>
+      <a href="{{ url_for('jobs.print_job_bom', job_id=job.id) }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-diagram-3 me-1"></i>BOM slip (separate page)
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  :root {
+    --slip2-section-col-w: 60px;
+  }
+  /* A4 single-page layout */
+  .a4-page {
+    background: #fff;
+    border: none;
+    margin: 0 auto 12px auto;
+    max-width: 210mm;
+    padding: 6mm;
+  }
+  .page-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 2mm;
+    border-bottom: none;
+    margin-bottom: 2mm;
+  }
+  .banner-left {
+    display: flex;
+    align-items: center;
+  }
+  .banner-left img {
+    height: 20mm;
+    max-height: 22mm;
+    width: auto;
+    display: block;
+    object-fit: contain;
+  }
+  .slip-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4mm;
+  }
+  /* Print slip layout */
+  .slip-sheet {
+    border: none;
+    border-radius: 0;
+    padding: 6px 8px;
+  }
+  .slip-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 6px;
+    border-bottom: none;
+  }
+  .slip-header-left {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+  .slip-title { font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+  .slip-meta {
+    font-size: 12px;
+    color: #333;
+  }
+  .slip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+  .slip-table th, .slip-table td {
+    border: 1px solid #111;
+    padding: 3px 5px;
+    vertical-align: middle;
+  }
+  .slip-table th {
+    background: #f3f3f3;
+    font-weight: 700;
+  }
+  .tight-col {
+    width: 1%;
+    white-space: nowrap;
+  }
+  .slip2-section-col {
+    width: var(--slip2-section-col-w);
+    white-space: nowrap;
+  }
+  .slip2-table {
+    table-layout: fixed;
+  }
+  .slip2-new-old {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+  }
+  .slip2-new-old .label {
+    white-space: nowrap;
+    padding-right: 4px;
+  }
+  .slip2-new-old .choices {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-left: 1px solid #111;
+  }
+  .slip2-new-old .choice {
+    flex: 1 1 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1;
+  }
+  .slip2-new-old .choice + .choice {
+    border-top: 1px solid #111;
+  }
+  .slip2-new-old.compact {
+    gap: 0;
+  }
+  .slip2-new-old.compact .label {
+    padding-right: 2px;
+  }
+  .slip2-new-old.compact .choices {
+    flex: 0 0 22px; /* keep New/Old area small */
+  }
+  /* Press row (slip 2) Blanket split (cleaner). */
+  .press-blanket {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+  }
+  .press-blanket .label {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+  }
+  .press-blanket .split {
+    flex: 0 0 44px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #111;
+    border-radius: 1px;
+    background: #fff;
+  }
+  .press-blanket .split > div {
+    flex: 1 1 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    line-height: 1;
+    padding: 1px 0;
+  }
+  .press-blanket .split > div + div {
+    border-top: 1px solid #111;
+  }
+  .slip-grid td {
+    height: 28px;
+  }
+  .slip-kv {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10.5px;
+  }
+  .slip-kv td {
+    padding: 3px 5px;
+    border: 1px solid #111;
+  }
+  .kv-key {
+    width: 1%;
+    white-space: nowrap;
+  }
+  .slip-sheet .fw-medium,
+  .slip-sheet .small,
+  .slip-sheet td,
+  .slip-sheet th {
+    font-size: 11.5px;
+  }
+  .muted {
+    color: #666;
+  }
+
+  /* Job-level remarks (slip 1): one line, compact row */
+  .slip-remarks-input {
+    width: 100%;
+    max-width: 100%;
+    font-size: inherit;
+    line-height: 1.2;
+    height: 1.55em;
+    border: 1px dashed #888;
+    border-radius: 2px;
+    padding: 1px 5px;
+    background: #fafafa;
+    box-sizing: border-box;
+  }
+  .slip-coordinator-input {
+    width: 20ch;
+    max-width: 20ch;
+    font-size: inherit;
+    line-height: 1.2;
+    height: 1.55em;
+    border: 1px dashed #888;
+    border-radius: 2px;
+    padding: 1px 5px;
+    background: #fafafa;
+    box-sizing: border-box;
+  }
+  .slip-coordinator-input:focus {
+    outline: 2px solid rgba(13, 110, 253, 0.35);
+    outline-offset: 1px;
+    background: #fff;
+  }
+  .slip-remarks-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .slip-remarks-row .remarks-col {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .slip-remarks-row .fg-col {
+    flex: 0 0 35%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .slip-fg-input {
+    width: 13ch;
+    max-width: 13ch;
+    font-size: inherit;
+    line-height: 1.2;
+    height: 1.55em;
+    border: 1px dashed #888;
+    border-radius: 2px;
+    padding: 1px 5px;
+    background: #fafafa;
+    box-sizing: border-box;
+  }
+  .slip-fg-input:focus {
+    outline: 2px solid rgba(13, 110, 253, 0.35);
+    outline-offset: 1px;
+    background: #fff;
+  }
+  .slip-remarks-input:focus {
+    outline: 2px solid rgba(13, 110, 253, 0.35);
+    outline-offset: 1px;
+    background: #fff;
+  }
+
+  /* Print only selected slip */
+  @media print {
+    /* Remove app chrome (navbar is d-print-none in base; reset layout offset) */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
+    }
+    .main-content {
+      margin-top: 0 !important;
+    }
+    .main-content > .container-fluid {
+      padding: 0 !important;
+      /* keep same centered A4 layout as screen */
+      max-width: 210mm !important;
+      margin: 0 auto !important;
+    }
+    .main-content .alert {
+      display: none !important;
+    }
+
+    /* Keep layout identical in print; only scale-to-fit is allowed. */
+    .print-slips-root .slip-sheet {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .slip-remarks-input {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .slip-fg-input {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .slip-coordinator-input {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    body.print-one .d-print-none { display: none !important; }
+    body.print-one .a4-page {
+      display: none !important;
+      margin: 0 auto !important;
+      border: none !important;
+      padding: 0 !important;
+    }
+    body.print-one .a4-page:has(.slip-sheet.print-target) {
+      display: block !important;
+    }
+    body.print-one .slip-sheet { display: none !important; }
+    body.print-one .slip-sheet.print-target { display: block !important; margin: 0; border: none; }
+
+    body.print-all .d-print-none { display: none !important; }
+    body.print-all .a4-page {
+      margin: 0 auto !important;
+      border: none !important;
+      page-break-after: always;
+      break-after: page;
+    }
+    body.print-all .a4-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    /* Auto-fit pages when printing all slips (set via JS var). */
+    body.print-all .a4-page {
+      /* Use zoom so layout box shrinks (prevents print overflow in Chromium). */
+      zoom: var(--print-scale, 1);
+      transform: none;
+      overflow: hidden;
+      width: 210mm;
+      max-width: 210mm;
+    }
+
+    /* Minimal margin; app chrome is hidden so content uses most of the sheet */
+    @page {
+      size: A4;
+      margin: 4mm;
+    }
+  }
+</style>
+
+<div class="print-slips-root">
+{# --- Page 1: slips 1–2 + first detail block (or empty slip 3) --- #}
+<div class="a4-page" id="a4Page">
+  <div class="page-banner">
+    <div class="banner-left">
+      <img src="{{ url_for('static', filename='img/vk-logo.png') }}" alt="VK logo">
+    </div>
+    <div class="slip-meta text-end">
+      <div><strong>Job No.- {{ job.job_no }}</strong></div>
+      <div><strong>Date- {{ print_date }}</strong></div>
+    </div>
+  </div>
+
+  <div class="slip-stack">
+{# ------------------------------ Slip 1: Job info #}
+<section class="slip-sheet" id="slip-1" aria-label="Slip 1">
+  <header class="slip-header">
+    <div class="slip-header-left">1. JOB SUMMARY</div>
+  </header>
+
+  <div class="mt-2">
+    <table class="slip-kv">
+      <colgroup>
+        <col style="width: 1%;">
+        <col style="width: 71%;">
+        <col style="width: 1%;">
+        <col style="width: 27%;">
+      </colgroup>
+      <tr>
+        <td class="kv-key"><strong>Customer</strong></td>
+        <td>{{ job.sap_customer_name_snap or '—' }}</td>
+        <td class="kv-key"><strong>Job type</strong></td>
+        <td>{{ (job.job_type_cat or 'Mono') }}</td>
+      </tr>
+      <tr>
+        <td class="kv-key"><strong>SO no</strong></td>
+        <td>{{ job.sap_so_number_snap or '—' }}</td>
+        <td class="kv-key"><strong>New / Repeat</strong></td>
+        <td>
+          {% set _kind = (header_lines[0].job_type if header_lines else '') %}
+          {% if (_kind or '')|lower == 'repeat' %}
+            Repeat{% if repeat_original_job_no_for_slip %} ({{ repeat_original_job_no_for_slip }}){% endif %}
+          {% elif (_kind or '')|lower == 'new' %}
+            New
+          {% else %}
+            {{ (_kind or '—') | title }}
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="mt-2">
+    <table class="slip-table">
+      <thead>
+        <tr>
+          <th style="width: 28%;">FG num-FG Name</th>
+          <th style="width: 10%; white-space: nowrap;">Art. No.</th>
+          <th style="width: 14%;">Itemcode</th>
+          <th class="tight-col">Delivery qty</th>
+          <th style="width: 18%;">Carton Size (mm)</th>
+          <th class="tight-col">UPs</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hl in header_lines %}
+        <tr>
+          <td>
+            <div><strong>{{ hl.sap_fg_item_code or '—' }}</strong></div>
+            <div class="muted">{{ hl.sap_fg_item_name_snap or '—' }}</div>
+          </td>
+          <td style="width: 10%; white-space: nowrap;">
+            {% set _fr = frgnname_by_fg.get((hl.sap_fg_item_code or '').strip()) %}
+            {{ _fr if _fr else '—' }}
+          </td>
+          <td>
+            {% set _ic = itemcode_by_fg.get((hl.sap_fg_item_code or '').strip()) %}
+            {{ _ic if _ic else '—' }}
+          </td>
+          <td class="text-end tight-col">{{ fmt_num(hl.dispatch_qty or 0) }}</td>
+          <td>
+            {% if hl.length %}
+              {{ fmt_num(hl.length) }} × {{ fmt_num(hl.width) }} × {{ fmt_num(hl.height) }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="text-center">{{ hl.ups or 1 }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center muted">No lines</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-2">
+    <table class="slip-kv">
+      <tr>
+        <td style="width: 18%;"><strong>Delivery date</strong></td>
+        <td style="width: 15%;">
+          {% if job.delivery_date %}{{ job.delivery_date.strftime('%d/%m/%Y') }}
+          {% elif order_header and order_header.get('DocDueDate') %}{{ order_header.get('DocDueDate') }}
+          {% else %}—{% endif %}
+        </td>
+        <td style="width: 22%;"><strong>Sales team</strong></td>
+        <td style="width: 45%;">
+          <span>{{ sales_rep_name or '—' }}</span>
+          <span class="muted"> / </span>
+          <label class="visually-hidden d-print-none" for="slipCoordinator">Coordinator</label>
+          <input type="text" id="slipCoordinator" class="slip-coordinator-input" maxlength="20" autocomplete="off" value="">
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Remarks</strong></td>
+        <td colspan="3" class="align-middle py-1">
+          <div class="slip-remarks-row">
+            <div class="remarks-col">
+              <label class="visually-hidden d-print-none" for="slipJobRemarks">Remarks</label>
+              <input type="text" id="slipJobRemarks" class="slip-remarks-input" autocomplete="off" value="{{ (job.remarks or '')|e }}">
+            </div>
+            <div class="fg-col">
+              <span><strong>FG (In Stock)</strong></span>
+              <label class="visually-hidden d-print-none" for="slipFgInStock">FG (In Stock)</label>
+              <input
+                type="text"
+                id="slipFgInStock"
+                class="slip-fg-input"
+                inputmode="numeric"
+                pattern="[0-9]{0,6}"
+                maxlength="6"
+                autocomplete="off"
+                value=""
+              >
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+{# ------------------------------ Slip 2: Checklist (static like photo) #}
+<section class="slip-sheet" id="slip-2" aria-label="Slip 2">
+  <header class="slip-header">
+    <div class="slip-header-left">2. CHECKLIST</div>
+  </header>
+
+  <div class="mt-2">
+    <table class="slip-table slip-grid slip2-table">
+      <colgroup>
+        <col style="width: var(--slip2-section-col-w);">
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+      </colgroup>
+      <tbody>
+        <tr>
+          <th class="slip2-section-col" rowspan="2">Pre<br>Press</th>
+          <td>Key line</td>
+          <td>Coating blanket</td>
+          <td>Foil block</td>
+          <td>EMB block</td>
+          <td>Spot UV</td>
+        </tr>
+        <tr>
+          <td>Positive</td>
+          <td>Epson Print</td>
+          <td>Customer sample</td>
+          <td>Die/Plotter</td>
+          <td>Sign &amp; stamp</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-3">
+    <table class="slip-table slip-grid slip2-table">
+      <colgroup>
+        <col style="width: var(--slip2-section-col-w);">
+        <col>
+        <col>
+        <col>
+      </colgroup>
+      <tbody>
+        <tr>
+          <th class="slip2-section-col">QC</th>
+          <td>Shade ref</td>
+          <td>QC remarks</td>
+          <td>Sign &amp; stamp</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-3">
+    <table class="slip-table slip-grid slip2-table">
+      <colgroup>
+        <col style="width: var(--slip2-section-col-w);">
+        <col>
+        <col>
+        <col>
+        <col>
+      </colgroup>
+      <tbody>
+        <tr>
+          <th class="slip2-section-col" rowspan="2">IMS</th>
+          <td>Ink drawdown</td>
+          <td>Ink CMYK</td>
+          <td>Ink other</td>
+          <td rowspan="2" class="align-middle">Sign &amp; stamp</td>
+        </tr>
+        <tr>
+          <td>Conventional Ink</td>
+          <td>UV Ink</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-3">
+    <table class="slip-table slip-grid slip2-table">
+      <colgroup>
+        <col style="width: var(--slip2-section-col-w);">
+        <col style="width: 15%;">
+        <col style="width: 15%;">
+        <col style="width: 20%;">
+        <col style="width: 50%;">
+      </colgroup>
+      <tbody>
+        <tr>
+          <th class="slip2-section-col">Press</th>
+          <td>Plate</td>
+          <td>Board</td>
+          <td>
+            <div class="press-blanket">
+              <span class="label">Blanket</span>
+              <span class="split" aria-hidden="true">
+                <div>New</div>
+                <div>Old</div>
+              </span>
+            </div>
+          </td>
+          <td>Spl. Coating</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ------------------------------ Slip 3: first detail line only on page 1 #}
+<section class="slip-sheet slip-3-sheet" id="slip-3" aria-label="Slip 3">
+  <header class="slip-header">
+    <div class="slip-header-left">3. ELEMENTS</div>
+  </header>
+
+  {% if detail_lines %}
+    {{ detail_elements_block(detail_lines[0]) }}
+  {% else %}
+    <div class="mt-2 muted">No detail lines.</div>
+  {% endif %}
+</section>
+  </div>
+</div>
+
+{# --- Further A4 pages: one slip-3 block per additional detail line --- #}
+{% if detail_lines|length > 1 %}
+  {% for dl in detail_lines[1:] %}
+<div class="a4-page a4-detail-continuation">
+  <div class="page-banner">
+    <div class="banner-left">
+      <img src="{{ url_for('static', filename='img/vk-logo.png') }}" alt="VK logo">
+    </div>
+    <div class="slip-meta text-end">
+      <div><strong>Job No.- {{ job.job_no }}</strong></div>
+      <div><strong>Date- {{ print_date }}</strong></div>
+    </div>
+  </div>
+  <div class="slip-stack">
+    <section class="slip-sheet slip-3-sheet" aria-label="Slip 3 line {{ dl.detail_no }}">
+      <header class="slip-header">
+        <div class="slip-header-left">3. ELEMENTS</div>
+      </header>
+      {{ detail_elements_block(dl) }}
+    </section>
+  </div>
+</div>
+  {% endfor %}
+{% endif %}
+</div>{# .print-slips-root #}
+
+<script>
+  (function () {
+    var isPrintAllRequested = false;
+
+    function mmToPx(mm) {
+      // Use the browser's current CSS mm -> px conversion (works better in print media).
+      var probe = document.createElement('div');
+      probe.style.position = 'absolute';
+      probe.style.left = '-9999px';
+      probe.style.top = '0';
+      probe.style.height = mm + 'mm';
+      probe.style.width = '1px';
+      document.body.appendChild(probe);
+      var px = probe.getBoundingClientRect().height || 0;
+      probe.remove();
+      return px;
+    }
+
+    function computePrintAllScale() {
+      // A4 sizes in mm.
+      var pageWidthMm = 210;
+      var pageHeightMm = 297;
+      var pageMarginMm = 4; // keep in sync with @page margin
+
+      var pxPerMm = mmToPx(1) || (96 / 25.4);
+      var availableWidthPx = (pageWidthMm - (pageMarginMm * 2)) * pxPerMm;
+      var availableHeightPx = (pageHeightMm - (pageMarginMm * 2)) * pxPerMm;
+
+      document.querySelectorAll('.a4-page').forEach(function (page) {
+        page.style.removeProperty('--print-scale');
+
+        // Use scroll sizes so we measure untransformed layout size.
+        var contentW = page.scrollWidth || 0;
+        var contentH = page.scrollHeight || 0;
+
+        if (contentW > 0 && contentH > 0) {
+          var scaleW = availableWidthPx / contentW;
+          var scaleH = availableHeightPx / contentH;
+          var scale = Math.min(1, scaleW, scaleH);
+          if (scale < 0.999) {
+            page.style.setProperty('--print-scale', String(scale));
+          }
+        }
+      });
+    }
+
+    function cleanupPrintScale() {
+      document.querySelectorAll('.a4-page').forEach(function (page) {
+        page.style.removeProperty('--print-scale');
+      });
+    }
+
+    function clearPrintTargets() {
+      document.querySelectorAll('.slip-sheet').forEach(function (el) {
+        el.classList.remove('print-target');
+      });
+    }
+
+    function markSingleTarget(id) {
+      clearPrintTargets();
+      var el = document.getElementById(id);
+      if (el) el.classList.add('print-target');
+    }
+
+    /** Mark every slip 3 section (first page + continuation pages). */
+    function markAllSlip3Targets() {
+      clearPrintTargets();
+      document.querySelectorAll('.slip-3-sheet').forEach(function (el) {
+        el.classList.add('print-target');
+      });
+    }
+
+    window.printSlip = function (id) {
+      if (id === 'slip-3') {
+        markAllSlip3Targets();
+      } else {
+        markSingleTarget(id);
+      }
+      document.body.classList.remove('print-all');
+      document.body.classList.add('print-one');
+      isPrintAllRequested = false;
+      window.print();
+      document.body.classList.remove('print-one');
+      clearPrintTargets();
+    };
+
+    window.printAllSlips = function () {
+      clearPrintTargets();
+      document.body.classList.remove('print-one');
+      document.body.classList.add('print-all');
+      isPrintAllRequested = true;
+      window.print();
+      document.body.classList.remove('print-all');
+      cleanupPrintScale();
+    };
+
+    // Compute scale when print media is active (prevents print-preview mismatch).
+    window.addEventListener('beforeprint', function () {
+      if (!isPrintAllRequested) return;
+      // Let the browser apply print styles before measuring.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          computePrintAllScale();
+        });
+      });
+    });
+    window.addEventListener('afterprint', function () {
+      isPrintAllRequested = false;
+      cleanupPrintScale();
+    });
+  })();
+</script>
+{% endblock %}

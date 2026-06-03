@@ -1,4 +1,4 @@
-"""SQLAlchemy models — import from `app.models` in routes and services."""
+"""SQLAlchemy models — Unit 1 master data + Unit 2 manufacturing jobs."""
 
 from .bom import BomStructure, BomTemplate, GeneratedFGItem, GeneratedProcessItem
 from .coating import CoatingType
@@ -7,6 +7,17 @@ from .material import MaterialType
 from .pattern import Pattern
 from .sap import SapPushLog
 from .user import User
+
+from .job import (  # noqa: F401
+    JobMaster,
+    JobHeaderLine,
+    JobDetailLine,
+    JobDetailLineFgInvolved,
+)
+from .mfg_bom import Bom, BomStep, BomStepInput  # noqa: F401
+from .audit import JobStatusHistory, IntegrationEvent  # noqa: F401
+from .reference import ProcessMaster  # noqa: F401
+from .sap_mirror import SapCustomerMirror, SapMirrorSyncState, SapItemMirror  # noqa: F401
 
 __all__ = [
     'User',
@@ -19,4 +30,17 @@ __all__ = [
     'ItemMaster',
     'BomStructure',
     'SapPushLog',
+    'JobMaster',
+    'JobHeaderLine',
+    'JobDetailLine',
+    'JobDetailLineFgInvolved',
+    'Bom',
+    'BomStep',
+    'BomStepInput',
+    'JobStatusHistory',
+    'IntegrationEvent',
+    'ProcessMaster',
+    'SapCustomerMirror',
+    'SapMirrorSyncState',
+    'SapItemMirror',
 ]

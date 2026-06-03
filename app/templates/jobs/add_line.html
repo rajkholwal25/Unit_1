@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Add Component — {{ job.job_no }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Job Cards</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('jobs.view_job', job_id=job.id) }}">{{ job.job_no }}</a></li>
+    <li class="breadcrumb-item active">Add Component</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold">Add Component to {{ job.job_no }}</h6>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Finished Good Item <span class="text-danger">*</span></label>
+            <select name="fg_item_code" class="form-select" required>
+              <option value="">— Select FG Item —</option>
+              {% for item in fg_items %}
+              <option value="{{ item.item_code }}"
+                {% if request.form.get('fg_item_code') == item.item_code %}selected{% endif %}>
+                {{ item.item_code }} — {{ item.item_name }}
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Run <code>flask sync-sap-items</code> if item is missing.</div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label class="form-label fw-medium">Dispatch Qty <span class="text-danger">*</span></label>
+              <input type="number" name="dispatch_qty" class="form-control" min="1" required
+                     value="{{ request.form.get('dispatch_qty', '') }}">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label fw-medium">Ups <span class="text-danger">*</span></label>
+              <input type="number" name="ups" class="form-control" min="1" required
+                     value="{{ request.form.get('ups', '1') }}">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label fw-medium">UOM</label>
+              <select name="uom" class="form-select">
+                {% for u in ['PCS','BOX','PKT','ROLL','KG','MTR'] %}
+                <option value="{{ u }}" {% if request.form.get('uom','PCS') == u %}selected{% endif %}>{{ u }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label class="form-label fw-medium">Length (mm)</label>
+              <input type="number" name="length" class="form-control" step="0.01"
+                     value="{{ request.form.get('length', '') }}">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label fw-medium">Width (mm)</label>
+              <input type="number" name="width" class="form-control" step="0.01"
+                     value="{{ request.form.get('width', '') }}">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label fw-medium">Height (mm)</label>
+              <input type="number" name="height" class="form-control" step="0.01"
+                     value="{{ request.form.get('height', '') }}">
+            </div>
+          </div>
+
+          <hr class="my-4">
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-plus me-1"></i>Add Component
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

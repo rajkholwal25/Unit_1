@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% block title %}Edit BOM — {{ job.job_no }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-bom-page { margin: 0 auto; }
+  .edit-bom-narrow { max-width: 920px; margin-left: auto; margin-right: auto; }
+  .edit-bom-bom-studio-wrap { max-width: 1200px; margin-left: auto; margin-right: auto; }
+  .edit-bom-hero {
+    border-radius: 0.5rem;
+    border: 1px solid var(--bs-border-color);
+    background: linear-gradient(120deg, #fff7ed 0%, #fff 55%);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .edit-bom-hero h1 { font-size: 1.15rem; font-weight: 600; margin: 0; }
+  .edit-bom-help { font-size: 0.8125rem; color: var(--bs-secondary-color); }
+  .proc-seq-readonly {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    padding: 0.5rem 0;
+    min-height: 2.5rem;
+  }
+  .proc-seq-readonly .proc-chip {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 2rem;
+    background: #e7f1ff;
+    border: 1px solid #b6d4fe;
+    color: #084298;
+  }
+  .proc-seq-readonly .proc-arrow {
+    color: #6c757d;
+    font-size: 0.75rem;
+    user-select: none;
+  }
+  #seqEditorWrap {
+    border: 1px dashed var(--bs-border-color);
+    border-radius: 0.5rem;
+    background: #f8fafc;
+  }
+  #seqEditorWrap .seq-editor-inner {
+    padding: 1rem 1rem 0.75rem;
+  }
+  #seqEditorWrap .seq-editor-tab-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .process-preset-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .process-seq-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .process-seq-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #fff;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 2rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-bom-page px-2 px-md-0">
+  <form method="POST" id="editBomMainForm" action="{{ url_for('jobs.edit_bom_spec', job_id=job.id, bom_id=bom.id) }}"
+        data-items-search-url="{{ url_for('sap_api.items_search') }}"
+        data-unit1-uom="{{ config.get('UNIT1_DEFAULT_UOM', 'KGS') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="bom_payload_json" id="bom_payload_json" value="">
+
+  <div class="edit-bom-narrow">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Manufacturing jobs</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.view_job', job_id=job.id) }}">{{ job.job_no }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit BOM v{{ bom.version }}</li>
+    </ol>
+  </nav>
+
+  <div class="edit-bom-hero">
+    <h1><i class="bi bi-diagram-3 me-2 text-warning"></i>Edit BOM</h1>
+    <p class="edit-bom-help mb-0 mt-2">
+      <strong>FG Ups / Quantity</strong> and <strong>Wastage sheets</strong> — applied when you <strong>Regenerate BOM</strong> or <strong>Save BOM &amp; update SAP</strong>; planned quantities in the studio stay aligned (same rules as new-job BOM).<br>
+      <strong>Process sequence</strong> — edit, then <strong>Regenerate BOM</strong> to rebuild steps.<br>
+      <strong>BOM studio</strong> — same editable layout as the new-job BOM builder. Use <strong>Save BOM &amp; update SAP</strong> to write the BOM and update SAP.
+    </p>
+  </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+      <div class="card-body">
+        <div class="section-title">Finished goods (this detail line)</div>
+        <p class="text-muted small">Edit <strong>Qty (KGS)</strong> per FG (planned output). <strong>Yield loss %</strong> grosses up raw material (e.g. 1200 kg @ 2% → 1224 kg RM). <strong>Wastage (KGS)</strong> is extra on top.</p>
+        <input type="hidden" name="detail_total_sheets" id="detail_total_sheets_hidden" value="">
+        {% if fg_rows %}
+        <div class="table-responsive border rounded">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">FG</th>
+                <th class="text-muted small">SO</th>
+                <th style="width:9rem" class="pe-3">Qty (KGS)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inv, hl in fg_rows %}
+              <tr data-fg-code="{{ (hl.sap_fg_item_code or '')|e }}">
+                <td class="ps-3">
+                  <div class="small fw-medium">{{ hl.sap_fg_item_name_snap or '—' }}</div>
+                  <div class="font-monospace text-muted" style="font-size:11px">{{ hl.sap_fg_item_code or '—' }}</div>
+                  <span class="badge bg-light text-dark border">{{ inv.fg_num }}</span>
+                </td>
+                <td class="small text-muted">{{ inv.sap_so_number or '—' }}</td>
+                <td class="pe-3">
+                  <input type="text" class="form-control form-control-sm" name="fg_{{ hl.id }}_dispatch_qty" value="{{ hl.dispatch_qty if hl.dispatch_qty is not none else '' }}">
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0">No FG-involved rows.</p>
+        {% endif %}
+
+        <div class="row g-2 mt-3 pt-2 border-top align-items-end">
+          <div class="col-md-3 col-lg-2">
+            <label class="form-label small mb-0" for="detail_yield_loss_pct_input">Yield loss %</label>
+            <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm" name="detail_yield_loss_pct" id="detail_yield_loss_pct_input"
+                   value="{{ detail.yield_loss_pct if detail.yield_loss_pct is not none else config.get('BOM_YIELD_LOSS_PCT', 2) }}">
+          </div>
+          <div class="col-md-4 col-lg-3">
+            <label class="form-label small mb-0" for="detail_wastage_sheets_input">Wastage (KGS)</label>
+            <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="detail_wastage_sheets" id="detail_wastage_sheets_input"
+                   value="{% if detail.wastage_sheets is not none %}{{ detail.wastage_sheets|int }}{% else %}0{% endif %}">
+            <div class="form-text small">Extra kg after yield gross-up.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+          <div class="section-title mb-0">Process sequence</div>
+          <button type="button" class="btn btn-sm btn-outline-primary" id="btnToggleSeqEditor" aria-expanded="false" aria-controls="seqEditorWrap">
+            <i class="bi bi-pencil me-1"></i><span id="btnToggleSeqEditorLabel">Edit sequence</span>
+          </button>
+        </div>
+
+        <p class="text-muted small mb-2">Current order (left → right):</p>
+        <div class="proc-seq-readonly border rounded px-3 bg-white" id="procSeqReadonly" aria-live="polite">
+          {% if steps %}
+            {# Collapse duplicates: multiple FGs create multiple steps/POs per process internally. #}
+            {% set ns = namespace(uniq=[], last_code='') %}
+            {% for st in steps %}
+              {% set code = (st.process_code or '')|trim %}
+              {% if code and code != ns.last_code %}
+                {% set ns.uniq = ns.uniq + [code] %}
+                {% set ns.last_code = code %}
+              {% endif %}
+            {% endfor %}
+            {% for code in ns.uniq %}
+              <span class="proc-chip">{{ code }}</span>
+              {% if not loop.last %}<span class="proc-arrow" aria-hidden="true">→</span>{% endif %}
+            {% endfor %}
+          {% else %}
+            <span class="text-muted small">No steps on this BOM.</span>
+          {% endif %}
+        </div>
+
+        <div id="seqEditorWrap" class="d-none mt-3">
+          <div id="seqEditorWrapInner" class="seq-editor-inner">
+            <div class="seq-editor-tab-label">Process sequence — edit</div>
+            <p class="small text-muted mb-2">Add or remove steps in order (still left → right). Submit with <strong>Regenerate BOM</strong> below.</p>
+            <div class="mb-2">
+              <div class="small fw-semibold mb-1">Edited order (draft)</div>
+              <div class="proc-seq-readonly border rounded px-3 bg-white" id="procSeqDraft" aria-live="polite">
+                <span class="text-muted small">No steps.</span>
+              </div>
+              <div class="form-text small">This draft does <strong>not</strong> change the current BOM until you regenerate.</div>
+            </div>
+            <div class="row g-2 align-items-end mb-2">
+              <div class="col-md-12">
+                <label class="form-label small mb-0">Search &amp; Add Process</label>
+                <input type="text" class="form-control form-control-sm" id="editBomProcessSearch"
+                       placeholder="Type to filter processes (Printing, Foiling...)" autocomplete="off">
+              </div>
+            </div>
+            <div class="mb-3 process-preset-wrap" id="editBomProcessPresetWrap">
+              <button type="button" class="btn btn-outline-secondary btn-sm editbom-process-btn"
+                      data-process="FG"
+                      data-search="fg packing">
+                FG — Finished goods
+              </button>
+              {% for pm in process_choices %}
+              {% if pm.process_code|upper not in ['FG', 'PK-PACK'] %}
+              <button type="button" class="btn btn-outline-secondary btn-sm editbom-process-btn"
+                      data-process="{{ pm.process_code }}"
+                      data-search="{{ (pm.process_code ~ ' ' ~ pm.name ~ ' ' ~ (pm.category or ''))|lower }}">
+                {{ pm.process_code }} — {{ pm.name }}
+              </button>
+              {% endif %}
+              {% endfor %}
+            </div>
+            <div class="border rounded p-2 bg-white">
+              <div class="small fw-semibold mb-2">Selected order (click remove to delete)</div>
+              <p class="text-muted small mb-2">Each process appears once in order. Multiple production orders per process (per FG) are created automatically from your FG list and pre/post diecut rules — you do not repeat codes here.</p>
+              <div class="process-seq-list" id="editBomSeqList"></div>
+              <div class="text-muted small mt-2" id="editBomSeqHint">No process selected.</div>
+            </div>
+            <div class="mt-2">
+              <button type="button" class="btn btn-outline-danger btn-sm" id="editBomSeqClear">
+                <i class="bi bi-x-circle me-1"></i>Clear sequence
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="editBomSeqUndo">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Undo last
+              </button>
+            </div>
+            <div id="editBomProcInputs"></div>
+            <div class="pt-2 pb-1">
+              <button type="submit" class="btn btn-warning" name="bom_action" value="regenerate"
+                      onclick="return confirm('Regenerate BOM from the sequence above? This creates a new BOM version; then edit the BOM studio and use Save BOM & update SAP to push to SAP.');">
+                <i class="bi bi-arrow-repeat me-1"></i>Regenerate BOM
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="edit-bom-bom-studio-wrap px-1 px-md-2 mt-2 mb-4" id="edit-bom-preview">
+    <div class="section-title mb-2 px-1">BOM studio</div>
+    <p class="text-muted small px-1 mb-2">Editable like the new-job BOM builder. Inter-step required lines (previous output) stay read-only.</p>
+    {% if current_user.has_role('admin', 'planner') and job.is_editable %}
+    <div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
+      <button type="submit" class="btn btn-success" name="bom_action" value="save_bom_builder">
+        <i class="bi bi-send-check me-1"></i>Save BOM &amp; update SAP
+      </button>
+      <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" class="btn btn-outline-secondary">View full job</a>
+    </div>
+    {% endif %}
+    {% include 'jobs/partials/bom_studio_hydrate.html' %}
+  </div>
+
+  </form>
+
+</div>
+
+<script>
+(function () {
+  const wrap = document.getElementById('seqEditorWrap');
+  const btnToggle = document.getElementById('btnToggleSeqEditor');
+  const btnToggleLabel = document.getElementById('btnToggleSeqEditorLabel');
+  const draftBar = document.getElementById('procSeqDraft');
+  const presetWrap = document.getElementById('editBomProcessPresetWrap');
+  const searchIn = document.getElementById('editBomProcessSearch');
+  const list = document.getElementById('editBomSeqList');
+  const hint = document.getElementById('editBomSeqHint');
+  const inputsWrap = document.getElementById('editBomProcInputs');
+  const btnClear = document.getElementById('editBomSeqClear');
+  const btnUndo = document.getElementById('editBomSeqUndo');
+
+  /** One entry per logical process in order (collapse consecutive duplicate steps / multi-PO same code). */
+  const rawSteps = [];
+  {% if steps %}
+  {% for st in steps %}
+  rawSteps.push({ code: "{{ (st.process_code or '')|e }}", step_id: "{{ st.id }}" });
+  {% endfor %}
+  {% endif %}
+  const seq = [];
+  (function () {
+    var lastU = '';
+    rawSteps.forEach(function (row) {
+      var c = String(row.code || '').trim();
+      if (!c) return;
+      var u = c.toUpperCase();
+      if (u === lastU) return;
+      lastU = u;
+      seq.push({ code: c, step_id: String(row.step_id != null ? row.step_id : '') });
+    });
+  })();
+
+  function syncDraftPreview() {
+    if (!draftBar) return;
+    var codes = [];
+    seq.forEach(function (x) { if (x && x.code) codes.push(x.code); });
+    if (!codes.length) {
+      draftBar.innerHTML = '<span class="text-muted small">No steps.</span>';
+      return;
+    }
+    draftBar.innerHTML = codes.map(function (c, i) {
+      var chip = '<span class="proc-chip">' + escapeHtml(c) + '</span>';
+      var arr = i < codes.length - 1 ? '<span class="proc-arrow" aria-hidden="true">→</span>' : '';
+      return chip + arr;
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderSeq() {
+    if (!list || !inputsWrap || !hint) return;
+    list.innerHTML = '';
+    inputsWrap.innerHTML = '';
+    if (!seq.length) {
+      hint.classList.remove('d-none');
+    } else {
+      hint.classList.add('d-none');
+    }
+    seq.forEach(function (x, i) {
+      const chip = document.createElement('div');
+      chip.className = 'process-seq-chip';
+      chip.innerHTML =
+        '<span>' + (i + 1) + '. ' + escapeHtml(x.code) + '</span>' +
+        '<button type="button" class="btn btn-sm p-0 border-0 bg-transparent text-danger editbom-rm-chip" data-i="' + i + '" title="Remove">x</button>';
+      list.appendChild(chip);
+
+      const hidId = document.createElement('input');
+      hidId.type = 'hidden';
+      hidId.name = 'step_id[]';
+      hidId.value = x.step_id || '';
+      inputsWrap.appendChild(hidId);
+
+      const hid = document.createElement('input');
+      hid.type = 'hidden';
+      hid.name = 'proc_code[]';
+      hid.value = x.code || '';
+      inputsWrap.appendChild(hid);
+    });
+    syncDraftPreview();
+  }
+
+  function addCode(code) {
+    const v = String(code || '').trim();
+    if (!v) return;
+    if (v.toUpperCase() === 'FG') return; // same as new job: FG is auto in BOM
+    if (seq.length) {
+      var last = String(seq[seq.length - 1].code || '').trim().toUpperCase();
+      if (last === v.toUpperCase()) return;
+    }
+    seq.push({ code: v, step_id: '' });
+    renderSeq();
+  }
+
+  if (presetWrap) {
+    presetWrap.addEventListener('click', function (e) {
+      const b = e.target.closest('.editbom-process-btn');
+      if (!b) return;
+      addCode(b.getAttribute('data-process'));
+    });
+  }
+  if (list) {
+    list.addEventListener('click', function (e) {
+      const rm = e.target.closest('.editbom-rm-chip');
+      if (!rm) return;
+      const i = parseInt(rm.getAttribute('data-i'), 10);
+      if (!isNaN(i)) {
+        seq.splice(i, 1);
+        renderSeq();
+      }
+    });
+  }
+  if (btnClear) {
+    btnClear.addEventListener('click', function () {
+      seq.length = 0;
+      renderSeq();
+    });
+  }
+  if (btnUndo) {
+    btnUndo.addEventListener('click', function () {
+      if (seq.length) seq.pop();
+      renderSeq();
+    });
+  }
+  if (searchIn && presetWrap) {
+    searchIn.addEventListener('input', function () {
+      const q = String(searchIn.value || '').toLowerCase().trim();
+      presetWrap.querySelectorAll('.editbom-process-btn').forEach(function (btn) {
+        const s = (btn.getAttribute('data-search') || btn.textContent || '').toLowerCase();
+        if (!q || s.indexOf(q) >= 0) btn.classList.remove('d-none');
+        else btn.classList.add('d-none');
+      });
+    });
+    searchIn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const visible = Array.prototype.slice.call(presetWrap.querySelectorAll('.editbom-process-btn:not(.d-none)'));
+        if (visible.length === 1) {
+          addCode(visible[0].getAttribute('data-process'));
+          searchIn.value = '';
+          presetWrap.querySelectorAll('.editbom-process-btn').forEach(function (btn) { btn.classList.remove('d-none'); });
+        }
+      }
+    });
+  }
+
+  if (btnToggle && wrap) {
+    btnToggle.addEventListener('click', function () {
+      wrap.classList.toggle('d-none');
+      var open = !wrap.classList.contains('d-none');
+      btnToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (btnToggleLabel) {
+        btnToggleLabel.textContent = open ? 'Close editor' : 'Edit sequence';
+      }
+      if (open) renderSeq();
+    });
+  }
+
+  renderSeq();
+
+  if (window.location.hash === '#edit-bom-preview') {
+    requestAnimationFrame(function () {
+      var el = document.getElementById('edit-bom-preview');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+})();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/bom_studio_edit.js') }}"></script>
+{% endblock %}

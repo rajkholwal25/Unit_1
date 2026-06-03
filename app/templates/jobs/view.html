@@ -1,0 +1,743 @@
+{% extends "base.html" %}
+{% block title %}{{ job.job_no }}{% endblock %}
+
+{% block content %}
+<div class="job-view-page">
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Job Cards</a></li>
+    <li class="breadcrumb-item active">{{ job.job_no }}</li>
+  </ol>
+</nav>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+      <div>
+        <div class="job-view-title mb-2">
+          {{ job.job_no }}
+          {% set _status = job.overall_status %}
+          {% include 'partials/status_badge.html' %}
+          <span class="badge rounded-pill ms-1
+            {% if job.priority == 'urgent' %}bg-danger
+            {% elif job.priority == 'normal' %}bg-secondary
+            {% else %}bg-light text-dark border{% endif %}">
+            {{ job.priority | title }}
+          </span>
+        </div>
+        <div class="job-view-meta">
+          <span class="me-2">Customer: <strong>{{ job.sap_customer_name_snap or '—' }}</strong></span>
+          {% if job.sap_so_number_snap %}<span class="me-2">SO <strong>{{ job.sap_so_number_snap }}</strong></span>{% endif %}
+          {% if job.delivery_date %}<span class="me-2">Delivery <strong>{{ job.delivery_date.strftime('%d %b %Y') }}</strong></span>{% endif %}
+          {% if job.sap_job_card_doc_num_snap %}
+          <span class="d-block mt-1 small">SAP JC: <strong>{{ job.sap_job_card_doc_num_snap }}</strong>{% if job.sap_job_card_series_snap %} / {{ job.sap_job_card_series_snap }}{% endif %}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 job-view-actions">
+        {% if job.is_editable and current_user.has_role('admin', 'planner') %}
+        <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-pencil"></i><span class="d-none d-md-inline ms-1">Edit</span>
+        </a>
+        {% endif %}
+        <a href="{{ url_for('jobs.print_job', job_id=job.id) }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
+          <i class="bi bi-printer"></i><span class="d-none d-md-inline ms-1">Slips</span>
+        </a>
+        <a href="{{ url_for('jobs.print_job_bom', job_id=job.id) }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
+          <i class="bi bi-diagram-3"></i><span class="d-none d-md-inline ms-1">BOM</span>
+        </a>
+        {% if current_user.has_role('admin', 'planner', 'quality') and job.overall_status == 'released' %}
+        <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#finalCloseJobModal">
+          <i class="bi bi-lock"></i><span class="d-none d-md-inline ms-1">Final close</span>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if current_user.has_role('admin', 'planner', 'quality') and status_choices %}
+    <div class="job-view-status-panel">
+      <form method="POST" action="{{ url_for('jobs.change_status', job_id=job.id) }}"
+            class="row g-2 align-items-end"
+            id="jobStatusChangeForm"
+            onsubmit="return confirmJobStatusChange(this);">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="col-auto">
+          <label class="form-label small text-muted mb-1" for="job_status_to">Change status</label>
+          <select class="form-select form-select-sm" name="to_status" id="job_status_to">
+            <option value="">— Select —</option>
+            {% for code, label in status_choices %}
+            <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col">
+          <label class="form-label small text-muted mb-1" for="job_status_reason">Remark</label>
+          <input type="text" class="form-control form-control-sm" name="reason" id="job_status_reason" placeholder="Optional">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% set detail_lines = job.detail_lines.all() %}
+<div class="row g-4">
+  {# Component lines #}
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 border-bottom">
+        <span class="fw-semibold">Sales order / FG lines</span>
+        <span class="text-muted small ms-2">({{ job.header_line_count }})</span>
+      </div>
+      <div class="card-body p-0">
+        {% set lines = job.header_lines.all() %}
+        {% if lines %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3" style="width:40px">#</th>
+                <th>FG item</th>
+                <th class="text-end">Qty (KGS)</th>
+                <th class="text-end">Width (mm)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in lines %}
+              <tr>
+                <td class="ps-3 text-muted">{{ line.line_no }}</td>
+                <td>
+                  <div class="fw-medium small">{{ line.sap_fg_item_name_snap or '—' }}</div>
+                  <div class="text-muted" style="font-size:11px">{{ line.sap_fg_item_code or '—' }}</div>
+                </td>
+                <td class="small text-end">{{ line.dispatch_qty }}</td>
+                <td class="small text-end text-muted">
+                  {% if line.width %}{{ line.width }}{% else %}—{% endif %}
+                </td>
+
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-layers fs-2 d-block mb-2"></i>
+          No components yet.
+          {% if job.is_editable and current_user.has_role('admin', 'planner') %}
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if detail_lines %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-header bg-white py-3 border-bottom">
+        <span class="fw-semibold">Manufacturing lines</span>
+        <span class="text-muted small ms-2">raw material · yield · linked FG</span>
+      </div>
+      <div class="card-body">
+        {% for jdl in detail_lines %}
+        <div class="mfg-line-card">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <span class="fw-semibold small">Line {{ jdl.detail_no }}</span>
+            {% if jdl.active_bom %}
+            <span class="badge bg-light text-dark border">BOM v{{ jdl.active_bom.version }}</span>
+            {% endif %}
+          </div>
+          <div class="row g-2 small">
+            <div class="col-md-6">
+              <span class="text-muted">Raw material</span>
+              <div class="font-monospace fw-medium">{{ jdl.raw_material_item_code or '—' }}</div>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted">Yield loss</span>
+              <div>{{ jdl.yield_loss_pct if jdl.yield_loss_pct is not none else '—' }}%</div>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted">Total (KGS)</span>
+              <div>{{ jdl.total_sheets if jdl.total_sheets is not none else '—' }}</div>
+            </div>
+          </div>
+          <div class="mt-2">
+            <span class="text-muted small">Applies to FG lines</span>
+            <div class="mt-1">
+              {% set inv = jdl.fg_involved.all() %}
+              {% if inv %}
+                {% for r in inv %}
+                <span class="badge text-bg-primary me-1 mb-1">
+                  {{ r.sap_fg_item_code or r.fg_num }}{% if r.sap_so_number %} · SO {{ r.sap_so_number }}{% endif %}
+                </span>
+                {% endfor %}
+              {% else %}
+                <span class="text-muted small">All header lines (legacy)</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Remarks #}
+    {% if job.remarks %}
+    <div class="card border-0 shadow-sm mt-3">
+      <div class="card-body">
+        <div class="fw-medium small text-muted mb-1">Remarks</div>
+        <div class="small">{{ job.remarks }}</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Sidebar: status history + job info #}
+  <div class="col-lg-4 d-flex flex-column gap-3">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 border-bottom fw-semibold">Job details</div>
+      <div class="card-body">
+        <dl class="row job-info-dl mb-0">
+          <div class="col-6">
+            <dt>Created</dt>
+            <dd>{{ job.created_at.strftime('%d %b %Y') }}</dd>
+          </div>
+          <div class="col-6">
+            <dt>Customer code</dt>
+            <dd>{{ job.sap_customer_code or '—' }}</dd>
+          </div>
+          <div class="col-6">
+            <dt>Category</dt>
+            <dd>{{ job.job_type_cat or '—' }}</dd>
+          </div>
+          <div class="col-6">
+            <dt>Series</dt>
+            <dd>{{ job.job_series or '—' }}</dd>
+          </div>
+          {% if job.assigned_planner %}
+          <div class="col-6">
+            <dt>Planner</dt>
+            <dd>{{ job.assigned_planner.username }}</dd>
+          </div>
+          {% endif %}
+          <div class="col-6">
+            <dt>Repeat / old job</dt>
+            <dd>{{ old_job_no_display or '—' }}</dd>
+          </div>
+          <div class="col-6">
+            <dt>OMJD DocEntry</dt>
+            <dd>{{ omjd_doc_entry or '—' }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    {# Status history #}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3 fw-medium">Status History</div>
+      <ul class="list-group list-group-flush">
+        {% for h in history %}
+        <li class="list-group-item py-2 px-3">
+          <div class="d-flex justify-content-between">
+            <span class="small fw-medium">
+              {{ h.from_status or 'Created' }} → {{ h.to_status }}
+            </span>
+            <span class="text-muted" style="font-size:11px">
+              {{ h.changed_at.strftime('%d %b %H:%M') }}
+            </span>
+          </div>
+          {% if h.remark %}
+          <div class="text-muted" style="font-size:11px">{{ h.remark }}</div>
+          {% endif %}
+          <div class="text-muted" style="font-size:11px">by {{ h.user.username if h.user else '—' }}</div>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted small py-2 px-3">No history yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+{% if detail_lines %}
+<div class="row g-3 mt-1 job-view-bom-row">
+  <div class="col-12">
+    <h6 class="fw-semibold text-muted mb-0 mt-2">Bill of materials &amp; production orders</h6>
+  </div>
+  <div class="col-12">
+    {% for jdl in detail_lines %}
+      {% set bom = jdl.active_bom %}
+      {% if bom %}
+      {% set detail = jdl %}
+      {% include 'jobs/partials/bom_design_card.html' %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if job_cancel_block %}
+<div class="modal fade" id="jobCancelBlockedModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title">
+          <i class="bi bi-exclamation-triangle me-1"></i>Job cancellation blocked
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">
+          Job <strong>{{ job_cancel_block.job_no }}</strong> was not cancelled because these production orders still have issued material.
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Production order</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in job_cancel_block.rows or [] %}
+              <tr>
+                <td class="fw-semibold">Production Order {{ row.label }}</td>
+                <td class="text-danger small">{{ row.error }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if job.overall_status == 'released' and current_user.has_role('admin', 'planner', 'quality') %}
+<div
+  class="modal fade"
+  id="finalCloseJobModal"
+  tabindex="-1"
+  aria-hidden="true"
+  data-fetch-url="{{ url_for('jobs.final_close_data', job_id=job.id) }}"
+  data-report-url="{{ url_for('jobs.report_final_fg_completion', job_id=job.id) }}"
+  data-close-url="{{ url_for('jobs.final_close_job', job_id=job.id) }}"
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title">
+          <i class="bi bi-lock me-1"></i>Final close job
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="finalCloseCsrfToken" value="{{ csrf_token() }}">
+        <div class="alert alert-info small">
+          Final close verifies all FG production orders are fully completed, then closes linked SAP production orders with <code>boposClosed</code>.
+        </div>
+        <div id="finalCloseAlert" class="alert d-none small"></div>
+        <div id="finalCloseLoading" class="text-muted small py-3">
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Loading fresh SAP FG production order data...
+        </div>
+        <div id="finalCloseContent" class="d-none">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>SAP PO</th>
+                  <th>FG item / output</th>
+                  <th class="text-end">Planned</th>
+                  <th class="text-end">Issued</th>
+                  <th class="text-end">Completed</th>
+                  <th class="text-end">Pending</th>
+                  <th style="min-width: 260px">Report completion</th>
+                </tr>
+              </thead>
+              <tbody id="finalCloseRows">
+                <tr>
+                  <td colspan="7" class="text-muted text-center py-4">No final FG production orders found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <label class="form-label small fw-medium mt-2" for="finalCloseReason">Final close remarks</label>
+          <textarea id="finalCloseReason" class="form-control form-control-sm" rows="2" placeholder="Optional remarks for the job status history"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-outline-primary" id="finalCloseRefreshBtn">
+          <i class="bi bi-arrow-clockwise me-1"></i>Refresh SAP data
+        </button>
+        <button type="button" class="btn btn-dark" id="finalCloseSubmitBtn" disabled>
+          <i class="bi bi-lock me-1"></i>Final Close Job
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function () {
+  function cleanText(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function getCellText(row, selector) {
+    var el = row.querySelector(selector);
+    return el ? cleanText(el.textContent) : '';
+  }
+
+  function buildBomText(card) {
+    var lines = [];
+    var header = [
+      'Seq',
+      'Process',
+      'Process Code',
+      'SAP Item',
+      'SAP PO',
+      'Step Warehouse',
+      'Required Item Code',
+      'Required Item Name',
+      'Required Qty',
+      'Required Warehouse',
+    ];
+
+    var steps = card.querySelectorAll('.bom-step-row');
+    if (!steps.length) {
+      lines.push(header.join('\t'));
+      lines.push('No process steps defined.');
+      return lines.join('\n');
+    }
+
+    lines.push(header.join('\t'));
+    steps.forEach(function (row) {
+      if (row.classList.contains('bom-design-empty-row')) return;
+
+      var seq = getCellText(row, '.bom-design-seq-pill');
+      var process = getCellText(row, '.bom-col-process .fw-medium');
+      var processCode = getCellText(row, '.bom-col-process .text-muted');
+      var outputCode = getCellText(row, '.bom-col-output-code');
+      var po = getCellText(row, '.bom-design-po-badge') || '—';
+      var warehouse = getCellText(row, '.bom-design-wh-code') || '—';
+
+      var materialRows = row.querySelectorAll('.bom-inner-row');
+      var requiredRows = materialRows.length ? materialRows : [null];
+      requiredRows.forEach(function (matRow) {
+        var code = matRow ? (getCellText(matRow, '.bom-inner-code') || '—') : '—';
+        var name = matRow ? (getCellText(matRow, '.bom-line-name') || '—') : '—';
+        var qty = matRow ? (getCellText(matRow, '.bom-line-qty') || '—') : '—';
+        var reqWh = matRow ? cleanText(matRow.getAttribute('data-req-wh') || '') : '';
+        if (!reqWh) reqWh = warehouse;
+
+        lines.push([
+          seq || '—',
+          process || 'Process',
+          processCode || '—',
+          outputCode || '—',
+          po,
+          warehouse,
+          code,
+          name,
+          qty,
+          reqWh || '—',
+        ].join('\t'));
+      });
+    });
+
+    return lines.join('\n').trim();
+  }
+
+  async function copyBom(card, button) {
+    var text = buildBomText(card);
+    if (!text) return;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      if (button) {
+        var old = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check2 me-1"></i>Copied';
+        button.classList.add('is-copied');
+        window.setTimeout(function () {
+          button.innerHTML = old;
+          button.classList.remove('is-copied');
+        }, 1400);
+      }
+    } catch (err) {
+      var fallback = document.createElement('textarea');
+      fallback.value = text;
+      fallback.setAttribute('readonly', 'readonly');
+      fallback.style.position = 'fixed';
+      fallback.style.left = '-9999px';
+      document.body.appendChild(fallback);
+      fallback.select();
+      try {
+        document.execCommand('copy');
+      } finally {
+        document.body.removeChild(fallback);
+      }
+    }
+  }
+
+  window.confirmJobStatusChange = function (form) {
+    var sel = form && form.querySelector ? form.querySelector('[name="to_status"]') : null;
+    if (!sel || !sel.value) {
+      alert('Choose a status from the dropdown, then click Apply.');
+      return false;
+    }
+    if (sel.value === 'cancelled') {
+      return confirm('Cancel this job? Linked SAP production orders will only be cancelled if they have no issued material.');
+    }
+    if (sel.value === 'released') {
+      return confirm('Release this job? Linked SAP production orders will be released.');
+    }
+    if (sel.value === 'closed') {
+      alert('Use Final close so FG completion is verified before closing SAP production orders.');
+      return false;
+    }
+    return true;
+  };
+
+  document.addEventListener('click', function (ev) {
+    var button = ev.target && ev.target.closest ? ev.target.closest('.js-copy-bom-btn') : null;
+    if (!button) return;
+    var card = button.closest('.bom-design-card');
+    if (!card) return;
+    copyBom(card, button);
+  });
+
+  function escHtml(value) {
+    var div = document.createElement('div');
+    div.textContent = value == null ? '' : String(value);
+    return div.innerHTML;
+  }
+
+  function fmtQty(value) {
+    var n = Number(value || 0);
+    if (!isFinite(n)) n = 0;
+    return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+
+  var finalCloseModal = document.getElementById('finalCloseJobModal');
+  if (finalCloseModal) {
+    var finalCloseState = { rows: [], canClose: false, loaded: false };
+    var loadingEl = document.getElementById('finalCloseLoading');
+    var contentEl = document.getElementById('finalCloseContent');
+    var rowsEl = document.getElementById('finalCloseRows');
+    var alertEl = document.getElementById('finalCloseAlert');
+    var refreshBtn = document.getElementById('finalCloseRefreshBtn');
+    var submitBtn = document.getElementById('finalCloseSubmitBtn');
+    var reasonEl = document.getElementById('finalCloseReason');
+    var csrfEl = document.getElementById('finalCloseCsrfToken');
+
+    function csrfToken() {
+      return csrfEl ? csrfEl.value : '';
+    }
+
+    function showFinalCloseAlert(kind, message) {
+      if (!alertEl) return;
+      alertEl.className = 'alert alert-' + kind + ' small';
+      alertEl.textContent = message || '';
+      alertEl.classList.toggle('d-none', !message);
+    }
+
+    function setFinalCloseLoading(isLoading) {
+      if (loadingEl) loadingEl.classList.toggle('d-none', !isLoading);
+      if (contentEl) contentEl.classList.toggle('d-none', isLoading);
+      if (refreshBtn) refreshBtn.disabled = isLoading;
+    }
+
+    function renderFinalCloseRows(rows) {
+      if (!rowsEl) return;
+      if (!rows || !rows.length) {
+        rowsEl.innerHTML = '<tr><td colspan="7" class="text-muted text-center py-4">No final FG production orders found.</td></tr>';
+        return;
+      }
+      rowsEl.innerHTML = rows.map(function (row) {
+        var pending = Number(row.pending_qty || 0);
+        var docEntry = escHtml(row.doc_entry);
+        var docNum = escHtml(row.doc_num || row.doc_entry || '—');
+        var item = escHtml(row.item_no || '—');
+        var desc = escHtml(row.product_description || '');
+        var action = '<span class="badge text-bg-success">No pending completion</span>';
+        if (pending > 0.0001) {
+          action = [
+            '<div class="row g-1 align-items-center final-close-report-row" data-doc-entry="' + docEntry + '">',
+            '<div class="col-4"><input class="form-control form-control-sm js-final-close-qty" type="number" min="0.0001" step="0.0001" max="' + escHtml(pending) + '" value="' + escHtml(pending) + '" placeholder="Qty"></div>',
+            '<div class="col-4"><input class="form-control form-control-sm js-final-close-batch" type="text" maxlength="32" placeholder="Batch #"></div>',
+            '<div class="col-4"><button type="button" class="btn btn-sm btn-primary w-100 js-report-completion">Report</button></div>',
+            '<div class="col-12"><input class="form-control form-control-sm js-final-close-remarks mt-1" type="text" maxlength="254" placeholder="Optional remarks"></div>',
+            '</div>',
+          ].join('');
+        }
+        return [
+          '<tr>',
+          '<td><div class="fw-semibold">' + docNum + '</div><div class="text-muted small">Entry ' + docEntry + '</div></td>',
+          '<td><div class="font-monospace small">' + item + '</div><div class="text-muted small">' + desc + '</div></td>',
+          '<td class="text-end">' + escHtml(fmtQty(row.planned_qty)) + '</td>',
+          '<td class="text-end">' + escHtml(fmtQty(row.issued_qty)) + '</td>',
+          '<td class="text-end">' + escHtml(fmtQty(row.completed_qty)) + '</td>',
+          '<td class="text-end ' + (pending > 0.0001 ? 'text-danger fw-semibold' : 'text-success') + '">' + escHtml(fmtQty(pending)) + '</td>',
+          '<td>' + action + '</td>',
+          '</tr>',
+        ].join('');
+      }).join('');
+    }
+
+    async function loadFinalCloseData() {
+      setFinalCloseLoading(true);
+      showFinalCloseAlert('', '');
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        var resp = await fetch(finalCloseModal.getAttribute('data-fetch-url'), {
+          credentials: 'same-origin',
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Could not load SAP completion data.');
+        finalCloseState.rows = data.rows || [];
+        finalCloseState.canClose = !!data.can_close;
+        finalCloseState.loaded = true;
+        renderFinalCloseRows(finalCloseState.rows);
+        if (submitBtn) submitBtn.disabled = !finalCloseState.canClose;
+        if (finalCloseState.canClose) {
+          showFinalCloseAlert('success', 'All final FG completion quantities are cleared. You can close the job.');
+        } else {
+          showFinalCloseAlert('warning', 'Report pending FG completion quantities before final close.');
+        }
+      } catch (err) {
+        finalCloseState.canClose = false;
+        renderFinalCloseRows([]);
+        showFinalCloseAlert('danger', err && err.message ? err.message : 'Could not load SAP completion data.');
+      } finally {
+        setFinalCloseLoading(false);
+      }
+    }
+
+    async function reportCompletion(reportRow, button) {
+      var qtyEl = reportRow.querySelector('.js-final-close-qty');
+      var batchEl = reportRow.querySelector('.js-final-close-batch');
+      var remarksEl = reportRow.querySelector('.js-final-close-remarks');
+      var fd = new FormData();
+      fd.append('csrf_token', csrfToken());
+      fd.append('doc_entry', reportRow.getAttribute('data-doc-entry') || '');
+      fd.append('quantity', qtyEl ? qtyEl.value : '');
+      fd.append('batch_number', batchEl ? batchEl.value : '');
+      fd.append('remarks', remarksEl ? remarksEl.value : '');
+      if (button) button.disabled = true;
+      showFinalCloseAlert('', '');
+      try {
+        var resp = await fetch(finalCloseModal.getAttribute('data-report-url'), {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || 'Could not report completion.');
+        finalCloseState.rows = data.rows || [];
+        finalCloseState.canClose = !!data.can_close;
+        renderFinalCloseRows(finalCloseState.rows);
+        if (submitBtn) submitBtn.disabled = !finalCloseState.canClose;
+        showFinalCloseAlert(finalCloseState.canClose ? 'success' : 'info', data.message || 'Completion reported.');
+      } catch (err) {
+        showFinalCloseAlert('danger', err && err.message ? err.message : 'Could not report completion.');
+      } finally {
+        if (button) button.disabled = false;
+      }
+    }
+
+    async function finalCloseJob() {
+      if (!finalCloseState.canClose) return;
+      var fd = new FormData();
+      fd.append('csrf_token', csrfToken());
+      fd.append('reason', reasonEl ? reasonEl.value : '');
+      if (submitBtn) submitBtn.disabled = true;
+      showFinalCloseAlert('', '');
+      try {
+        var resp = await fetch(finalCloseModal.getAttribute('data-close-url'), {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          if (data.rows) {
+            finalCloseState.rows = data.rows;
+            finalCloseState.canClose = !!data.can_close;
+            renderFinalCloseRows(finalCloseState.rows);
+          }
+          throw new Error(data.error || 'Could not close job.');
+        }
+        window.location = data.redirect_url || window.location.href;
+      } catch (err) {
+        showFinalCloseAlert('danger', err && err.message ? err.message : 'Could not close job.');
+        if (submitBtn) submitBtn.disabled = !finalCloseState.canClose;
+      }
+    }
+
+    finalCloseModal.addEventListener('shown.bs.modal', function () {
+      loadFinalCloseData();
+    });
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', loadFinalCloseData);
+    }
+    if (submitBtn) {
+      submitBtn.addEventListener('click', finalCloseJob);
+    }
+    if (rowsEl) {
+      rowsEl.addEventListener('click', function (ev) {
+        var button = ev.target && ev.target.closest ? ev.target.closest('.js-report-completion') : null;
+        if (!button) return;
+        var reportRow = button.closest('.final-close-report-row');
+        if (!reportRow) return;
+        reportCompletion(reportRow, button);
+      });
+    }
+  }
+
+  var blockedModal = document.getElementById('jobCancelBlockedModal');
+  if (blockedModal) {
+    window.setTimeout(function () {
+      bootstrap.Modal.getOrCreateInstance(blockedModal, { backdrop: 'static', keyboard: false }).show();
+    }, 0);
+  }
+})();
+</script>
+
+{# Reject modal #}
+<div class="modal fade" id="rejectModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('jobs.change_status', job_id=job.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="to_status" value="draft">
+        <div class="modal-header">
+          <h6 class="modal-title">Reject & return to draft</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label fw-medium">Reason for rejection <span class="text-danger">*</span></label>
+          <textarea name="reason" class="form-control" rows="3" required
+                    placeholder="Describe what needs to be corrected…"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Reject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</div>{# .job-view-page #}
+{% endblock %}

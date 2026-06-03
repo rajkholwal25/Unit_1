@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-load_dotenv(BASE_DIR / '.env')
+# .env is the source of truth (overrides stale shell DATABASE_URL from old sessions).
+load_dotenv(BASE_DIR / '.env', override=True)
 
 def _sap_service_root():
     """Host root for Service Layer (paths append /b1s/v1/...)."""
@@ -19,8 +20,12 @@ def _sap_service_root():
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
+    WTF_CSRF_TIME_LIMIT = None
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or 'sqlite:///bom.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    JOB_NO_PREFIX = os.getenv('JOB_NO_PREFIX', 'JC')
+    SAP_DEFAULT_WAREHOUSE = os.getenv('SAP_DEFAULT_WAREHOUSE', 'FBD-FG').strip() or 'FBD-FG'
+    UNIT1_DEFAULT_UOM = (os.getenv('UNIT1_DEFAULT_UOM', 'KGS') or 'KGS').strip().upper()
     SAP_SERVICE_LAYER_URL = os.getenv('SAP_SERVICE_LAYER_URL')
     SAP_BASE_URL = _sap_service_root()
     SAP_COMPANY_DB = os.getenv('SAP_COMPANY_DB')

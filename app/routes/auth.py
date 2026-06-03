@@ -10,9 +10,11 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = (request.form.get('email') or '').strip()
+        email = (request.form.get('email') or request.form.get('username') or '').strip()
         password = request.form.get('password') or ''
         user = User.query.filter_by(email=email).first()
+        if not user and email:
+            user = User.query.filter_by(username=email).first()
         if user and user.check_password(password):
             login_user(user)
             flash('Logged in', 'success')

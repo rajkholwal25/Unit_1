@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}BOM print — {{ job.job_no }}{% endblock %}
+
+{% block content %}
+<div class="d-print-none mb-3">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Job Cards</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.view_job', job_id=job.id) }}">{{ job.job_no }}</a></li>
+      <li class="breadcrumb-item active">BOM print</li>
+    </ol>
+  </nav>
+  <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+    <div>
+      <h5 class="fw-semibold mb-1">Bill of materials — {{ job.job_no }}</h5>
+      <div class="text-muted small">
+        Customer: <strong>{{ job.sap_customer_name_snap or '—' }}</strong>
+        {% if job.sap_so_number_snap %}· SO: <strong>{{ job.sap_so_number_snap }}</strong>{% endif %}
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('jobs.print_job', job_id=job.id) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-printer me-1"></i>Job slips (3)
+      </a>
+      <button class="btn btn-primary btn-sm" type="button" onclick="window.print()">
+        <i class="bi bi-printer-fill me-1"></i>Print BOM
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .print-bom-root {
+    max-width: 210mm;
+    margin: 0 auto 16px auto;
+  }
+  .a4-bom-page {
+    background: #fff;
+    border: 1px solid #111;
+    padding: 6mm;
+    margin-bottom: 12px;
+  }
+  .page-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 4mm;
+    border-bottom: 1px solid #111;
+    margin-bottom: 4mm;
+  }
+  .banner-left img {
+    height: 18mm;
+    max-height: 20mm;
+    width: auto;
+    display: block;
+    object-fit: contain;
+  }
+  .slip-meta { font-size: 11px; color: #333; text-align: right; }
+  .slip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .slip-table th, .slip-table td {
+    border: 1px solid #111;
+    padding: 3px 5px;
+    vertical-align: top;
+  }
+  .slip-table th {
+    background: #f3f3f3;
+    font-weight: 700;
+  }
+  .slip-kv {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .slip-kv td {
+    padding: 3px 6px;
+    border: 1px solid #111;
+  }
+  .muted { color: #666; }
+  .bom-block {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 2px solid #222;
+  }
+  .bom-block:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .bom-step-block {
+    margin-top: 10px;
+    padding: 8px 10px 10px 10px;
+    border: 2px solid #111;
+    border-radius: 2px;
+    background: #fafafa;
+  }
+  .bom-step-block h6 {
+    font-size: 11.5px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #d0d0d0;
+  }
+  /* Step summary (Output FG / SAP PO): lighter grid than inputs */
+  .bom-step-summary-table th,
+  .bom-step-summary-table td {
+    border-color: #c8c8c8;
+  }
+  .text-end { text-align: right; }
+  .text-center { text-align: center; }
+
+  @media print {
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
+    }
+    .main-content { margin-top: 0 !important; }
+    .main-content > .container-fluid {
+      padding: 0 !important;
+      max-width: none !important;
+    }
+    .print-bom-root { max-width: none; margin: 0; }
+    .a4-bom-page {
+      border: none;
+      margin: 0;
+      padding: 4mm 5mm;
+    }
+    .bom-block {
+      page-break-after: always;
+      break-after: page;
+    }
+    .bom-block:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    @page { size: A4; margin: 4mm; }
+  }
+</style>
+
+<div class="print-bom-root">
+  <div class="a4-bom-page">
+    <div class="page-banner">
+      <div class="banner-left">
+        <img src="{{ url_for('static', filename='img/vk-logo.png') }}" alt="VK logo">
+      </div>
+      <div class="slip-meta">
+        <div><strong>BILL OF MATERIALS</strong></div>
+        <div><strong>Job No.</strong> {{ job.job_no }}</div>
+        <div><strong>Date</strong> {{ print_date }}</div>
+      </div>
+    </div>
+
+    {% for block in bom_blocks %}
+    {% set dl = block.detail %}
+    {% set bom = block.bom %}
+    <section class="bom-block" aria-label="BOM {{ dl.element_name or ('line ' ~ dl.detail_no) }}">
+      {% if not bom %}
+      <p class="muted small mb-0"><strong>No active BOM</strong> for this detail line.</p>
+      {% else %}
+      <table class="slip-kv mb-2">
+        <tr>
+          <td style="width: 18%;"><strong>Process sequence</strong></td>
+          <td>{{ block.sequence_display or '—' }}</td>
+        </tr>
+      </table>
+
+      {% for sp in block.steps %}
+      {% set st = sp.step %}
+      <div class="bom-step-block">
+        <h6>Step {{ st.seq_no }} — {{ st.process_code }} — {{ st.step_name }}</h6>
+        <table class="slip-table bom-step-summary-table mb-0">
+          <tbody>
+            <tr>
+              <td style="width: 14%;"><strong>Output FG</strong></td>
+              <td style="width: 30%;" class="font-monospace">{{ st.output_item_code or '—' }}</td>
+              <td style="width: 12%;"><strong>UoM</strong></td>
+              <td style="width: 12%;">{{ st.uom or '—' }}</td>
+              <td style="width: 14%;"><strong>Planned qty</strong></td>
+              <td class="text-end" style="width: 18%;">{{ (st.planned_qty|float)|round(0)|int if st.planned_qty is not none else '—' }}</td>
+            </tr>
+            <tr>
+              <td><strong>SAP PO</strong></td>
+              <td colspan="2">
+                {% if st.sap_doc_num or st.sap_warehouse %}
+                  {% if st.sap_doc_num %}<strong>#{{ st.sap_doc_num }}</strong>{% endif %}
+                  {% if st.sap_doc_num and st.sap_warehouse %} · {% endif %}
+                  {% if st.sap_warehouse %}WH {{ st.sap_warehouse }}{% endif %}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td><strong>Remarks</strong></td>
+              <td colspan="2">{{ st.production_order_remarks or '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        {% if sp.inputs %}
+        <table class="slip-table mt-2">
+          <thead>
+            <tr>
+              <th style="width: 18%;">Item code</th>
+              <th style="width: 28%;">Description</th>
+              <th style="width: 8%;">UoM</th>
+              <th style="width: 12%;" class="text-end">Qty</th>
+              <th style="width: 12%;">WH</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inp in sp.inputs %}
+            <tr>
+              <td class="font-monospace">{{ inp.sap_item_code or '—' }}</td>
+              <td>{{ inp.description or '—' }}</td>
+              <td class="text-center">{{ inp.uom or '—' }}</td>
+              <td class="text-end">{{ (inp.qty_per_job|float)|round(0)|int if inp.qty_per_job is not none else '—' }}</td>
+              <td>{{ inp.sap_warehouse or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="muted small mb-0 mt-1">No inputs on this step.</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </section>
+    {% else %}
+    <p class="muted">No detail lines on this job.</p>
+    {% endfor %}
+    {% if bom_blocks %}
+    <div class="text-end mt-3">
+      <small class="text-muted">BOM version v{{ bom_blocks[0].bom.version if bom_blocks[0].bom else '—' }}</small>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

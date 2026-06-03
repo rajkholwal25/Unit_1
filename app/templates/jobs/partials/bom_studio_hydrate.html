@@ -1,0 +1,108 @@
+{# Interactive BOM studio (DOM matches job_cards/form.html BOM builder for serialization).
+   Expects: studio_block (dict with sections), material_row_index, detail #}
+{% set WH_OPTS = [
+  ('II-RM', 'II-RM'), ('II-PSTR', 'II-PSTR'), ('II-PRI', 'II-PRI'), ('II-FOI', 'II-FOI'), ('II-PST', 'II-PST'),
+  ('II-LAM', 'II-LAM'), ('II-DIE', 'II-DIE'), ('II-CORU', 'II-CORU'), ('II-COT', 'II-COT'),
+  ('II-UV', 'II-UV'), ('II-MAN', 'II-MAN'), ('OHJW-U2', 'OHJW-U2'), ('II-FG', 'II-FG'),
+  ('II-EMB', 'II-EMB'),
+] %}
+<datalist id="sapBomItemsDatalist"></datalist>
+<div id="materialsContainer" class="d-none" aria-hidden="true">
+  <div class="material-row border rounded p-2 mb-2" id="mat_row_{{ material_row_index }}">
+    <input type="text" name="mat_name_{{ material_row_index }}" value="{{ detail.element_name or '' }}" tabindex="-1">
+  </div>
+</div>
+<div id="processSequenceBlocksContainer" class="d-none" aria-hidden="true"></div>
+
+<div id="bomBlocksContainer">
+  <div class="bom-line-block border rounded p-3 mb-3 bg-light-subtle" data-bom-line-index="{{ material_row_index }}" id="bom_line_wrap_{{ material_row_index }}">
+    <div class="fw-semibold bom-line-title">BOM for this detail line</div>
+    <div class="text-muted small mb-2 bom-line-element-label">Element – {{ detail.element_name or '(unnamed)' }}</div>
+    <p class="text-muted small mb-2">FG qty = dispatch (kg). RM input uses <strong>yield loss %</strong> then <strong>wastage (kg)</strong>.</p>
+    <div class="row g-2 mb-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small mb-0">Yield loss % (BOM)</label>
+        <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm bom-yield-loss-pct"
+               value="{{ studio_block.yield_loss_pct if studio_block.yield_loss_pct is not none else config.get('BOM_YIELD_LOSS_PCT', 2) }}">
+      </div>
+    </div>
+    <div class="bom-sections-inner">
+      {% if not studio_block.sections %}
+      <p class="text-muted small mb-0">No BOM steps yet. Set the process sequence and press <strong>Regenerate BOM</strong> above.</p>
+      {% endif %}
+      {% for sec in studio_block.sections %}
+      <div class="border rounded p-2 mb-3 bg-light-subtle" data-process-name="{{ sec.process_name }}" data-process-code="{{ sec.process_code }}">
+        <div class="fw-semibold mb-2 d-flex justify-content-between align-items-center">
+          <span>{{ loop.index }}. {{ sec.process_name }} ({{ sec.process_code }})</span>
+        </div>
+        {% for card in sec.cards %}
+        <div class="border rounded p-2 mb-2 bg-white bom-process-card" data-card-idx="{{ card.card_idx|default(0) }}">
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-4">
+              <label class="form-label small mb-0">Item code</label>
+              <input class="form-control form-control-sm bom-item-name" value="{{ card.item_name }}"
+                     {% if (sec.process_name or '')|upper == 'FG' %}readonly{% endif %}>
+              <input type="hidden" class="bom-full-name" value="">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small mb-0">Warehouse</label>
+              <select class="form-select form-select-sm bom-warehouse">
+                {% for val, lab in WH_OPTS %}
+                <option value="{{ val }}" {% if (card.warehouse or '')|trim == val or (val == 'OHJW-U2' and (card.warehouse or '')|trim == 'II-OHJW') %}selected{% endif %}>{{ lab }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small mb-0">Planned qty</label>
+              <input type="number" step="0.01" min="0" class="form-control form-control-sm bom-planned-qty" value="{{ card.planned_qty }}">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label small mb-0">UoM</label>
+              <input class="form-control form-control-sm bom-uom" value="{{ card.uom }}">
+            </div>
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-12">
+              <label class="form-label small mb-0">SAP production order remarks <span class="text-muted fw-normal">(optional, max 254)</span></label>
+              <textarea class="form-control form-control-sm bom-po-remarks" rows="2" maxlength="254" placeholder="Passed to SAP PO Remarks…">{{ card.production_order_remarks or '' }}</textarea>
+            </div>
+          </div>
+          <div class="border-top pt-2">
+            <div class="small fw-semibold mb-1">Required items</div>
+            <div class="bom-extra-wrap">
+              {% for req in card.required_items %}
+              <div class="row g-2 mt-1 align-items-center"{% if req.is_linkage %} data-is-prev-output="true"{% endif %}{% if req.is_qty_driver %} data-bom-qty-driver="true"{% endif %}>
+                <div class="col-md-4">
+                  <input type="text" class="form-control form-control-sm bom-itemcode-input" list="sapBomItemsDatalist" placeholder="Item code (SAP)"
+                         value="{{ req.sap_item_code }}{% if req.description and req.description != req.sap_item_code %} — {{ req.description }}{% endif %}" {% if req.is_linkage %}readonly title="Previous step output (linked)"{% endif %}>
+                </div>
+                <div class="col-md-3">
+                  <select class="form-select form-select-sm bom-item-wh">
+                    {% for val, lab in WH_OPTS %}
+                    <option value="{{ val }}" {% if (req.warehouse or '')|trim == val or (val == 'OHJW-U2' and (req.warehouse or '')|trim == 'II-OHJW') %}selected{% endif %}>{{ lab }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <input type="number" step="0.01" class="form-control form-control-sm bom-item-qty" placeholder="Qty" value="{{ req.qty_per_job }}">
+                </div>
+                <div class="col-md-2">
+                  <input type="text" class="form-control form-control-sm bom-item-uom" placeholder="UoM" value="{{ req.uom }}">
+                </div>
+                <div class="col-md-1 text-end">
+                  {% if not req.is_linkage %}
+                  <button type="button" class="btn btn-sm btn-outline-danger bom-rm-extra" title="Remove">×</button>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm mt-1 bom-add-extra">+ Add required item</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>

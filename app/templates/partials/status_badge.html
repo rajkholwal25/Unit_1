@@ -1,0 +1,22 @@
+{#
+  Reusable status badge. Expects `job` in context with `job.overall_status`
+  OR `line` with `line.line_status`.
+  Usage: {% set status = job.overall_status %} {% include 'partials/status_badge.html' %}
+  Or just call it where job is in scope.
+#}
+{% set _status = status if status is defined else (job.overall_status if job is defined else (line.line_status if line is defined else '')) %}
+{% set _map = {
+  'draft':            ('secondary', 'Draft'),
+  'pending_approval': ('warning',   'Pending Approval'),
+  'approved':         ('info',      'Approved'),
+  'in_production':    ('primary',   'In Production'),
+  'qc_check':         ('danger',    'QC Check'),
+  'completed':        ('success',   'Completed'),
+  'closed':           ('dark',      'Closed'),
+  'cancelled':        ('secondary', 'Cancelled'),
+  'released':         ('primary',   'Released'),
+  'open':             ('success',   'Open'),
+  'staged':           ('warning',   'Staged'),
+} %}
+{% set _color, _label = _map.get(_status, ('secondary', _status | title)) %}
+<span class="badge bg-{{ _color }}">{{ _label }}</span>

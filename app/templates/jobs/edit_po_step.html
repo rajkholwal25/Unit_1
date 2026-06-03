@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Edit PO — {{ job.job_no }} step {{ step.seq_no }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-po-page { max-width: 920px; margin: 0 auto; }
+  .edit-po-hero {
+    border-radius: 0.5rem;
+    border: 1px solid var(--bs-border-color);
+    background: linear-gradient(120deg, #eff6ff 0%, #fff 50%);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .edit-po-hero h1 { font-size: 1.1rem; font-weight: 600; margin: 0; }
+  .edit-po-kv { display: grid; grid-template-columns: 8rem 1fr; gap: 0.35rem 1rem; font-size: 0.875rem; }
+  .edit-po-kv dt { color: var(--bs-secondary-color); margin: 0; font-weight: 500; }
+  .edit-po-kv dd { margin: 0; }
+  .edit-po-mat th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--bs-secondary-color); }
+  .edit-po-linkage-badge { font-size: 0.65rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-po-page px-2 px-md-0">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Manufacturing jobs</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.view_job', job_id=job.id) }}">{{ job.job_no }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edit production order</li>
+    </ol>
+  </nav>
+
+  <div class="edit-po-hero">
+    <h1><i class="bi bi-gear-wide-connected me-2 text-primary"></i>One production step</h1>
+    <p class="small text-muted mb-0 mt-2">
+      You may change the step <strong>warehouses</strong>, edit <strong>component lines</strong> that are <em>not</em> the previous-step output link,
+      and <strong>add</strong> extra components. The linkage row (previous process output) is read-only — adjust routing in the <strong>BOM studio</strong> instead.
+      Planned quantity is shown for reference only; change it via BOM studio or FG save flows.
+      {% if step.sap_doc_num %}
+      When a SAP PO is linked, saving runs a full line PATCH from this app’s BOM lines.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <div class="section-title mb-3">Step summary</div>
+      <dl class="edit-po-kv">
+        <dt>Sequence</dt><dd>#{{ step.seq_no }}</dd>
+        <dt>Process</dt><dd>{{ step.step_name }} <span class="text-muted font-monospace">({{ step.process_code }})</span></dd>
+        <dt>Output item</dt><dd class="font-monospace small">{{ step.output_item_code or '—' }}</dd>
+        <dt>Planned qty</dt><dd>{{ step.planned_qty if step.planned_qty is not none else '—' }} <span class="text-muted">(read-only here)</span></dd>
+        <dt>SAP PO</dt><dd>{% if step.sap_doc_num %}<span class="badge bg-light text-dark border">{{ step.sap_doc_num }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+        <dt>Doc entry</dt><dd class="font-monospace">{% if step.sap_doc_entry %}{{ step.sap_doc_entry }}{% else %}<span class="text-muted">—</span>{% endif %}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <div class="section-title">Editable fields</div>
+      <form method="POST" id="edit-po-form" data-items-search-url="{{ url_for('sap_api.items_search') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <datalist id="sapPoItemsDatalist"></datalist>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-medium">SAP warehouse (order header)</label>
+            <input type="text" name="sap_warehouse" class="form-control" value="{{ step.sap_warehouse or '' }}" placeholder="e.g. II-DIE" maxlength="20">
+            <div class="form-text">Sent to SAP as the production order <code>Warehouse</code>.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Warehouse (app)</label>
+            <input type="text" name="warehouse" class="form-control" value="{{ step.warehouse or '' }}" maxlength="20">
+            <div class="form-text">Display / internal field on the BOM step.</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-medium">SAP production order remarks</label>
+            <textarea name="production_order_remarks" class="form-control" rows="3" maxlength="254"
+                      placeholder="Optional — sent to SAP as the PO header Remarks (max 254 chars)">{{ step.production_order_remarks or '' }}</textarea>
+            <div class="form-text">If left empty, SAP uses the default <span class="font-monospace">Job … | Step …</span> line when the order is created or updated.</div>
+          </div>
+        </div>
+
+        <div class="section-title mt-2">Required components</div>
+        <p class="text-muted small mb-2">Rows marked <span class="badge bg-secondary edit-po-linkage-badge">Link</span> consume the prior step’s output and cannot be edited here.
+          For other lines, type at least two characters in <strong>SAP item code</strong> to search item master (OITM), same as the new job BOM builder.</p>
+
+        <div class="table-responsive border rounded edit-po-mat">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3" style="min-width:9rem">SAP item code</th>
+                <th style="min-width:12rem">Description</th>
+                <th style="width:5rem">UoM</th>
+                <th style="width:7rem">Qty / job</th>
+                <th style="width:7rem">Line WH</th>
+                <th class="pe-3" style="width:4rem"></th>
+              </tr>
+            </thead>
+            <tbody id="po-inputs-tbody">
+              {% for row in input_rows %}
+              {% set inp = row.inp %}
+              <tr class="{% if row.is_linkage %}table-light{% endif %}">
+                <td class="ps-3">
+                  {% if row.is_linkage %}
+                  <span class="font-monospace small">{{ inp.sap_item_code or '—' }}</span>
+                  {% else %}
+                  <input type="text" name="inp_{{ inp.id }}_sap_item_code" class="form-control form-control-sm font-monospace edit-po-item-code"
+                         value="{{ inp.sap_item_code or '' }}" maxlength="50" required list="sapPoItemsDatalist" autocomplete="off"
+                         placeholder="Type to search OITM…">
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.is_linkage %}
+                  <span class="small">{{ inp.description or '—' }}</span>
+                  {% else %}
+                  <input type="text" name="inp_{{ inp.id }}_description" class="form-control form-control-sm"
+                         value="{{ inp.description or '' }}" maxlength="200">
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.is_linkage %}
+                  <span class="small text-muted">{{ inp.uom or '—' }}</span>
+                  {% else %}
+                  <input type="text" name="inp_{{ inp.id }}_uom" class="form-control form-control-sm"
+                         value="{{ inp.uom or '' }}" maxlength="10">
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.is_linkage %}
+                  <span class="small">{{ inp.qty_per_job if inp.qty_per_job is not none else '—' }}</span>
+                  {% else %}
+                  <input type="text" name="inp_{{ inp.id }}_qty" class="form-control form-control-sm"
+                         value="{{ inp.qty_per_job if inp.qty_per_job is not none else '' }}" inputmode="decimal">
+                  {% endif %}
+                </td>
+                <td>
+                  {% if row.is_linkage %}
+                  <span class="small text-muted">{{ inp.sap_warehouse or '—' }}</span>
+                  {% else %}
+                  <input type="text" name="inp_{{ inp.id }}_sap_warehouse" class="form-control form-control-sm"
+                         value="{{ inp.sap_warehouse or '' }}" maxlength="20" placeholder="Default">
+                  {% endif %}
+                </td>
+                <td class="pe-3 text-end">
+                  {% if row.is_linkage %}
+                  <span class="badge bg-secondary edit-po-linkage-badge">Link</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-primary btn-sm" id="add-po-line-btn">
+            <i class="bi bi-plus-lg me-1"></i>Add component line
+          </button>
+        </div>
+
+        <template id="new-po-line-template">
+          <tr class="new-po-line">
+            <td class="ps-3">
+              <input type="text" name="new_sap_item_code" class="form-control form-control-sm font-monospace edit-po-item-code" maxlength="50"
+                     list="sapPoItemsDatalist" autocomplete="off" placeholder="Type to search OITM…">
+            </td>
+            <td>
+              <input type="text" name="new_description" class="form-control form-control-sm" maxlength="200" placeholder="Description">
+            </td>
+            <td>
+              <input type="text" name="new_uom" class="form-control form-control-sm" maxlength="10" value="PCS" placeholder="PCS">
+            </td>
+            <td>
+              <input type="text" name="new_qty_per_job" class="form-control form-control-sm" inputmode="decimal" placeholder="Qty">
+            </td>
+            <td>
+              <input type="text" name="new_sap_warehouse" class="form-control form-control-sm" maxlength="20" placeholder="WH">
+            </td>
+            <td class="pe-3 text-end">
+              <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 remove-new-po-line" title="Remove">&times;</button>
+            </td>
+          </tr>
+        </template>
+
+        <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+          <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-check2-circle me-1"></i>Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var form = document.getElementById('edit-po-form');
+  var tbody = document.getElementById('po-inputs-tbody');
+  var tpl = document.getElementById('new-po-line-template');
+  var addBtn = document.getElementById('add-po-line-btn');
+  var itemsSearchUrl = (form && form.getAttribute('data-items-search-url')) || '';
+  var dl = document.getElementById('sapPoItemsDatalist');
+  var itemTmo;
+
+  function codeFromItemField(el) {
+    var raw = String(el && el.value ? el.value : '').trim();
+    if (!raw) return '';
+    if (raw.indexOf('\u2014') >= 0) return raw.split('\u2014')[0].trim().toUpperCase();
+    if (raw.indexOf(' — ') >= 0) return raw.split(' — ')[0].trim().toUpperCase();
+    return raw.toUpperCase();
+  }
+
+  function fetchSapItemCodes(q, cb) {
+    var t = (q || '').trim();
+    if (t.length < 2 || !itemsSearchUrl) return;
+    fetch(itemsSearchUrl + '?q=' + encodeURIComponent(t), { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (data) {
+        if (!Array.isArray(data) || data.error) return;
+        window.__sapItemUomCache = window.__sapItemUomCache || {};
+        if (!dl) return;
+        dl.innerHTML = '';
+        data.forEach(function (it) {
+          var code = String(it.item_code || '').trim();
+          var uom = String(it.uom || '').trim();
+          var nm = String(it.item_name || '').trim();
+          if (code) window.__sapItemUomCache[code.toUpperCase()] = uom;
+          var o = document.createElement('option');
+          o.value = code + (nm ? (' — ' + nm) : '');
+          dl.appendChild(o);
+        });
+        if (cb) cb();
+      })
+      .catch(function () {});
+  }
+
+  function tryPrefillRowFromCache(itemInput) {
+    if (!itemInput) return;
+    var tr = itemInput.closest('tr');
+    if (!tr) return;
+    var uIn = tr.querySelector('input[name$="_uom"], input[name="new_uom"]');
+    var dIn = tr.querySelector('input[name$="_description"], input[name="new_description"]');
+    var code = codeFromItemField(itemInput);
+    if (!code) return;
+    var cache = window.__sapItemUomCache || {};
+    var uom = cache[code] || cache[code.toUpperCase()];
+    if (uIn && uom && !String(uIn.value || '').trim()) uIn.value = uom;
+    if (dIn) {
+      var raw = String(itemInput.value || '').trim();
+      var nm = '';
+      if (raw.indexOf('\u2014') >= 0) nm = raw.split(/\u2014/).slice(1).join('\u2014').trim();
+      else if (raw.indexOf(' — ') >= 0) nm = raw.split(' — ').slice(1).join(' — ').trim();
+      if (nm && !String(dIn.value || '').trim()) dIn.value = nm.substring(0, 200);
+    }
+  }
+
+  if (!tbody || !tpl || !addBtn) return;
+
+  addBtn.addEventListener('click', function () {
+    tbody.appendChild(tpl.content.cloneNode(true));
+  });
+  tbody.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.classList && t.classList.contains('remove-new-po-line')) {
+      var tr = t.closest('tr');
+      if (tr && tr.classList.contains('new-po-line')) tr.remove();
+    }
+  });
+
+  tbody.addEventListener('input', function (e) {
+    var el = e.target;
+    if (!el || !el.classList || !el.classList.contains('edit-po-item-code')) return;
+    window.clearTimeout(itemTmo);
+    itemTmo = window.setTimeout(function () {
+      var q = String(el.value || '').trim();
+      if (q.length < 2) return;
+      fetchSapItemCodes(q, function () {
+        tryPrefillRowFromCache(el);
+      });
+    }, 300);
+  });
+
+  tbody.addEventListener('change', function (e) {
+    var el = e.target;
+    if (!el || !el.classList || !el.classList.contains('edit-po-item-code')) return;
+    var code = codeFromItemField(el);
+    if (!code) return;
+    fetchSapItemCodes(code, function () {
+      tryPrefillRowFromCache(el);
+    });
+  });
+})();
+</script>
+{% endblock %}

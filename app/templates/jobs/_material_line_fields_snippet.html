@@ -1,0 +1,34 @@
+{# Shared: jobs/edit.html, jobs/edit_detail.html
+   Expects: detail (JobDetailLine), field_prefix (str, e.g. "dl_12" or "") #}
+{% set pfx = (field_prefix + '_') if field_prefix else '' %}
+<div class="row g-2 mb-2">
+  <div class="col-md-6 col-lg-8">
+    <label class="form-label small mb-0 text-muted">Raw material (SAP)</label>
+    <div class="form-control form-control-sm bg-light text-muted font-monospace">{{ detail.raw_material_item_code or '—' }}</div>
+  </div>
+  <div class="col-md-6 col-lg-4">
+    <label class="form-label small mb-0">Yield loss %</label>
+    <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm" name="{{ pfx }}yield_loss_pct"
+           value="{{ detail.yield_loss_pct if detail.yield_loss_pct is not none else '' }}">
+  </div>
+</div>
+<div class="row g-2 mb-2">
+  <div class="col-md-4 col-lg-3">
+    <label class="form-label small mb-0 text-muted">Total qty (KGS)</label>
+    <div class="form-control form-control-sm bg-light">{{ detail.total_sheets if detail.total_sheets is not none else '—' }}</div>
+  </div>
+  <div class="col-md-4 col-lg-3">
+    <label class="form-label small mb-0 text-muted">Wastage %</label>
+    <div class="form-control form-control-sm bg-light">{{ detail.wastage_pct if detail.wastage_pct is not none else '—' }}</div>
+  </div>
+  <div class="col-md-4 col-lg-3">
+    <label class="form-label small mb-0 text-muted">Wastage (KGS)</label>
+    <div class="form-control form-control-sm bg-light">{{ detail.wastage_sheets if detail.wastage_sheets is not none else '—' }}</div>
+  </div>
+</div>
+<div class="row g-2">
+  <div class="col-md-12">
+    <label class="form-label small mb-0">Line remarks</label>
+    <input type="text" class="form-control form-control-sm" name="{{ pfx }}special_instructions" value="{{ detail.special_instructions or '' }}">
+  </div>
+</div>

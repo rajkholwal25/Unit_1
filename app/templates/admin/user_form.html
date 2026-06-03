@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if user else 'Create' }} User - Job Card Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>
+        <i class="bi bi-person-{{ 'gear' if user else 'plus' }} me-2"></i>
+        {{ 'Edit' if user else 'Create' }} User
+    </h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="username" name="username"
+                           value="{{ user.username if user else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="email" name="email"
+                           value="{{ user.email if user else '' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="password" class="form-label">
+                        Password {% if not user %}<span class="text-danger">*</span>{% endif %}
+                    </label>
+                    <input type="password" class="form-control" id="password" name="password"
+                           {% if not user %}required{% endif %}
+                           placeholder="{{ 'Leave blank to keep current' if user else '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                    <select class="form-select" id="role" name="role" required>
+                        {% for value, label in role_choices %}
+                        <option value="{{ value }}" {{ 'selected' if (user and user.role == value) or (not user and value == 'viewer') }}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% if user %}
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                           {{ 'checked' if user.is_active_user }}>
+                    <label class="form-check-label" for="is_active">Active</label>
+                </div>
+            </div>
+            {% endif %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>{{ 'Update' if user else 'Create' }} User
+                </button>
+                <a href="{{ url_for('admin.user_list') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

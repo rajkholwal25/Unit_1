@@ -8,7 +8,11 @@ def ensure_default_manager(app):
             user = User.query.filter_by(email='manager@test.com').first()
             if user:
                 return
-            user = User(email='manager@test.com', role='manager')
+            user = User(
+                email='manager@test.com',
+                username='manager',
+                role='manager',
+            )
             user.set_password('test@123')
             db.session.add(user)
             db.session.commit()

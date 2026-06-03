@@ -21,36 +21,31 @@
     <h3>Coatings</h3>
     <p>Manage coating types used in item code generation.</p>
   </a>
-  <a href="/bom-templates/" class="module-card">
-    <div class="module-icon"><i class="bi bi-list-nested"></i></div>
-    <h3>BOM Templates</h3>
-    <p>Define process sequences for finished goods.</p>
-  </a>
   <a href="/item-generator/" class="module-card">
     <div class="module-icon"><i class="bi bi-magic"></i></div>
     <h3>Item Generator</h3>
-    <p>Generate item codes and push to SAP.</p>
+    <p>Create new FG codes (material, thickness, pattern, coating) and push to SAP — do this before Sales Order and Job Card.</p>
   </a>
-  <a href="/bom-builder/" class="module-card">
-    <div class="module-icon"><i class="bi bi-diagram-3-fill"></i></div>
-    <h3>BOM Builder</h3>
-    <p>Generate codes, add raw material from Item Master, push multi-level BOM to SAP.</p>
+  <a href="/manufacturing/" class="module-card">
+    <div class="module-icon"><i class="bi bi-briefcase"></i></div>
+    <h3>Manufacturing</h3>
+    <p>Jobs, production orders, staging & release (Unit 2 flow).</p>
   </a>
-  <a href="/item-codes/" class="module-card">
-    <div class="module-icon"><i class="bi bi-archive"></i></div>
-    <h3>Item Master</h3>
-    <p>All FG and component codes — search and check if a code exists.</p>
+  <a href="/jobs/" class="module-card">
+    <div class="module-icon"><i class="bi bi-list-task"></i></div>
+    <h3>All Jobs</h3>
+    <p>List and manage manufacturing jobs.</p>
   </a>
   <a href="/sap-logs/" class="module-card">
     <div class="module-icon"><i class="bi bi-cloud-upload"></i></div>
     <h3>SAP Logs</h3>
-    <p>Review SAP push history and responses.</p>
+    <p>Review SAP push history.</p>
   </a>
-  {% if session.role == 'manager' %}
+  {% if session.role in ('manager', 'admin') %}
   <a href="{{ url_for('auth.users') }}" class="module-card">
     <div class="module-icon"><i class="bi bi-people"></i></div>
     <h3>Users</h3>
-    <p>Manage accounts and roles for your team.</p>
+    <p>Manage accounts and roles.</p>
   </a>
   {% endif %}
 </div>

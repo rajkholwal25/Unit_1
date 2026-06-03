@@ -1,0 +1,428 @@
+/* app.css — minimal overrides on top of Bootstrap 5 */
+
+body {
+  font-size: 0.9rem;
+  background-color: #f4f5f7;
+}
+
+.navbar {
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+
+.card {
+  border-radius: 0.6rem;
+}
+
+.card-header {
+  border-radius: 0.6rem 0.6rem 0 0 !important;
+}
+
+.table th {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: #6c757d;
+}
+
+.table td {
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.badge {
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+
+.form-label {
+  font-size: 0.84rem;
+  margin-bottom: 0.3rem;
+}
+
+.btn-sm {
+  font-size: 0.8rem;
+}
+
+/* Status colour overrides */
+.border-3 {
+  border-width: 3px !important;
+}
+
+/* Job view page */
+.job-view-page .job-view-actions {
+  align-items: center !important;
+}
+.job-view-page .job-view-actions .btn {
+  white-space: nowrap;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+.job-view-page .job-view-status-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.85rem;
+}
+.job-view-page .job-view-status-panel .form-select,
+.job-view-page .job-view-status-panel .form-control {
+  max-width: 10rem;
+}
+.job-view-page .job-view-meta {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+.job-view-page .job-view-meta strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+.job-view-page .job-view-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+.job-view-page .job-info-dl dt {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+.job-view-page .job-info-dl dd {
+  font-size: 0.875rem;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
+}
+.job-view-page .mfg-line-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: #fafbfc;
+}
+.job-view-page .mfg-line-card + .mfg-line-card {
+  margin-top: 0.65rem;
+}
+
+/* Job view — BOM full-width row (below 8+4 layout) */
+.job-view-bom-row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* ── BOM visual design (job view) ── */
+.job-view-bom-row .bom-design-card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 4px 24px rgba(15, 23, 42, 0.08);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+.job-view-bom-row .bom-design-card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #eef2ff 100%);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 1rem 1.25rem;
+}
+.job-view-bom-row .bom-design-card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-size: 1.02rem;
+}
+.job-view-bom-row .bom-design-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+.job-view-bom-row .bom-design-card-heading {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+.job-view-bom-row .bom-design-card-sep {
+  color: #94a3b8;
+  font-weight: 300;
+}
+.job-view-bom-row .bom-design-card-element {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.98rem;
+}
+.job-view-bom-row .bom-design-version-badge {
+  background: #fff !important;
+  color: #64748b !important;
+  border: 1px solid rgba(15, 23, 42, 0.1) !important;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.28em 0.65em;
+  border-radius: 2rem;
+}
+.job-view-bom-row .bom-design-push-btn {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+}
+.job-view-bom-row .bom-design-copy-btn {
+  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.18);
+}
+.job-view-bom-row .bom-design-copy-btn.is-copied {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+.job-view-bom-row .bom-design-table-outer {
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 12%);
+}
+.job-view-bom-row .bom-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.job-view-bom-row .bom-design-steps-table {
+  --bom-border: rgba(15, 23, 42, 0.07);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.job-view-bom-row .bom-design-steps-table thead th {
+  font-size: 0.73rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  background: #f1f5f9;
+  border-bottom: 1px solid var(--bom-border);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  vertical-align: middle;
+}
+.job-view-bom-row .bom-design-steps-table thead .bom-design-th-materials {
+  color: #475569;
+  background: linear-gradient(180deg, #e8eef5 0%, #f1f5f9 100%);
+}
+.job-view-bom-row .bom-step-row {
+  background: #fff;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.job-view-bom-row .bom-step-row--alt {
+  background: #f8fafc;
+}
+.job-view-bom-row .bom-design-steps-table tbody tr:hover {
+  background: #f0f9ff !important;
+  box-shadow: inset 3px 0 0 #3b82f6;
+}
+.job-view-bom-row .bom-design-steps-table tbody td {
+  border-bottom: 1px solid var(--bom-border);
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+  vertical-align: middle;
+}
+.job-view-bom-row .bom-design-seq {
+  vertical-align: middle;
+}
+.job-view-bom-row .bom-design-seq-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  border-radius: 0.35rem;
+}
+.job-view-bom-row .bom-step-row--alt .bom-design-seq-pill {
+  background: #cbd5e1;
+  color: #334155;
+}
+.job-view-bom-row .bom-design-po-badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #047857;
+  background: linear-gradient(180deg, #ecfdf5, #d1fae5);
+  border: 1px solid #6ee7b7;
+  border-radius: 2rem;
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.12);
+}
+.job-view-bom-row .bom-design-wh-code {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  padding: 0.25rem 0.5rem;
+  background: #f1f5f9;
+  border-radius: 0.35rem;
+  border: 1px solid #e2e8f0;
+}
+.job-view-bom-row .bom-design-materials-wrap {
+  padding: 0.5rem 0.6rem !important;
+  vertical-align: top !important;
+  background: transparent !important;
+}
+.job-view-bom-row .bom-inner-panel {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+.job-view-bom-row .bom-inner-panel .bom-inner-head th {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #64748b;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+.job-view-bom-row .bom-inner-row {
+  background: #fff;
+}
+.job-view-bom-row .bom-inner-row--alt {
+  background: #fafbfc;
+}
+.job-view-bom-row .bom-inner-panel tbody tr:hover {
+  background: #f8fafc !important;
+}
+.job-view-bom-row .bom-inner-panel tbody td {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+.job-view-bom-row .bom-inner-panel tbody tr:last-child td {
+  border-bottom: none;
+}
+.job-view-bom-row .bom-line-name {
+  max-width: none;
+  line-height: 1.5;
+  color: #334155 !important;
+  font-size: 0.9rem;
+}
+.job-view-bom-row .bom-col-process .fw-medium {
+  color: #0f172a;
+  font-size: 0.92rem;
+}
+.job-view-bom-row .bom-col-output-code {
+  color: #334155 !important;
+  font-size: 0.86rem;
+}
+.job-view-bom-row .bom-inner-code,
+.job-view-bom-row .bom-line-qty,
+.job-view-bom-row .bom-inner-qty-h {
+  font-size: 0.82rem;
+}
+.job-view-bom-row .bom-design-wh-code,
+.job-view-bom-row .bom-design-po-badge {
+  font-size: 0.8rem;
+}
+.job-view-bom-row .bom-design-empty-row td {
+  background: #fafbfc;
+  border-bottom: none;
+  font-style: italic;
+}
+
+.job-view-bom-row .bom-steps-table {
+  width: 100%;
+  table-layout: fixed;
+}
+/* Outer BOM: keep # / process / output / PO / warehouse tight; give remainder to materials */
+.job-view-bom-row .bom-steps-table > :is(thead, tbody) > tr > :nth-child(1) {
+  width: 2.75rem;
+  max-width: 3rem;
+}
+.job-view-bom-row .bom-steps-table > :is(thead, tbody) > tr > :nth-child(2) {
+  width: 8%;
+  min-width: 4.5rem;
+  max-width: 9rem;
+}
+.job-view-bom-row .bom-steps-table > :is(thead, tbody) > tr > :nth-child(3) {
+  width: 11%;
+  min-width: 6rem;
+  max-width: 12rem;
+}
+.job-view-bom-row .bom-steps-table > :is(thead, tbody) > tr > :nth-child(4) {
+  width: 5.5rem;
+  max-width: 6.5rem;
+}
+.job-view-bom-row .bom-steps-table > :is(thead, tbody) > tr > :nth-child(5) {
+  width: 58%;
+  min-width: 16rem;
+}
+.job-view-bom-row .bom-steps-table > :is(thead, tbody) > tr > :nth-child(6) {
+  width: 4.75rem;
+  max-width: 5.5rem;
+}
+.job-view-bom-row .bom-col-process {
+  line-height: 1.25;
+}
+.job-view-bom-row .bom-materials-col {
+  min-width: 16rem;
+}
+.job-view-bom-row .bom-inner-lines {
+  table-layout: fixed;
+  width: 100%;
+}
+/* Inner materials: wide name column */
+.job-view-bom-row .bom-inner-lines > :is(thead, tbody) > tr > :nth-child(1) {
+  width: 18%;
+  min-width: 0;
+}
+.job-view-bom-row .bom-inner-lines > :is(thead, tbody) > tr > :nth-child(2) {
+  width: 62%;
+  min-width: 0;
+}
+.job-view-bom-row .bom-inner-lines > :is(thead, tbody) > tr > :nth-child(3) {
+  width: 20%;
+  min-width: 4.5rem;
+  max-width: 7rem;
+}
+.job-view-bom-row .bom-inner-code {
+  word-break: break-word;
+}
+
+/* BOM materials (inner Code / Name / Qty) — default / narrow contexts */
+.bom-steps-table .bom-materials-col {
+  min-width: 14rem;
+}
+.bom-steps-table .bom-materials-cell {
+  vertical-align: top;
+  background-color: rgba(0, 0, 0, 0.015);
+}
+.bom-steps-table .bom-inner-lines {
+  --bs-table-bg: transparent;
+  margin-bottom: 0;
+}
+.bom-steps-table .bom-inner-lines > thead {
+  background: rgba(248, 249, 250, 0.95);
+}
+.bom-steps-table .bom-inner-head th {
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+}
+.bom-steps-table .bom-inner-lines tbody tr:not(:last-child) td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+.bom-steps-table .bom-line-name {
+  max-width: 14rem;
+  word-wrap: break-word;
+  line-height: 1.35;
+}
+.bom-steps-table .bom-inner-qty-h {
+  width: 4.5rem;
+}
+.bom-steps-table .bom-line-qty {
+  font-variant-numeric: tabular-nums;
+}

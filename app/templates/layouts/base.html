@@ -28,13 +28,12 @@
         <nav class="app-sidebar-nav nav flex-column">
           {% set nav_items = [
             ('/', 'Dashboard', 'bi-grid-1x2'),
+            ('/manufacturing/', 'Manufacturing', 'bi-briefcase'),
+            ('/jobs/', 'Jobs', 'bi-list-task'),
             ('/patterns/', 'Patterns', 'bi-diagram-3'),
             ('/material-types/', 'Materials', 'bi-layers'),
             ('/coating-types/', 'Coatings', 'bi-droplet'),
-            ('/bom-templates/', 'BOM Templates', 'bi-list-nested'),
             ('/item-generator/', 'Item Generator', 'bi-magic'),
-            ('/bom-builder/', 'BOM Builder', 'bi-diagram-3-fill'),
-            ('/item-codes/', 'Item Master', 'bi-archive'),
             ('/sap-logs/', 'SAP Logs', 'bi-cloud-upload')
           ] %}
           {% for href, label, icon in nav_items %}
@@ -43,7 +42,7 @@
             {{ label }}
           </a>
           {% endfor %}
-          {% if session.role == 'manager' %}
+          {% if session.role in ('manager', 'admin') %}
           <a class="nav-link{% if request.path.startswith('/users') %} active{% endif %}" href="{{ url_for('auth.users') }}">
             <i class="bi bi-people"></i>
             Users
@@ -56,7 +55,7 @@
               <i class="bi bi-person-fill text-white"></i>
             </span>
             <div>
-              {% if session.role == 'manager' %}
+              {% if session.role in ('manager', 'admin') %}
                 <span class="badge badge-role bg-danger">{{ session.role }}</span>
               {% elif session.role == 'planner' %}
                 <span class="badge badge-role bg-warning text-dark">{{ session.role }}</span>

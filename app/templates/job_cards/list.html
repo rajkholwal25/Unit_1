@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Job Cards - Job Card Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-journal-text me-2"></i>Job Cards</h2>
+    {% if current_user.has_role('admin', 'planner') %}
+    <a href="{{ url_for('jobs.new_job') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>New Job
+    </a>
+    {% endif %}
+</div>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label mb-1 small">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="draft" {{ 'selected' if status_filter == 'draft' }}>Draft</option>
+                    <option value="approved" {{ 'selected' if status_filter == 'approved' }}>Approved</option>
+                    <option value="in_production" {{ 'selected' if status_filter == 'in_production' }}>In Production</option>
+                    <option value="completed" {{ 'selected' if status_filter == 'completed' }}>Completed</option>
+                    <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' }}>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label mb-1 small">Priority</label>
+                <select name="priority" class="form-select form-select-sm">
+                    <option value="">All Priorities</option>
+                    <option value="low" {{ 'selected' if priority_filter == 'low' }}>Low</option>
+                    <option value="medium" {{ 'selected' if priority_filter == 'medium' }}>Medium</option>
+                    <option value="high" {{ 'selected' if priority_filter == 'high' }}>High</option>
+                    <option value="urgent" {{ 'selected' if priority_filter == 'urgent' }}>Urgent</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label mb-1 small">Search</label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="Job card number or product..." value="{{ search }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="jobCardsTable">
+                <thead>
+                    <tr>
+                        <th>Job Card #</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Delivery</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>SAP</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for jc in job_cards %}
+                    <tr onclick="window.location='{{ url_for('job_cards.view', job_card_id=jc.id) }}'" style="cursor:pointer;">
+                        <td class="fw-semibold">{{ jc.job_card_number }}</td>
+                        <td>{{ jc.customer.name }}</td>
+                        <td>{{ jc.product_name }}</td>
+                        <td>{{ jc.quantity }} {{ jc.uom }}</td>
+                        <td>{{ jc.delivery_date.strftime('%d %b %Y') if jc.delivery_date else '-' }}</td>
+                        <td><span class="badge badge-{{ jc.priority }}">{{ jc.priority|title }}</span></td>
+                        <td><span class="badge badge-{{ jc.status }}">{{ jc.status|replace('_', ' ')|title }}</span></td>
+                        <td>
+                            {% if jc.is_synced_to_sap %}
+                                <i class="bi bi-check-circle-fill sap-synced" title="Synced: {{ jc.sap_production_order }}"></i>
+                            {% else %}
+                                <i class="bi bi-dash-circle sap-not-synced" title="Not synced"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ jc.created_at.strftime('%d %b') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            No job cards found.
+                            {% if current_user.has_role('admin', 'planner') %}
+                            <a href="{{ url_for('jobs.new_job') }}">Create one now</a>.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

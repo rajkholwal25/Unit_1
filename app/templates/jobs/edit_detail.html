@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Print spec — {{ job.job_no }} L{{ line.line_no }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-flow-page { max-width: 720px; margin: 0 auto; }
+  .edit-flow-hero {
+    border-radius: 0.5rem;
+    border: 1px solid var(--bs-border-color);
+    background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .edit-flow-hero h1 { font-size: 1.1rem; font-weight: 600; margin: 0; }
+  .edit-flow-hero .sub { font-size: 0.8125rem; color: var(--bs-secondary-color); margin-top: 0.35rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-flow-page px-2 px-md-0">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.list_jobs') }}">Manufacturing jobs</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('jobs.view_job', job_id=job.id) }}">{{ job.job_no }}</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Line {{ line.line_no }} — Print spec</li>
+    </ol>
+  </nav>
+
+  <div class="edit-flow-hero">
+    <h1><i class="bi bi-card-text me-2 text-primary"></i>Printing specification</h1>
+    <div class="sub">
+      Line {{ line.line_no }} · {{ line.sap_fg_item_code or '—' }}
+      {% if line.sap_fg_item_name_snap %} — {{ line.sap_fg_item_name_snap }}{% endif %}
+      <br>
+      Same material/print fields as the new job card. BOM-only fields are read-only; change them via <strong>Edit job</strong> (BOM section) or <strong>Edit BOM</strong> on the job view.
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <div class="section-title">Detail line (material / print)</div>
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="material-row border rounded p-3 mb-0 bg-light">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <strong>Line {{ detail.detail_no }}</strong>
+            {% if job.is_editable and detail.active_bom %}
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('jobs.edit_bom_spec', job_id=job.id, bom_id=detail.active_bom.id) }}">Edit BOM</a>
+            {% endif %}
+          </div>
+          {% set field_prefix = '' %}
+          {% include 'jobs/_material_line_fields_snippet.html' %}
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+          <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i>Save specification
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,166 @@
+{# Shared BOM card (job view + edit BOM spec). Expects: job, bom, detail, bom_input_names.
+   Optional: hide_edit_bom_link (default false), card_element_id (optional id on root card). #}
+{% set hide_edit = hide_edit_bom_link|default(false, true) %}
+{% set card_id = card_element_id|default('', true) %}
+<div class="card border-0 bom-design-card mt-3"{% if card_id %} id="{{ card_id }}"{% endif %}>
+  <div class="card-header bom-design-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="bom-design-card-title">
+      <span class="bom-design-card-icon"><i class="bi bi-diagram-3"></i></span>
+      <span class="bom-design-card-heading">BOM</span>
+      <span class="bom-design-card-sep">—</span>
+      <span class="bom-design-card-element">{{ detail.element_name or 'Detail' }}</span>
+      <span class="badge bom-design-version-badge">v{{ bom.version }}</span>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <button type="button"
+              class="btn btn-sm btn-outline-secondary bom-design-push-btn bom-design-copy-btn js-copy-bom-btn"
+              title="Copy this BOM">
+        <i class="bi bi-clipboard me-1"></i>Copy BOM
+      </button>
+      {% if current_user.has_role('admin', 'planner') %}
+      {% set already_pushed = bom.steps.filter_by().all() | selectattr('sap_doc_num') | list | length %}
+      {% if job.is_editable %}
+      {% if not hide_edit %}
+      <a href="{{ url_for('jobs.edit_bom_spec', job_id=job.id, bom_id=bom.id) }}"
+         class="btn btn-sm btn-outline-primary bom-design-push-btn">
+        <i class="bi bi-sliders me-1"></i> Edit BOM
+      </a>
+      {% endif %}
+      {% if not already_pushed %}
+      <form method="POST" class="d-inline"
+            action="{{ url_for('jobs.push_production_orders', job_id=job.id, bom_id=bom.id) }}"
+            onsubmit="return confirm('Update SAP for this BOM? This may close superseded production orders, then create production orders for all {{ bom.step_count }} step(s) that are not yet linked.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-success bom-design-push-btn">
+          <i class="bi bi-send-check me-1"></i> Update production orders
+        </button>
+      </form>
+      {% endif %}
+      {% endif %}
+      {% endif %}
+    </div>
+    {% if bom.slip_process_sequence_codes %}
+    <div class="w-100 small text-muted border-top pt-2 mt-1 bom-slip-seq-line">
+      <span class="fw-semibold text-body-secondary">Process sequence (print):</span>
+      {{ bom.slip_process_sequence_codes | join(', ') }}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="bom-design-table-outer">
+  <div class="table-responsive bom-table-responsive">
+    <table class="table table-sm align-middle mb-0 bom-steps-table bom-design-steps-table w-100">
+      <thead>
+        <tr>
+          <th class="ps-3 bom-design-th-seq" scope="col">#</th>
+          <th class="bom-design-th" scope="col">Process</th>
+          <th class="bom-design-th" scope="col">SAP item</th>
+          <th class="bom-design-th" scope="col">SAP PO</th>
+          <th class="bom-materials-col bom-design-th bom-design-th-materials" scope="col">Required materials</th>
+          <th class="bom-design-th" scope="col">Warehouse</th>
+          <th class="bom-design-th text-end pe-3" scope="col" style="width:6rem">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set names_by_inp = bom_input_names|default({}, true) %}
+        {% for step in bom.steps|sort(attribute='seq_no') %}
+        {% set inputs = step.inputs.all() %}
+        <tr class="bom-step-row{% if loop.index0 % 2 == 1 %} bom-step-row--alt{% endif %}">
+          <td class="ps-3 bom-design-seq"><span class="bom-design-seq-pill">{{ step.seq_no }}</span></td>
+          <td class="bom-col-process">
+            <div class="fw-medium small text-break">{{ step.step_name }}</div>
+            <div class="text-muted text-break" style="font-size:11px">{{ step.process_code }}</div>
+          </td>
+          <td class="small text-muted font-monospace fw-semibold text-break bom-col-output-code">
+            {{ step.output_item_code or '—' }}
+          </td>
+          <td class="bom-col-po text-nowrap bom-design-po">
+            {% if step.sap_doc_num %}
+            <span class="bom-design-po-badge">{{ step.sap_doc_num }}</span>
+            {% else %}
+            <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td class="bom-materials-cell p-0 align-top bom-design-materials-wrap">
+            {% if inputs %}
+            <div class="bom-inner-panel">
+            <table class="table table-sm mb-0 align-middle bom-inner-lines w-100">
+              <thead>
+                <tr class="bom-inner-head">
+                  <th class="ps-2 py-2 border-0" scope="col">Code</th>
+                  <th class="py-2 border-0" scope="col">Name</th>
+                  <th class="text-end pe-2 py-2 border-0 bom-inner-qty-h" scope="col">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inp in inputs|sort(attribute='id') %}
+                {% set code_show = (inp.sap_item_code or '')|trim %}
+                {% set nm = (names_by_inp[inp.id] if inp.id in names_by_inp else '')|trim %}
+                <tr class="bom-inner-row{% if loop.index0 % 2 == 1 %} bom-inner-row--alt{% endif %}" data-req-wh="{{ inp.sap_warehouse or '' }}">
+                  <td class="border-0 py-2 ps-2 small text-muted font-monospace fw-semibold text-break align-top bom-inner-code">{{ code_show or '—' }}</td>
+                  <td class="border-0 py-2 small text-body-secondary align-top bom-line-name">{{ nm if nm else '—' }}</td>
+                  <td class="border-0 py-2 pe-2 small text-muted text-end text-nowrap align-top tabular-nums bom-line-qty">
+                    {% if inp.qty_per_job is not none %}
+                      {{ (inp.qty_per_job|float)|round(0)|int }}{% if inp.uom %} <span class="text-muted">{{ inp.uom }}</span>{% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            </div>
+            {% else %}
+            <span class="text-muted small ps-3 py-3 d-inline-block">—</span>
+            {% endif %}
+          </td>
+          <td class="small text-nowrap bom-col-wh bom-design-wh"><span class="bom-design-wh-code">{{ step.sap_warehouse or step.warehouse or '—' }}</span></td>
+          <td class="small text-end pe-3 text-nowrap bom-col-actions">
+            {% if job.is_editable and current_user.has_role('admin', 'planner') %}
+            <div class="d-inline-flex flex-column align-items-center gap-1">
+            {% if (step.process_code or '')|trim|upper == 'PRI' %}
+              {% if step.sap_doc_num %}
+              <form method="POST"
+                    action="{{ url_for('jobs.upload_job_pdf', job_id=job.id) }}"
+                    enctype="multipart/form-data"
+                    class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="step_id" value="{{ step.id }}">
+                <input id="job-pdf-step-{{ step.id }}"
+                       type="file"
+                       name="job_pdf"
+                       accept="application/pdf,.pdf"
+                       class="d-none"
+                       onchange="this.form.submit()">
+                <label for="job-pdf-step-{{ step.id }}"
+                       class="btn btn-sm btn-outline-secondary py-0 px-2 mb-0"
+                       title="Upload PDF for production order {{ step.sap_doc_num }}">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>Upload PDF
+                </label>
+              </form>
+              {% else %}
+              <button type="button"
+                      class="btn btn-sm btn-outline-secondary py-0 px-2"
+                      disabled
+                      title="Create SAP production order before uploading PDF">
+                Upload PDF
+              </button>
+              {% endif %}
+            {% endif %}
+            <a href="{{ url_for('jobs.edit_po_step', job_id=job.id, step_id=step.id) }}"
+               class="btn btn-sm btn-outline-secondary py-0 px-2" title="Edit this step / linked PO">Edit</a>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr class="bom-design-empty-row">
+          <td colspan="7" class="text-center text-muted py-4 small">No process steps defined.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </div>
+</div>

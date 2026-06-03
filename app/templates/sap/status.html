@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}SAP Connection - Job Card Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-cloud-check me-2"></i>SAP Connection Status</h2>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                {% if connected %}
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-success">Connected to SAP</h4>
+                    <p class="text-muted">Service Layer is reachable and authenticated.</p>
+                {% else %}
+                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-danger">Not Connected</h4>
+                    {% if error_msg %}
+                    <p class="text-muted">{{ error_msg }}</p>
+                    {% else %}
+                    <p class="text-muted">Check your SAP credentials in the .env file.</p>
+                    {% endif %}
+                {% endif %}
+                <a href="{{ url_for('sap.status') }}" class="btn btn-outline-primary mt-3">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Test Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
