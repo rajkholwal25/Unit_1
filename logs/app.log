@@ -3306,3 +3306,235 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
 
 2026-06-04 14:24:11,042 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
 2026-06-04 14:24:11,043 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 14:27:27 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:27:27 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:27:27 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:27:27 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:27:28 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:27:28 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:27:28 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-04 14:27:29 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:27:29 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:27:29 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:27:30 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:27:30 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:27:30 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-04 14:30:12 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 14:30:12 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 14:32:59 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 14:33:00 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 14:33:17 [INFO] jobcard.api.sap: Batch creating 4 items in SAP.
+2026-06-04 14:33:18 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-EMB: ItemName updated
+2026-06-04 14:33:18 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-EMB already exists or verified.
+2026-06-04 14:33:18 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-MET: ItemName updated
+2026-06-04 14:33:18 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-MET already exists or verified.
+2026-06-04 14:33:18 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-COT: ItemName updated
+2026-06-04 14:33:18 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-COT already exists or verified.
+2026-06-04 14:33:19 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-SLT: ItemName updated
+2026-06-04 14:33:19 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-SLT already exists or verified.
+2026-06-04 14:33:39,675 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 0, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'BOP-12-1003-HRI-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '1224', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '1224', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Metalisation', 'process_code': 'MET', 'cards': [{'card_idx': 0, 'item_name': 'BOP-12-1003-HRI-MET', 'war [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1991]
+2026-06-04 14:33:40 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-EMB: ItemName updated
+2026-06-04 14:33:40 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-MET: ItemName updated
+2026-06-04 14:33:40 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-COT: ItemName updated
+2026-06-04 14:33:41 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-SLT: ItemName updated
+2026-06-04 14:33:41,399 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-30 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1522]
+2026-06-04 14:33:41,519 INFO: [SAP-PUSH] Step seq=10 item_no=BOP-12-1003-HRI-EMB header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 1224.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 14:33:41 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-EMB qty=1224.0 wh=FBD-EMB
+2026-06-04 14:33:41 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 14:33:41 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 14:33:41 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141460 DocNum=714
+2026-06-04 14:33:41,986 INFO: [SAP-PUSH] Step seq=20 item_no=BOP-12-1003-HRI-MET header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-HRI-EMB', 'PlannedQuantity': 1224.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'BOP 12MM Waves HRI Embossing'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 14:33:41 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-MET qty=1224.0 wh=FBD-MTL
+2026-06-04 14:33:42 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 14:33:42 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 14:33:42 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141461 DocNum=715
+2026-06-04 14:33:42,326 INFO: [SAP-PUSH] Step seq=30 item_no=BOP-12-1003-HRI-COT header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-HRI-MET', 'PlannedQuantity': 1224.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'BOP 12MM Waves HRI Metalisation'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 14:33:42 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-COT qty=1224.0 wh=OHJW-U1
+2026-06-04 14:33:42 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 14:33:42 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 14:33:42 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141462 DocNum=716
+2026-06-04 14:33:42,716 INFO: [SAP-PUSH] Step seq=40 item_no=BOP-12-1003-HRI-SLT header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-HRI-COT', 'PlannedQuantity': 1224.0, 'Warehouse': 'OHJW-U1', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'BOP 12MM Waves HRI Coating'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 14:33:42 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-SLT qty=1224.0 wh=FBD-SLT
+2026-06-04 14:33:42 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 14:33:42 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 14:33:43 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141463 DocNum=717
