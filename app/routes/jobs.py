@@ -98,13 +98,13 @@ def _validate_process_sequence_and_bom(
 def _bom_input_display_names_by_id(job: JobMaster) -> dict[int, str]:
     """Map ``BomStepInput.id`` → display name for BOM view.
 
-    Order: ``sap_item_mirror`` (batch) → ``BomStepInput.description`` when it is
-    not just the item code → live SAP ``/Items`` lookup for codes still missing
-    (mirror is often stale vs items created during job save).
+    Process / FG-linked codes use ``unit1_process_item_description`` (pattern
+    **name** + process label, e.g. ``PET-12-Rectangle-TR-EMB Embossing``).
+    Raw materials use mirror → stored description → live SAP ItemName.
     """
     from sqlalchemy import func
 
-    rows_meta: list[tuple[Any, str, str]] = []  # (inp, code_show, code_u)
+    rows_meta: list[tuple[Any, str, str, JobDetailLine]] = []  # (inp, code_show, code_u, detail)
     codes: set[str] = set()
     code_u_to_fetch_key: dict[str, str] = {}
 
@@ -116,7 +116,7 @@ def _bom_input_display_names_by_id(job: JobMaster) -> dict[int, str]:
             for inp in step.inputs.all():
                 code_show = (inp.sap_item_code or '').strip()
                 code_u = code_show.upper()
-                rows_meta.append((inp, code_show, code_u))
+                rows_meta.append((inp, code_show, code_u, jdl))
                 if not code_u:
                     continue
                 codes.add(code_u)
@@ -135,7 +135,12 @@ def _bom_input_display_names_by_id(job: JobMaster) -> dict[int, str]:
     by_id: dict[int, str] = {}
     missing_for_sap: set[str] = set()
 
-    for inp, code_show, code_u in rows_meta:
+    for inp, code_show, code_u, jdl in rows_meta:
+        synth = _synthetic_display_name_for_process_item_code(job, jdl, code_show)
+        if synth:
+            by_id[inp.id] = synth
+            continue
+
         nm = (mirror_map.get(code_u, '') if code_u else '').strip()
         desc = (inp.description or '').strip()
         if not nm and desc and code_u and desc.upper() != code_u:
@@ -161,7 +166,7 @@ def _bom_input_display_names_by_id(job: JobMaster) -> dict[int, str]:
                 label = (row.get('ItemName') or row.get('ItemDescription') or '').strip()
                 if not label:
                     continue
-                for inp2, _cs, cu in rows_meta:
+                for inp2, _cs, cu, _jdl in rows_meta:
                     if cu == code_u and not (by_id.get(inp2.id) or '').strip():
                         by_id[inp2.id] = label
         except Exception as e:
@@ -995,17 +1000,9 @@ def _decimal_or_none(val) -> Optional[Decimal]:
 
 
 def _yield_loss_pct_from_form(idx: int) -> Decimal:
-    raw = (request.form.get(f'mat_yield_loss_pct_{idx}', '') or '').strip()
-    if not raw:
-        try:
-            raw = str(current_app.config.get('BOM_YIELD_LOSS_PCT', 2))
-        except Exception:
-            raw = '2'
-    try:
-        v = float(raw)
-    except (TypeError, ValueError):
-        v = 2.0
-    return Decimal(str(max(0.0, min(v, 99.9))))
+    """Unit 1 job form: RM gross-up is wastage-only (yield not used)."""
+    _ = idx
+    return Decimal('0')
 
 
 def _material_detail_indices_from_form() -> list[int]:
@@ -3288,12 +3285,7 @@ def edit_bom_spec(job_id, bom_id):
         # For detail lines after the first, UPS is a per-detail-line value (material row UPS),
         # so we must not overwrite header-line UPS while editing that BOM.
         if (detail.detail_no or 0) > 1:
-            yl = (request.form.get('detail_yield_loss_pct', '') or '').strip()
-            if yl:
-                try:
-                    detail.yield_loss_pct = Decimal(str(max(0.0, min(float(yl), 99.9))))
-                except (TypeError, ValueError):
-                    pass
+            detail.yield_loss_pct = Decimal('0')
             for _inv, hl in fg_rows:
                 dq = request.form.get(f'fg_{hl.id}_dispatch_qty', '').strip()
                 if dq != '':
@@ -3313,12 +3305,7 @@ def edit_bom_spec(job_id, bom_id):
                             **_studio_kw,
                         )
         else:
-            yl0 = (request.form.get('detail_yield_loss_pct', '') or '').strip()
-            if yl0:
-                try:
-                    detail.yield_loss_pct = Decimal(str(max(0.0, min(float(yl0), 99.9))))
-                except (TypeError, ValueError):
-                    pass
+            detail.yield_loss_pct = Decimal('0')
             for _inv, hl in fg_rows:
                 dq = request.form.get(f'fg_{hl.id}_dispatch_qty', '').strip()
                 if dq != '':

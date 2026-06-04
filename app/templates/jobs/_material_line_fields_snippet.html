@@ -6,15 +6,10 @@
     <label class="form-label small mb-0 text-muted">Raw material (SAP)</label>
     <div class="form-control form-control-sm bg-light text-muted font-monospace">{{ detail.raw_material_item_code or '—' }}</div>
   </div>
-  <div class="col-md-6 col-lg-4">
-    <label class="form-label small mb-0">Yield loss %</label>
-    <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm" name="{{ pfx }}yield_loss_pct"
-           value="{{ detail.yield_loss_pct if detail.yield_loss_pct is not none else '' }}">
-  </div>
 </div>
 <div class="row g-2 mb-2">
   <div class="col-md-4 col-lg-3">
-    <label class="form-label small mb-0 text-muted">Total qty (KGS)</label>
+    <label class="form-label small mb-0 text-muted">Total RM (KGS)</label>
     <div class="form-control form-control-sm bg-light">{{ detail.total_sheets if detail.total_sheets is not none else '—' }}</div>
   </div>
   <div class="col-md-4 col-lg-3">

@@ -214,17 +214,8 @@
   /**
    * Unit 1: gross planned qty in KGS (max dispatch kg + wastage kg).
    */
-  function yieldPctFromEditForm() {
-    const yInp = document.getElementById('detail_yield_loss_pct_input');
-    const v = parseFloat(yInp && yInp.value);
-    return isNaN(v) ? 2 : Math.max(0, Math.min(v, 99));
-  }
-
-  function grossKgFromFg(netKg, yieldPct, numConv) {
-    const n = parseFloat(netKg) || 0;
-    const y = Math.max(0, parseFloat(yieldPct) || 0) / 100;
-    const steps = Math.max(1, parseInt(numConv, 10) || 1);
-    return n * Math.pow(1 + y, steps);
+  function rmKgFromFgAndWastage(netKg, wastageKg) {
+    return Math.ceil((parseFloat(netKg) || 0) + (parseFloat(wastageKg) || 0));
   }
 
   function countConvertingStepsEdit(steps) {
@@ -235,19 +226,13 @@
     return n;
   }
 
-  function stepOutputKgFromFgEdit(maxKg, yieldPct, stepIndex, numConv) {
-    const n = parseFloat(maxKg) || 0;
-    const y = Math.max(0, parseFloat(yieldPct) || 0) / 100;
-    const nc = Math.max(0, parseInt(numConv, 10) || 0);
-    if (nc <= 0) return n;
-    const exp = Math.max(0, nc - 1 - stepIndex);
-    return n * Math.pow(1 + y, exp);
+  function plannedKgForConvertStep(rmKg) {
+    return Math.ceil(parseFloat(rmKg) || 0);
   }
 
   function syncEditBomFromFg() {
     const wsInp = document.getElementById('detail_wastage_sheets_input');
     const wastageKg = parseFloat(wsInp && wsInp.value) || 0;
-    const yieldPct = yieldPctFromEditForm();
     const lines = fgDispatchLinesFromEditForm();
 
     let maxKg = 0;
@@ -259,8 +244,7 @@
     if (!block) return;
 
     const steps = Array.prototype.slice.call(block.querySelectorAll('.bom-sections-inner > .border'));
-    const nConv = countConvertingStepsEdit(steps);
-    const totalKg = Math.ceil(grossKgFromFg(maxKg, yieldPct, nConv) + wastageKg);
+    const totalKg = rmKgFromFgAndWastage(maxKg, wastageKg);
     let gross = totalKg < 1 ? 1 : totalKg;
 
     const hid = document.getElementById('detail_total_sheets_hidden');
@@ -287,7 +271,7 @@
         if (isFg) {
           headerQty = lineKg > 0 ? lineKg : maxKg;
         } else if (convIdx >= 0) {
-          headerQty = Math.ceil(stepOutputKgFromFgEdit(maxKg, yieldPct, convIdx, nConv));
+          headerQty = plannedKgForConvertStep(gross);
         } else {
           headerQty = lineKg > 0 ? lineKg : gross;
         }
@@ -679,11 +663,9 @@
           cards: cards,
         });
       });
-      const bomYieldEl = lb.querySelector('.bom-yield-loss-pct');
-      const yieldLossPct = bomYieldEl ? parseFloat(bomYieldEl.value) : yieldPctFromEditForm();
       bomPayload.push({
         line_index: lineIndex,
-        yield_loss_pct: isNaN(yieldLossPct) ? 2 : yieldLossPct,
+        yield_loss_pct: 0,
         sections: sections,
       });
     });
@@ -725,9 +707,7 @@
     if (!t || !t.name) return;
     if (
       t.name.indexOf('fg_') === 0
-      || t.name === 'detail_yield_loss_pct'
       || t.name === 'detail_wastage_sheets'
-      || (t.classList && t.classList.contains('bom-yield-loss-pct'))
     ) {
       syncAfterFgOrWastageChange();
     }
@@ -737,9 +717,7 @@
     if (!t || !t.name) return;
     if (
       t.name.indexOf('fg_') === 0
-      || t.name === 'detail_yield_loss_pct'
       || t.name === 'detail_wastage_sheets'
-      || (t.classList && t.classList.contains('bom-yield-loss-pct'))
     ) {
       syncAfterFgOrWastageChange();
     }

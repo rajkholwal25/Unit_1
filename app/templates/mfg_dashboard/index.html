@@ -173,8 +173,6 @@
         </div>
     </div>
 </div>
-{% elif sap_configured %}
-<div class="alert alert-warning mb-3">SAP is configured but snapshot could not be loaded. Check <code>.env</code> and Service Layer URL.</div>
 {% endif %}
 
 <div class="card border-0 shadow-sm mb-3">
@@ -187,7 +185,7 @@
             <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-sm btn-outline-secondary">View all</a>
         </div>
 
-        <form method="GET" action="{{ url_for('mfg_dashboard.index') }}" class="mt-3">
+        <form method="GET" action="{{ url_for('dashboard.index') }}" class="mt-3">
             <div class="input-group input-group-lg">
                 <span class="input-group-text bg-white border-end-0">
                     <i class="bi bi-search text-muted"></i>
@@ -201,7 +199,7 @@
                     autocomplete="off"
                 >
                 {% if q %}
-                <a class="btn btn-outline-secondary" href="{{ url_for('mfg_dashboard.index') }}" title="Clear">
+                <a class="btn btn-outline-secondary" href="{{ url_for('dashboard.index') }}" title="Clear">
                     <i class="bi bi-x-lg"></i>
                 </a>
                 {% endif %}
@@ -249,7 +247,11 @@
                             {% set j = row.job %}
                             {% set fl = row.first_line %}
                             <tr onclick="window.location='{{ url_for('jobs.view_job', job_id=j.id) }}'" style="cursor:pointer;">
-                                <td class="ps-3 fw-semibold">{{ j.job_no }}</td>
+                                <td class="ps-3">
+                                    <a href="{{ url_for('jobs.view_job', job_id=j.id) }}"
+                                       class="fw-semibold text-primary text-decoration-none"
+                                       onclick="event.stopPropagation();">{{ j.job_no }}</a>
+                                </td>
                                 <td>{{ j.sap_customer_name_snap or j.sap_customer_code or '—' }}</td>
                                 <td>{{ j.sap_so_number_snap or '—' }}</td>
                                 <td class="text-muted small font-monospace">{% if fl %}{{ fl.sap_fg_item_code or '—' }}{% else %}—{% endif %}</td>
@@ -296,7 +298,7 @@
                         </div>
                         <div class="fw-semibold">
                             {% if item.job_id %}
-                            <a href="{{ url_for('jobs.view_job', job_id=item.job_id) }}" class="text-decoration-none">{{ item.job_no }}</a>
+                            <a href="{{ url_for('jobs.view_job', job_id=item.job_id) }}" class="text-decoration-none text-primary">{{ item.job_no }}</a>
                             {% else %}
                             <span>{{ item.job_no }}</span>
                             {% endif %}

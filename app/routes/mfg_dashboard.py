@@ -11,7 +11,7 @@ MFG_JOB_STATUSES = ('open', 'staged', 'released', 'closed', 'cancelled')
 @mfg_dashboard_bp.route('/')
 @login_required
 def index():
-    """Manufacturing jobs only — list with filters (no SAP PO/SO snapshot)."""
+    """Manufacturing jobs list with filters (full list; home dashboard is ``/``)."""
     page = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '')
     customer_filter = request.args.get('customer', '').strip()

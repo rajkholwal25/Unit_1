@@ -18,14 +18,7 @@
   <div class="bom-line-block border rounded p-3 mb-3 bg-light-subtle" data-bom-line-index="{{ material_row_index }}" id="bom_line_wrap_{{ material_row_index }}">
     <div class="fw-semibold bom-line-title">BOM for this detail line</div>
     <div class="text-muted small mb-2 bom-line-element-label">Element – {{ detail.element_name or '(unnamed)' }}</div>
-    <p class="text-muted small mb-2">FG qty = dispatch (kg). RM input uses <strong>yield loss %</strong> then <strong>wastage (kg)</strong>.</p>
-    <div class="row g-2 mb-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label small mb-0">Yield loss % (BOM)</label>
-        <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm bom-yield-loss-pct"
-               value="{{ studio_block.yield_loss_pct if studio_block.yield_loss_pct is not none else config.get('BOM_YIELD_LOSS_PCT', 2) }}">
-      </div>
-    </div>
+    <p class="text-muted small mb-2">FG step = dispatch (kg). Converting steps planned qty = RM kg (FG + wastage from detail line).</p>
     <div class="bom-sections-inner">
       {% if not studio_block.sections %}
       <p class="text-muted small mb-0">No BOM steps yet. Set the process sequence and press <strong>Regenerate BOM</strong> above.</p>

@@ -237,30 +237,23 @@
                             </div>
                         </div>
                         <div class="row g-2 mt-1">
-                            <div class="col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Yield loss % <span class="text-danger">*</span></label>
-                                <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm mat-yield-loss-pct" name="mat_yield_loss_pct_{{ loop.index0 }}"
-                                       value="{{ m.yield_loss_pct if m.yield_loss_pct is not none else (config.get('BOM_YIELD_LOSS_PCT', 2)) }}" required title="Raw material kg ≈ FG kg × (1 + this %)">
-                            </div>
-                            <div class="col-md-9 col-lg-10 d-flex align-items-end">
-                                <div class="form-text mb-1">Per process: 1200 kg FG, 2% loss, 3 steps → RM ≈ 1200×1.02³ kg. Codes: PET-…-TR-EMB (no GEN).</div>
-                            </div>
-                        </div>
-                        <div class="row g-2 mt-1">
-                            <div class="col-md-4 col-lg-3">
-                                <label class="form-label small mb-0">Total qty (KGS) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" class="form-control form-control-sm mat-total-kg" name="mat_total_sheets_{{ loop.index0 }}"
-                                       value="{{ m.total_sheets or '' }}" required>
-                            </div>
                             <div class="col-md-4 col-lg-2">
                                 <label class="form-label small mb-0">Wastage %</label>
-                                <input type="number" step="0.01" class="form-control form-control-sm mat-wastage-pct" name="mat_wastage_pct_{{ loop.index0 }}"
-                                       value="{{ m.wastage_pct or '' }}">
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm mat-wastage-pct" name="mat_wastage_pct_{{ loop.index0 }}"
+                                       value="{{ m.wastage_pct or '' }}" title="% of FG qty (KGS)">
                             </div>
                             <div class="col-md-4 col-lg-3">
                                 <label class="form-label small mb-0">Wastage (KGS)</label>
-                                <input type="number" step="0.01" class="form-control form-control-sm mat-wastage-kg" name="mat_wastage_sheets_{{ loop.index0 }}"
-                                       value="{{ m.wastage_sheets or '' }}">
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm mat-wastage-kg" name="mat_wastage_sheets_{{ loop.index0 }}"
+                                       value="{{ m.wastage_sheets or '' }}" title="Extra RM kg — manual or from %">
+                            </div>
+                            <div class="col-md-4 col-lg-3">
+                                <label class="form-label small mb-0">Total RM (KGS) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm mat-total-kg" name="mat_total_sheets_{{ loop.index0 }}"
+                                       value="{{ m.total_sheets or '' }}" required title="FG qty + wastage (auto)">
+                            </div>
+                            <div class="col-md-12 col-lg-4 d-flex align-items-end">
+                                <div class="form-text mb-1">Like Unit 2: enter wastage; raw material kg = FG qty + wastage. No yield %.</div>
                             </div>
                         </div>
                         <div class="row g-2 mt-1">
@@ -295,8 +288,8 @@
     </div>
 
     <div class="d-flex gap-2 mb-4">
-        <button type="submit" class="btn btn-primary btn-lg">
-            <i class="bi bi-check-lg me-1"></i>{{ 'Update' if job_card else 'Create' }} Job Card
+        <button type="submit" class="btn btn-primary btn-lg" id="btn_create_job_submit">
+            <i class="bi bi-check-lg me-1"></i>{{ 'Update' if job_card else 'Create' }} Job
         </button>
         <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
     </div>
@@ -558,12 +551,13 @@
 
   const jcForm = document.getElementById('jobCardForm');
   if (jcForm) {
-    jcForm.addEventListener('submit', function (e) {
-      const hid = document.getElementById('customer_id');
-      if (hid && !hid.value) {
-        e.preventDefault();
-        alert('Please select a customer using Browse.');
-      }
+    jcForm.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const t = e.target;
+      if (!t) return;
+      if (t.tagName === 'TEXTAREA') return;
+      if (t.closest && t.closest('.dropdown-menu')) return;
+      e.preventDefault();
     });
   }
 })();
@@ -1878,26 +1872,7 @@
         bom.innerHTML =
           '<div class="fw-semibold bom-line-title">BOM for line ' + disp + ' of ' + total + '</div>' +
           '<div class="text-muted small mb-2 bom-line-element-label">Element – ' + esc(elLabel) + '</div>' +
-          '<div class="text-muted small mb-2">Each process is created in sequence.</div>' +
-          '<div class="row g-2 mb-2 align-items-end">' +
-            '<div class="col-md-3">' +
-              '<label class="form-label small mb-0">Yield loss %</label>' +
-              '<input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm bom-yield-loss-pct" value="' + UNIT1_DEFAULT_YIELD_PCT + '">' +
-            '</div>' +
-            '<div class="col-md-9">' +
-              '<div class="form-text small mb-1">Yield loss % applies on <strong>each</strong> process (EMB, SLT, MET). RM kg = FG × (1+yield%)<sup>n</sup>. Item code: FG-EMB (no GEN).</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="row g-2 mb-3 d-none">' +
-            '<div class="col-md-3">' +
-              '<label class="form-label small mb-0">Wastage %</label>' +
-              '<input type="number" step="0.01" min="0" class="form-control form-control-sm bom-wastage-pct" value="0">' +
-            '</div>' +
-            '<div class="col-md-3">' +
-              '<label class="form-label small mb-0">Wastage (KGS)</label>' +
-              '<input type="number" step="0.01" min="0" class="form-control form-control-sm bom-wastage-sheets" value="0">' +
-            '</div>' +
-          '</div>' +
+          '<div class="text-muted small mb-2">Each process is created in sequence. Wastage is in the detail line (RM kg); every converting step planned qty = that RM kg (FG step keeps dispatch qty).</div>' +
           '<div class="bom-sections-inner"></div>';
         bomContainer.appendChild(bom);
       }
@@ -2184,14 +2159,11 @@
     return linesForDetailLine(materialRowIdx);
   }
 
-  function syncBomYieldFromMaterialRow(materialRowIdx) {
-    const yIn = document.querySelector('input[name="mat_yield_loss_pct_' + materialRowIdx + '"]');
-    const bomY = document.querySelector('.bom-line-block[data-bom-line-index="' + materialRowIdx + '"] .bom-yield-loss-pct');
-    if (yIn && bomY && !bomY.dataset.userEdited) bomY.value = yIn.value;
+  function syncDetailRmFromHeader(materialRowIdx) {
     updateRowTotalSheets(materialRowIdx);
     recalculateBomQuantities(materialRowIdx);
   }
-  window.syncBomYieldFromMaterialRow = syncBomYieldFromMaterialRow;
+  window.syncBomYieldFromMaterialRow = syncDetailRmFromHeader;
 
   function syncRawMaterialToBom(materialRowIdx) {
     const rm = firstRawMaterialForLine(materialRowIdx);
@@ -2213,20 +2185,23 @@
   const FBD_WAREHOUSES = ['FBD-RM', 'FBD-EMB', 'FBD-SLT', 'FBD-MTL', 'FBD-HRI', 'FBD-COAT', 'FBD-ALOX', 'FBD-FG'];
   const UNIT1_RAW_WH = 'FBD-RM';
   const UNIT1_DEFAULT_UOM = 'KGS';
-  const UNIT1_DEFAULT_YIELD_PCT = {{ config.get('BOM_YIELD_LOSS_PCT', 2)|float }};
 
-  function detailYieldLossPct(materialRowIdx) {
-    const el = document.querySelector('input[name="mat_yield_loss_pct_' + materialRowIdx + '"]');
-    const bomY = document.querySelector('.bom-line-block[data-bom-line-index="' + materialRowIdx + '"] .bom-yield-loss-pct');
-    const v = parseFloat((el && el.value) || (bomY && bomY.value));
-    return isNaN(v) ? UNIT1_DEFAULT_YIELD_PCT : Math.max(0, Math.min(v, 99));
+  function detailWastageKg(materialRowIdx) {
+    const wsEl = document.querySelector('input[name="mat_wastage_sheets_' + materialRowIdx + '"]');
+    return parseFloat(wsEl ? wsEl.value : 0) || 0;
   }
 
-  function grossKgFromFg(netKg, yieldPct, numConv) {
-    const n = parseFloat(netKg) || 0;
-    const y = Math.max(0, parseFloat(yieldPct) || 0) / 100;
-    const steps = Math.max(1, parseInt(numConv, 10) || 1);
-    return n * Math.pow(1 + y, steps);
+  function maxFgKgForDetailLine(materialRowIdx) {
+    let maxKg = 0;
+    resolvedLinesForDetailLine(materialRowIdx).forEach(function (l) {
+      const q = parseFloat(l.quantity) || 0;
+      if (q > maxKg) maxKg = q;
+    });
+    return maxKg;
+  }
+
+  function rmKgFromFgAndWastage(netKg, wastageKg) {
+    return Math.ceil((parseFloat(netKg) || 0) + (parseFloat(wastageKg) || 0));
   }
 
   function countConvertingSteps(stepEls) {
@@ -2238,17 +2213,9 @@
     return n;
   }
 
-  function stepOutputKgFromFg(maxKg, yieldPct, stepIndex, numConv) {
-    const n = parseFloat(maxKg) || 0;
-    const y = Math.max(0, parseFloat(yieldPct) || 0) / 100;
-    const nc = Math.max(0, parseInt(numConv, 10) || 0);
-    if (nc <= 0) return n;
-    const exp = Math.max(0, nc - 1 - stepIndex);
-    return n * Math.pow(1 + y, exp);
-  }
-
-  function rmInputKgFromFg(maxKg, yieldPct, numConv) {
-    return grossKgFromFg(maxKg, yieldPct, numConv);
+  /** Converting-step planned qty = RM kg (FG + wastage already in detail line). */
+  function plannedKgForConvertStep(rmKg) {
+    return Math.ceil(parseFloat(rmKg) || 0);
   }
 
   function unit1ProcessItemCode(fgCode, processCode, fullFromModel) {
@@ -2472,11 +2439,9 @@
       if (q > maxKg) maxKg = q;
     });
 
-    const yieldPct = detailYieldLossPct(detailRowIdx);
-    const steps = bomWrap.querySelectorAll('.bom-sections-inner > .border');
-    const nConv = countConvertingSteps(steps);
-    const totalKg = Math.ceil(rmInputKgFromFg(maxKg, yieldPct, nConv) + wastageKg);
+    const totalKg = rmKgFromFgAndWastage(maxKg, wastageKg);
 
+    const steps = bomWrap.querySelectorAll('.bom-sections-inner > div');
     let convStepIndex = 0;
     let hasReachedSplit = false;
     steps.forEach(function (sec, stepIdx) {
@@ -2497,7 +2462,7 @@
         if (isFg) {
           headerQty = lineKg > 0 ? lineKg : maxKg;
         } else if (convIdx >= 0) {
-          headerQty = Math.ceil(stepOutputKgFromFg(maxKg, yieldPct, convIdx, nConv));
+          headerQty = plannedKgForConvertStep(totalKg);
         } else {
           headerQty = lineKg > 0 ? lineKg : totalKg;
         }
@@ -2624,16 +2589,6 @@
       const m = e.target.name && e.target.name.match(/mat_raw_material_(\d+)/);
       if (m) syncRawMaterialToBom(parseInt(m[1], 10));
     }
-    if (e.target.classList && e.target.classList.contains('mat-yield-loss-pct')) {
-      const m = e.target.name && e.target.name.match(/mat_yield_loss_pct_(\d+)/);
-      if (m) syncBomYieldFromMaterialRow(parseInt(m[1], 10));
-    }
-    if (e.target.classList && e.target.classList.contains('bom-yield-loss-pct')) {
-      e.target.dataset.userEdited = '1';
-      const block = e.target.closest('.bom-line-block');
-      const idx = block ? parseInt(block.getAttribute('data-bom-line-index'), 10) : NaN;
-      if (!isNaN(idx)) recalculateBomQuantities(idx);
-    }
   });
 
   bomContainer.addEventListener('input', function (e) {
@@ -2647,33 +2602,22 @@
   // Auto-calculation for Detail Line Total Sheets & Wastage Linking
   document.addEventListener('input', function(e) {
     const t = e.target;
-    if (t.name && (t.name.startsWith('mat_wastage_pct_') || t.name.startsWith('mat_wastage_sheets_') || t.name.startsWith('mat_yield_loss_pct_'))) {
+    if (t.name && (t.name.startsWith('mat_wastage_pct_') || t.name.startsWith('mat_wastage_sheets_'))) {
         const parts = t.name.split('_');
         const idx = parts[parts.length - 1];
-        
-        // 1. If % changed, update sheets. If sheets changed, update %.
         const wpEl = document.querySelector('input[name="mat_wastage_pct_' + idx + '"]');
         const wsEl = document.querySelector('input[name="mat_wastage_sheets_' + idx + '"]');
+        const maxBaseKg = maxFgKgForDetailLine(parseInt(idx, 10));
 
-        const lines = resolvedLinesForDetailLine(parseInt(idx, 10));
-        let maxBaseKg = 0;
-        lines.forEach(function(l) {
-            const q = parseFloat(l.quantity) || 0;
-            if (q > maxBaseKg) maxBaseKg = q;
-        });
-
-        if (t.name.startsWith('mat_yield_loss_pct_')) {
-            syncBomYieldFromMaterialRow(idx);
-        } else if (t.name.startsWith('mat_wastage_pct_')) {
+        if (t.name.startsWith('mat_wastage_pct_')) {
             const wp = parseFloat(wpEl.value) || 0;
-            wsEl.value = Math.ceil((maxBaseKg * wp) / 100);
+            if (wsEl) wsEl.value = Math.ceil((maxBaseKg * wp) / 100);
         } else {
             const ws = parseFloat(wsEl.value) || 0;
-            if (maxBaseKg > 0) {
+            if (maxBaseKg > 0 && wpEl) {
                 wpEl.value = ((ws / maxBaseKg) * 100).toFixed(2);
             }
         }
-        
         updateRowTotalSheets(idx);
     }
   });
@@ -2694,10 +2638,7 @@
           if (q > maxBaseKg) maxBaseKg = q;
       });
       
-      const yp = detailYieldLossPct(idx);
-      const bomSteps = document.querySelectorAll('#bom_line_wrap_' + idx + ' .bom-sections-inner > .border');
-      const nConv = countConvertingSteps(bomSteps);
-      const total = Math.ceil(rmInputKgFromFg(maxBaseKg, yp, nConv) + ws);
+      const total = rmKgFromFgAndWastage(maxBaseKg, ws);
       tsEl.value = total;
       
       // Also trigger BOM recalculation if it exists
@@ -2740,11 +2681,7 @@
       return (isNaN(q) || q <= 0) ? 0 : q;
     });
     const maxKg = kgByFg.length ? Math.max.apply(null, kgByFg) : 0;
-    const yieldPct = detailYieldLossPct(materialRowIdx);
-    const nConvCreate = seq.filter(function (p) {
-      return !isFgProcessTitle(normalizeProcessName(p));
-    }).length;
-    const sheetPlanned = Math.ceil(rmInputKgFromFg(maxKg, yieldPct, nConvCreate) + wasteSheets);
+    const sheetPlanned = rmKgFromFgAndWastage(maxKg, wasteSheets);
 
     bomSections.innerHTML = '';
     bomWrap.classList.remove('d-none');
@@ -2807,12 +2744,12 @@
           if (isFgStep) {
             headerQty = q > 0 ? q : maxKg;
           } else if (myConvIdx >= 0) {
-            headerQty = Math.ceil(stepOutputKgFromFg(maxKg, yieldPct, myConvIdx, nConvCreate));
+            headerQty = plannedKgForConvertStep(sheetPlanned);
           } else {
             headerQty = q > 0 ? q : sheetPlanned;
           }
           const reqItem = prev ? prev.name : initialRequiredItem;
-          const reqQty = prev ? prev.planned_qty : headerQty;
+          const reqQty = prev ? prev.planned_qty : (i === 0 ? sheetPlanned : headerQty);
           const reqUom = prev ? prev.uom : UNIT1_DEFAULT_UOM;
           let reqWh = prev ? prev.warehouse : null;
           let reqLink = prev ? 'prev' : (i === 0 ? 'raw' : '');
@@ -3008,23 +2945,27 @@
   window.addExtraRow = addExtraRow;
   window.fetchSapItemCodes = fetchSapItemCodes;
   window.recalculateBomQuantities = recalculateBomQuantities;
+  window.rmKgFromFgAndWastage = rmKgFromFgAndWastage;
   window.createBomForLine = createBomForLine;
 
+  const CREATE_JOB_SUBMIT_ID = 'btn_create_job_submit';
   const jcFormSync = document.getElementById('jobCardForm');
   if (jcFormSync) {
     jcFormSync.addEventListener('submit', async function (e) {
-      if (jcFormSync.getAttribute('data-submitting')) return;
+      e.preventDefault();
+      const submitter = e.submitter;
+      if (!submitter || submitter.id !== CREATE_JOB_SUBMIT_ID) {
+        return;
+      }
       
       // Pre-submit validations
       const hid = document.getElementById('customer_id');
       if (hid && !hid.value) { 
-        e.preventDefault();
         alert('Please select a customer using Browse.'); 
         return; 
       }
       const selLines = currentSelectedLines();
       if (!selLines.length) { 
-        e.preventDefault();
         alert('Please select at least one SO/FG line.'); 
         return; 
       }
@@ -3036,7 +2977,6 @@
           return de == null || de === '';
         });
         if (missingSo) {
-          e.preventDefault();
           alert('Link each FG line to an open Sales Order using Browse (repeat jobs keep your quantities; pick the matching SO line).');
           return;
         }
@@ -3046,7 +2986,6 @@
         return w == null || w === '' || isNaN(parseFloat(w)) || parseFloat(w) <= 0;
       });
       if (missingWidth) {
-        e.preventDefault();
         alert('Width (mm) is required on each line — load from SO via Browse or enter a value.');
         return;
       }
@@ -3057,14 +2996,12 @@
         return !line || !line.sequence || line.sequence.length === 0;
       });
       if (missingSeq && seqIndices.length > 0) {
-        e.preventDefault();
-        alert('Please select a process sequence for all detail lines before creating the job card. Production orders cannot be created without a sequence.');
+        alert('Please select a process sequence for all detail lines before creating the job. Production orders cannot be created without a sequence.');
         return;
       }
 
       const delInp = document.getElementById('delivery_date');
       if (!delInp || !String(delInp.value || '').trim()) {
-        e.preventDefault();
         alert('Delivery date is required. Select customer and open SO/FG lines first (due date comes from the sales order).');
         return;
       }
@@ -3077,12 +3014,9 @@
         return hiddenWrap.querySelectorAll('input[name="detail_fg_involved_' + idx + '[]"]').length < 1;
       });
       if (missingFgInvolved && seqIndices.length > 0) {
-        e.preventDefault();
         alert('For each detail line, select at least one FG under “FG involved (header)”.');
         return;
       }
-
-      e.preventDefault(); // Stop initial sync submission
 
       // Auto-generate missing BOMs
       const indices = typeof getMaterialIndices === 'function' ? getMaterialIndices() : [];
@@ -3169,11 +3103,9 @@
             cards: cards,
           });
         });
-        const bomYieldEl = lb.querySelector('.bom-yield-loss-pct');
-        const yieldLossPct = bomYieldEl ? parseFloat(bomYieldEl.value) : detailYieldLossPct(lineIndex);
         bomPayload.push({
           line_index: lineIndex,
-          yield_loss_pct: isNaN(yieldLossPct) ? UNIT1_DEFAULT_YIELD_PCT : yieldLossPct,
+          yield_loss_pct: 0,
           sections: sections,
         });
       });
@@ -3191,9 +3123,7 @@
           return !block || !block.sections || !block.sections.length;
         });
         if (missingBom) {
-          e.preventDefault();
-          jcFormSync.removeAttribute('data-submitting');
-          alert('Select process sequence and build BOM (Create BOM) for each detail line before creating the job card.');
+          alert('Select process sequence and build BOM (Generate BOM) for each detail line before creating the job.');
           return;
         }
       }
@@ -3209,8 +3139,10 @@
         }
       } catch (e) {}
       
+      const submitBtn = document.getElementById(CREATE_JOB_SUBMIT_ID);
+      if (submitBtn) submitBtn.disabled = true;
       jcFormSync.setAttribute('data-submitting', 'true');
-      jcFormSync.submit();
+      HTMLFormElement.prototype.submit.call(jcFormSync);
     });
   }
 
@@ -3219,21 +3151,12 @@
 
 </script>
 <script>
-const UNIT1_DEFAULT_YIELD_PCT = {{ config.get('BOM_YIELD_LOSS_PCT', 2)|float }};
 let materialIndex = (function () {
     var mic = document.getElementById('initial_material_row_count');
     return mic ? parseInt(mic.value, 10) || 0 : 0;
 })();
 
 function materialRowHtml(idx) {
-  const yieldFieldHtml =
-      '<div class="row g-2 mt-1">' +
-      '<div class="col-md-3 col-lg-2">' +
-      '<label class="form-label small mb-0">Yield loss % <span class="text-danger">*</span></label>' +
-      '<input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm mat-yield-loss-pct" name="mat_yield_loss_pct_' + idx + '" value="' + UNIT1_DEFAULT_YIELD_PCT + '" required>' +
-      '</div>' +
-      '<div class="col-md-9 col-lg-10 d-flex align-items-end"><div class="form-text mb-1">FG 1200 kg @ 2% → RM 1224 kg (+ wastage kg if any).</div></div>' +
-      '</div>';
   return `
     <div class="material-row border rounded p-2 mb-3 bg-light" id="mat_row_${idx}">
       <div class="d-flex justify-content-between mb-2">
@@ -3254,8 +3177,8 @@ function materialRowHtml(idx) {
         <div class="col-12">
           <label class="form-label small mb-0">FG involved (header) <span class="text-danger">*</span></label>
           <div class="dropdown" data-bs-auto-close="outside">
-            <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start js-fg-involved-btn"
-                    type="button" data-bs-toggle="dropdown" aria-expanded="false">— Select FGs —</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start js-fg-involved-btn"
+                                            data-bs-toggle="dropdown" aria-expanded="false">— Select FGs —</button>
             <ul class="dropdown-menu w-100 p-2 js-fg-involved-menu" style="max-height: 220px; overflow: auto;">
               <li class="text-muted small px-2 py-1">Select SO/FG lines in the header first</li>
             </ul>
@@ -3264,19 +3187,21 @@ function materialRowHtml(idx) {
           <div class="form-text">Select at least one FG from the header SO/FG lines.</div>
         </div>
       </div>
-      ${yieldFieldHtml}
       <div class="row g-2 mt-1">
-        <div class="col-md-4 col-lg-3">
-          <label class="form-label small mb-0">Total qty (KGS) <span class="text-danger">*</span></label>
-          <input type="number" step="0.01" class="form-control form-control-sm mat-total-kg" name="mat_total_sheets_${idx}" required>
-        </div>
         <div class="col-md-4 col-lg-2">
           <label class="form-label small mb-0">Wastage %</label>
-          <input type="number" step="0.01" class="form-control form-control-sm mat-wastage-pct" name="mat_wastage_pct_${idx}">
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm mat-wastage-pct" name="mat_wastage_pct_${idx}">
         </div>
         <div class="col-md-4 col-lg-3">
           <label class="form-label small mb-0">Wastage (KGS)</label>
-          <input type="number" step="0.01" class="form-control form-control-sm mat-wastage-kg" name="mat_wastage_sheets_${idx}">
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm mat-wastage-kg" name="mat_wastage_sheets_${idx}">
+        </div>
+        <div class="col-md-4 col-lg-3">
+          <label class="form-label small mb-0">Total RM (KGS) <span class="text-danger">*</span></label>
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm mat-total-kg" name="mat_total_sheets_${idx}" required>
+        </div>
+        <div class="col-12 col-lg-4 d-flex align-items-end">
+          <div class="form-text mb-1">FG qty + wastage → raw material kg (Unit 2 style).</div>
         </div>
       </div>
       <div class="row g-2 mt-1">
@@ -3666,8 +3591,6 @@ function removeMaterialRow(idx) {
                 if (nameEl) nameEl.value = (dl.element_name || 'Film').trim() || 'Film';
                 const rmEl = document.querySelector(`input[name="mat_raw_material_${idx}"]`);
                 if (rmEl) rmEl.value = dl.raw_material_item_code || '';
-                const yIn = document.querySelector(`input[name="mat_yield_loss_pct_${idx}"]`);
-                if (yIn) yIn.value = (dl.yield_loss_pct != null ? dl.yield_loss_pct : UNIT1_DEFAULT_YIELD_PCT);
                 const totEl = document.querySelector(`input[name="mat_total_sheets_${idx}"]`);
                 if (totEl) totEl.value = dl.total_sheets || '';
                 const wpEl = document.querySelector(`input[name="mat_wastage_pct_${idx}"]`);
@@ -3726,9 +3649,7 @@ function removeMaterialRow(idx) {
                         newDlWastagePct = dl.wastage_pct || 0;
                     }
                     document.querySelector(`input[name="mat_wastage_pct_${idx}"]`).value = newDlWastagePct;
-                    const ypR = parseFloat(dl.yield_loss_pct);
-                    const ypUse = isNaN(ypR) ? UNIT1_DEFAULT_YIELD_PCT : ypR;
-                    const newDlTotal = Math.ceil(grossKgFromFg(newDlNet, ypUse) + newDlWastage);
+                    const newDlTotal = window.rmKgFromFgAndWastage(newDlNet, newDlWastage);
                     document.querySelector(`input[name="mat_total_sheets_${idx}"]`).value = newDlTotal;
                     document.querySelector(`input[name="mat_wastage_sheets_${idx}"]`).value = newDlWastage;
                     var seqR = (dl.process_sequence_names && dl.process_sequence_names.length)
@@ -3756,8 +3677,6 @@ function removeMaterialRow(idx) {
                 data.detail_lines.forEach((dl, i) => {
                     if (window.addMaterialRow) window.addMaterialRow();
                     fillMaterialRowFromDetail(i, dl);
-                    const yEl = document.querySelector(`input[name="mat_yield_loss_pct_${i}"]`);
-                    if (yEl) yEl.value = UNIT1_DEFAULT_YIELD_PCT;
                     const totalSheetsEl = document.querySelector(`input[name="mat_total_sheets_${i}"]`);
                     if (totalSheetsEl) totalSheetsEl.value = '';
                     const wastagePctEl = document.querySelector(`input[name="mat_wastage_pct_${i}"]`);
@@ -3799,10 +3718,8 @@ function removeMaterialRow(idx) {
                     }
                 }
                 document.querySelector(`input[name="mat_wastage_pct_${idx}"]`).value = newDlWastagePct;
-                const yp0 = parseFloat(primaryDl.yield_loss_pct);
-                const ypUse0 = isNaN(yp0) ? UNIT1_DEFAULT_YIELD_PCT : yp0;
-                const newDlTotal = Math.ceil(grossKgFromFg(newDlNet, ypUse0) + newDlWastage);
-                console.log(`[REPEAT-CALC] Single detail row: net=${newDlNet}, yield%=${ypUse0}, waste=${newDlWastage}, total=${newDlTotal}`);
+                const newDlTotal = window.rmKgFromFgAndWastage(newDlNet, newDlWastage);
+                console.log(`[REPEAT-CALC] Single detail row: net=${newDlNet}, waste=${newDlWastage}, total=${newDlTotal}`);
                 document.querySelector(`input[name="mat_total_sheets_${idx}"]`).value = newDlTotal;
                 document.querySelector(`input[name="mat_wastage_sheets_${idx}"]`).value = newDlWastage;
 

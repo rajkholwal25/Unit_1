@@ -56,14 +56,11 @@ def rm_input_kg_from_fg(
 
 
 def detail_yield_loss_pct(detail_line: JobDetailLine | None, config=None) -> float:
+    """Unit 1: RM gross-up uses wastage only; per-step yield is not applied."""
+    _ = config
     if detail_line is not None and detail_line.yield_loss_pct is not None:
         try:
             return max(0.0, min(float(detail_line.yield_loss_pct), 99.9))
         except (TypeError, ValueError):
             pass
-    if config is not None:
-        try:
-            return max(0.0, min(float(config.get('BOM_YIELD_LOSS_PCT', 2)), 99.9))
-        except (TypeError, ValueError):
-            pass
-    return 2.0
+    return 0.0

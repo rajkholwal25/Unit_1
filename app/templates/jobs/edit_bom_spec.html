@@ -132,16 +132,11 @@
         {% endif %}
 
         <div class="row g-2 mt-3 pt-2 border-top align-items-end">
-          <div class="col-md-3 col-lg-2">
-            <label class="form-label small mb-0" for="detail_yield_loss_pct_input">Yield loss %</label>
-            <input type="number" step="0.1" min="0" max="99" class="form-control form-control-sm" name="detail_yield_loss_pct" id="detail_yield_loss_pct_input"
-                   value="{{ detail.yield_loss_pct if detail.yield_loss_pct is not none else config.get('BOM_YIELD_LOSS_PCT', 2) }}">
-          </div>
           <div class="col-md-4 col-lg-3">
             <label class="form-label small mb-0" for="detail_wastage_sheets_input">Wastage (KGS)</label>
             <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="detail_wastage_sheets" id="detail_wastage_sheets_input"
                    value="{% if detail.wastage_sheets is not none %}{{ detail.wastage_sheets|int }}{% else %}0{% endif %}">
-            <div class="form-text small">Extra kg after yield gross-up.</div>
+            <div class="form-text small">Raw material kg = max FG dispatch kg + wastage (Unit 2 style).</div>
           </div>
         </div>
       </div>

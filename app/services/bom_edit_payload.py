@@ -458,9 +458,7 @@ def gross_sheet_planned_for_detail(job: JobMaster, detail_line: JobDetailLine) -
         wastage_kg = float(detail_line.wastage_sheets or 0)
     except (TypeError, ValueError):
         wastage_kg = 0.0
-    n_conv = _num_converting_steps_for_detail(job, detail_line)
-    y = detail_yield_loss_pct(detail_line, current_app.config)
-    total = rm_input_kg_from_fg(net_max_kg, y, n_conv) + wastage_kg
+    total = net_max_kg + wastage_kg
     return max(1, int(total + 0.999999))
 
 
@@ -571,11 +569,7 @@ def persist_bom_payload_block(
     if kg_planned > 0:
         sheet_planned = max(1, int(kg_planned + 0.999999))
     else:
-        y = detail_yield_loss_pct(detail_line, current_app.config)
-        sheet_planned = max(
-            1,
-            int(rm_input_kg_from_fg(net_max_kg, y, n_conv) + wastage_kg + 0.999999),
-        )
+        sheet_planned = max(1, int(net_max_kg + wastage_kg + 0.999999))
 
     if not isinstance(sections, list) or not sections:
         raise ValueError('BOM payload has no sections')
