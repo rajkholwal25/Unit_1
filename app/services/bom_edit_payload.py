@@ -59,6 +59,9 @@ def _process_codes_from_sections(
         pc = resolve_process_code(process_name, hinted)
         if not pc:
             continue
+        from app.services.unit1_processes import normalize_unit1_process_code
+
+        pc = normalize_unit1_process_code(pc)
         key = pc.strip().upper()
         if key in seen:
             continue
@@ -124,6 +127,8 @@ def slip_process_sequence_json_from_planner_and_sections(
     """
     parts: list[str] = []
 
+    from app.services.unit1_processes import normalize_unit1_process_code
+
     if planner_names:
         for nm in planner_names:
             name = str(nm or '').strip()
@@ -131,7 +136,7 @@ def slip_process_sequence_json_from_planner_and_sections(
                 continue
             pc = resolve_process_code(name, None) or resolve_process_code(name, name)
             if pc:
-                parts.append(pc.strip())
+                parts.append(normalize_unit1_process_code(pc.strip()))
 
     merged = merge_ordered_unique_codes(
         parts,
@@ -609,7 +614,7 @@ def persist_bom_payload_block(
         'Slitting': warehouse_for_process_code('SLT'),
         'Metallizing': warehouse_for_process_code('MET'),
         'Heat seal': warehouse_for_process_code('HRI'),
-        'Coating': warehouse_for_process_code('COAT'),
+        'Coating': warehouse_for_process_code('COT'),
         'FG': warehouse_for_process_code('FG'),
     }
 
@@ -845,7 +850,7 @@ def persist_bom_payload_block(
             if step.output_item_code:
                 created_output_codes_u.add(step.output_item_code.strip().upper())
 
-            fg_full_name = (card_hdr.sap_fg_item_name_snap or card_hdr.sap_fg_item_code or 'FG').strip()
+            fg_full_name = card_hdr.fg_display_label
             proc_full_name = (process_name or process_code or 'PROC').strip()
             if is_fg_step:
                 output_item_name = fg_full_name[:100]
@@ -1143,7 +1148,7 @@ def persist_bom_payload_block(
                     )
                     other_name = synthetic_display_name_for_process_item_code(job, detail_line, other_item_code)
                     if not other_name:
-                        other_fg_full = (other_hl.sap_fg_item_name_snap or other_hl.sap_fg_item_code or 'FG').strip()
+                        other_fg_full = other_hl.fg_display_label
                         other_name = f'{other_fg_full[:100]}-{proc_full_name}'[:100]
                     if sap_client and other_item_code:
                         try:

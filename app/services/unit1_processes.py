@@ -7,9 +7,23 @@ UNIT1_PROCESS_ROWS = (
     ('EMB', 'Embossing', 'converting', 'FBD-EMB'),
     ('SLT', 'Slitting', 'converting', 'FBD-SLT'),
     ('MET', 'Metalisation', 'converting', 'FBD-MTL'),
+    ('COT', 'Coating', 'converting', 'OHJW-U1'),
 )
 
 UNIT1_PROCESS_CODES = frozenset(code for code, *_ in UNIT1_PROCESS_ROWS)
+
+# Legacy process_master row used ``COAT`` for Coating; Unit 1 now uses ``COT`` only.
+UNIT1_LEGACY_PROCESS_CODE_REMAP = {
+    'COAT': 'COT',
+}
+
+
+def normalize_unit1_process_code(process_code: str) -> str:
+    """Map legacy codes to current Unit 1 codes (e.g. COAT → COT)."""
+    c = (process_code or '').strip().upper()
+    if not c:
+        return ''
+    return UNIT1_LEGACY_PROCESS_CODE_REMAP.get(c, c)
 
 UNIT1_RAW_MATERIAL_WAREHOUSE = 'FBD-RM'
 
@@ -18,17 +32,23 @@ UNIT1_DEFAULT_UOM = 'KGS'
 
 # Process suffixes appended to FG base item code (Unit 1: PET-12-1009-TR-EMB, not …-GEN-EMB).
 UNIT1_PROCESS_CODE_SUFFIXES = frozenset(
-    {'EMB', 'SLT', 'MET', 'MTL', 'HRI', 'COAT', 'ALOX', 'FG', 'RM', 'PK', 'PACK'}
+    {'EMB', 'SLT', 'MET', 'MTL', 'HRI', 'COAT', 'COT', 'ALOX', 'FG', 'RM', 'PK', 'PACK'}
 )
 
 
 def unit1_fg_base_code(fg_code: str) -> str:
-    """Strip trailing process suffixes so PET-12-1009-TR-EMB → PET-12-1009-TR."""
+    """Strip trailing *process* suffixes only, keeping the FG identity intact.
+
+    FG ItemCode is always 4 segments: ``material-thickness-pattern-coating``
+    (e.g. ``BOP-12-1003-HRI``). The coating code (HRI, TR, ALO, …) is part of the
+    FG code, NOT a process — so we never strip below 4 segments. Process item codes
+    add a 5th segment: ``BOP-12-1003-HRI-EMB`` → base ``BOP-12-1003-HRI``.
+    """
     code = (fg_code or '').strip().upper()
     if not code:
         return 'FG'
     parts = code.split('-')
-    while len(parts) > 1 and parts[-1] in UNIT1_PROCESS_CODE_SUFFIXES:
+    while len(parts) > 4 and parts[-1] in UNIT1_PROCESS_CODE_SUFFIXES:
         parts.pop()
     return '-'.join(parts) if parts else code
 
@@ -52,11 +72,12 @@ UNIT1_WAREHOUSE_OPTIONS = (
     'FBD-COAT',
     'FBD-ALOX',
     'FBD-FG',
+    'OHJW-U1',
 )
 
 
 def seed_unit1_process_master() -> str:
-    """Upsert EMB/SLT/MET and deactivate all other process_master rows."""
+    """Upsert Unit 1 processes (EMB, SLT, MET, COT) and deactivate other rows."""
     active_codes = set(UNIT1_PROCESS_CODES)
     for code, name, cat, wc in UNIT1_PROCESS_ROWS:
         row = ProcessMaster.query.filter_by(process_code=code).first()

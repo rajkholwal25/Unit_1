@@ -64,7 +64,7 @@ def items():
 @ref_api_bp.route('/processes')
 @login_required
 def processes():
-    """Return Unit 1 active processes (EMB, SLT, MET by default)."""
+    """Return Unit 1 active processes (EMB, SLT, MET, COT by default)."""
     from app.services.unit1_processes import UNIT1_PROCESS_CODES
 
     category = request.args.get('category', '').strip()

@@ -537,7 +537,7 @@
     const opts = [
       ['II-RM', 'II-RM'], ['II-PSTR', 'II-PSTR'], ['II-PRI', 'II-PRI'], ['II-FOI', 'II-FOI'],
       ['II-PST', 'II-PST'], ['II-LAM', 'II-LAM'], ['II-DIE', 'II-DIE'], ['II-CORU', 'II-CORU'],
-      ['II-COT', 'II-COT'], ['II-UV', 'II-UV'], ['II-MAN', 'II-MAN'], ['OHJW-U2', 'OHJW-U2'],
+      ['II-COT', 'II-COT'], ['II-UV', 'II-UV'], ['II-MAN', 'II-MAN'], ['OHJW-U2', 'OHJW-U2'], ['OHJW-U1', 'OHJW-U1'],
       ['II-FG', 'II-FG'], ['II-EMB', 'II-EMB'],
     ];
     const sel = (selected || '').trim();

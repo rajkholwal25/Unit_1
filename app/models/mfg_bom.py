@@ -79,9 +79,14 @@ class Bom(db.Model):
             except (TypeError, ValueError):
                 stored_codes = []
 
+        from app.services.unit1_processes import normalize_unit1_process_code
+
         step_codes = ordered_unique_codes(
-            step.process_code
+            normalize_unit1_process_code(step.process_code)
             for step in self.steps.order_by(None).order_by(db.text('seq_no ASC')).all()
+        )
+        stored_codes = ordered_unique_codes(
+            normalize_unit1_process_code(c) for c in stored_codes
         )
 
         if not stored_codes:

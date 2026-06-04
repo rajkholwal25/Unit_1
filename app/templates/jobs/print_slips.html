@@ -528,8 +528,8 @@
         {% for hl in header_lines %}
         <tr>
           <td>
-            <div><strong>{{ hl.sap_fg_item_code or '—' }}</strong></div>
-            <div class="muted">{{ hl.sap_fg_item_name_snap or '—' }}</div>
+            <div><strong>{{ hl.fg_display_label }}</strong></div>
+            <div class="muted font-monospace">{{ hl.sap_fg_item_code or '—' }}</div>
           </td>
           <td style="width: 10%; white-space: nowrap;">
             {% set _fr = frgnname_by_fg.get((hl.sap_fg_item_code or '').strip()) %}

@@ -563,6 +563,18 @@
 })();
 </script>
 <script>
+window.unit1PatternByCode = {{ unit1_pattern_by_code | tojson }};
+function unit1FgLabelFromCode(code) {
+  const c = String(code || '').trim();
+  const m = c.match(/^([A-Za-z]+)-(\d+(?:\.\d+)?)-([^-]+)-([A-Za-z]+)$/);
+  if (!m) return '';
+  const patCode = m[3];
+  const patName = (window.unit1PatternByCode && window.unit1PatternByCode[patCode]) || patCode;
+  return (m[1].toUpperCase() + ' ' + m[2] + 'MM ' + patName + ' ' + m[4].toUpperCase()).trim();
+}
+window.unit1FgLabelFromCode = unit1FgLabelFromCode;
+</script>
+<script>
 (function () {
   const soDisplay = document.getElementById('sap_so_display');
   const soBrowseBtn = document.getElementById('sap_so_browse_btn');
@@ -679,8 +691,11 @@
     const supplierCatNum = String(
       row.supplier_cat_num || row.SupplierCatNum || row.supplierCatNum || row.SubCatNum || row.subCatNum || ''
     ).trim();
+    const derivedName = (typeof window.unit1FgLabelFromCode === 'function')
+      ? window.unit1FgLabelFromCode(fgCode)
+      : '';
     const fgName = String(
-      fgNameRaw || fgCode
+      derivedName || row.fg_display_label || fgNameRaw || fgCode
     ).trim();
     if (!fgCode && !fgName) return null;
     const out = Object.assign({}, row, {
@@ -1605,7 +1620,7 @@
   };
   window.loadStateFromHidden();
 
-  const PROCESS_PRESETS = ['Embossing', 'Slitting', 'Metalisation'];
+  const PROCESS_PRESETS = ['Embossing', 'Slitting', 'Metalisation', 'Coating'];
 
   const PROCESS_CODES = {
     'Embossing': 'EMB',
@@ -1613,6 +1628,7 @@
     'Metalisation': 'MET',
     'Metallizing': 'MET',
     'Metallisation': 'MET',
+    'Coating': 'COT',
   };
 
   // Process metadata from DB (category, default_workcenter) for special rules like outsourcing.
@@ -1624,6 +1640,7 @@
     'SLT': 'Slitting',
     'MET': 'Metalisation',
     'MTL': 'Metalisation',
+    'COT': 'Coating',
   };
   (function fetchProcessMeta() {
     window.fetchJsonOrThrow('{{ url_for("ref_api.processes") }}', { credentials: 'same-origin' }, 'Process metadata lookup failed')
@@ -1675,13 +1692,19 @@
     );
   }
 
+  function normalizeProcessCode(code) {
+    const c = String(code || '').trim().toUpperCase();
+    if (c === 'COAT') return 'COT';
+    return c;
+  }
+
   function processCodeFor(value) {
     const name = normalizeProcessName(value);
     const meta = PROCESS_META_BY_NAME[name] || PROCESS_META_BY_NAME_KEY[String(name || '').toLowerCase()] || null;
-    if (meta && meta.process_code) return meta.process_code;
+    if (meta && meta.process_code) return normalizeProcessCode(meta.process_code);
     if (PROCESS_CODES[name]) return PROCESS_CODES[name];
-    const upper = String(value || '').trim().toUpperCase();
-    if (PROCESS_META_BY_CODE[upper]) return PROCESS_META_BY_CODE[upper].process_code || upper;
+    const upper = normalizeProcessCode(String(value || '').trim());
+    if (PROCESS_META_BY_CODE[upper]) return normalizeProcessCode(PROCESS_META_BY_CODE[upper].process_code || upper);
     return upper || name.toUpperCase().slice(0, 4);
   }
 
@@ -2182,7 +2205,7 @@
     return match ? match[1].toUpperCase() : str.trim();
   }
 
-  const FBD_WAREHOUSES = ['FBD-RM', 'FBD-EMB', 'FBD-SLT', 'FBD-MTL', 'FBD-HRI', 'FBD-COAT', 'FBD-ALOX', 'FBD-FG'];
+  const FBD_WAREHOUSES = ['FBD-RM', 'FBD-EMB', 'FBD-SLT', 'FBD-MTL', 'FBD-HRI', 'FBD-COAT', 'FBD-ALOX', 'FBD-FG', 'OHJW-U1'];
   const UNIT1_RAW_WH = 'FBD-RM';
   const UNIT1_DEFAULT_UOM = 'KGS';
 
@@ -2227,9 +2250,12 @@
   }
 
   function unit1FgBaseCode(code) {
-    const suffixes = ['EMB', 'SLT', 'MET', 'MTL', 'HRI', 'COAT', 'ALOX', 'FG', 'RM'];
+    // FG identity is always 4 segments: material-thickness-pattern-coating.
+    // The coating code (HRI, TR, ALO, …) is part of the FG code, NOT a process,
+    // so only strip process suffixes appended as a 5th+ segment.
+    const suffixes = ['EMB', 'SLT', 'MET', 'MTL', 'HRI', 'COAT', 'COT', 'ALOX', 'FG', 'RM'];
     let parts = String(code || 'FG').trim().toUpperCase().split('-');
-    while (parts.length > 1 && suffixes.indexOf(parts[parts.length - 1]) >= 0) parts.pop();
+    while (parts.length > 4 && suffixes.indexOf(parts[parts.length - 1]) >= 0) parts.pop();
     return parts.join('-') || 'FG';
   }
 
@@ -2243,6 +2269,7 @@
     'Metalisation': 'FBD-MTL',
     'Metallizing': 'FBD-MTL',
     'Metallisation': 'FBD-MTL',
+    'Coating': 'OHJW-U1',
   };
 
   function warehouseSelectHtml(selectedWh) {
@@ -3500,7 +3527,7 @@ function removeMaterialRow(idx) {
             doc_entry: (data.sap_so_entry || null),
             line_num: null,
             fg_code: hl.sap_fg_item_code,
-            fg_name: hl.sap_fg_item_name_snap,
+            fg_name: hl.fg_display_label || hl.sap_fg_item_name_snap,
             ups: hl.ups || 1,
             quantity: (parseFloat(hl.dispatch_qty) || 0) * scale,
             carton_length_mm: hl.length,
@@ -3515,7 +3542,7 @@ function removeMaterialRow(idx) {
         } else if (loadMode === 'sap') {
             const sapLines = headerLines.map(function (hl) {
                 const fgCode = String(hl.sap_fg_item_code || hl.fg_code || hl.item_code || '').trim();
-                const fgName = String(hl.sap_fg_item_name_snap || hl.fg_name || hl.item_name || fgCode).trim();
+                const fgName = String(hl.fg_display_label || hl.sap_fg_item_name_snap || hl.fg_name || hl.item_name || fgCode).trim();
                 return {
                     fg_code: fgCode,
                     fg_name: fgName || fgCode,
@@ -3545,7 +3572,7 @@ function removeMaterialRow(idx) {
                 doc_entry: null,
                 line_num: null,
                 fg_code: hl.sap_fg_item_code,
-                fg_name: hl.sap_fg_item_name_snap,
+                fg_name: hl.fg_display_label || hl.sap_fg_item_name_snap,
                 ups: hl.ups || 1,
                 quantity: (parseFloat(hl.dispatch_qty) || 0) * scale,
                 carton_length_mm: hl.length,

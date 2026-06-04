@@ -2458,3 +2458,851 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
 2026-06-04 11:08:13,450 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
 2026-06-04 11:08:38,011 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
 2026-06-04 11:08:38,012 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:04:05,984 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:04:05,985 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:04:54,398 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:04:54,400 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:06:39,930 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:06:39,935 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:06:42,831 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:06:42,832 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:07:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:07:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:07:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:07:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:07:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:07:41 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:07:42 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-04 12:08:17 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 12:08:17 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 12:08:37 [INFO] jobcard.api.sap: Batch creating 4 items in SAP.
+2026-06-04 12:08:37 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-EMB: ItemName updated
+2026-06-04 12:08:37 [INFO] jobcard.api.sap: Item PET-12-1009-TR-EMB already exists or verified.
+2026-06-04 12:08:37 [ERROR] jobcard.sap: SAP request failed: GET /Items('PET-12-1009-TR-COT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 12:08:38 [INFO] jobcard.api.sap: Item PET-12-1009-TR-COT created successfully.
+2026-06-04 12:08:38 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-MET: ItemName updated
+2026-06-04 12:08:38 [INFO] jobcard.api.sap: Item PET-12-1009-TR-MET already exists or verified.
+2026-06-04 12:08:38 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-SLT: ItemName updated
+2026-06-04 12:08:38 [INFO] jobcard.api.sap: Item PET-12-1009-TR-SLT already exists or verified.
+2026-06-04 12:08:54,351 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 0, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'PET-12-1009-TR-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '3733', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '3733', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Coating', 'process_code': 'COT', 'cards': [{'card_idx': 0, 'item_name': 'PET-12-1009-TR-COT', 'warehouse' [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1975]
+2026-06-04 12:08:54 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-EMB: ItemName updated
+2026-06-04 12:08:55 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-COT: ItemName updated
+2026-06-04 12:08:55 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-MET: ItemName updated
+2026-06-04 12:08:55 [INFO] jobcard.sap: SAP Item PET-12-1009-TR-SLT: ItemName updated
+2026-06-04 12:08:55,931 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-24 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1508]
+2026-06-04 12:08:56,050 INFO: [SAP-PUSH] Step seq=10 item_no=PET-12-1009-TR-EMB header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 3733.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1531]
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-EMB qty=3733.0 wh=FBD-EMB
+2026-06-04 12:08:56 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:08:56 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-24 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141421 DocNum=702
+2026-06-04 12:08:56,389 INFO: [SAP-PUSH] Step seq=20 item_no=PET-12-1009-TR-COT header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-1009-TR-EMB', 'PlannedQuantity': 3733.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-Triangle-TR-EMB Embossing'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1531]
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-COT qty=3733.0 wh=OHJW-U1
+2026-06-04 12:08:56 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:08:56 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-24 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141422 DocNum=703
+2026-06-04 12:08:56,645 INFO: [SAP-PUSH] Step seq=30 item_no=PET-12-1009-TR-MET header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-1009-TR-COT', 'PlannedQuantity': 3733.0, 'Warehouse': 'OHJW-U1', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-Triangle-TR-COT Coating'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1531]
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-MET qty=3733.0 wh=FBD-MTL
+2026-06-04 12:08:56 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:08:56 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-24 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141423 DocNum=704
+2026-06-04 12:08:56,895 INFO: [SAP-PUSH] Step seq=40 item_no=PET-12-1009-TR-SLT header_FG=PET-12-1009-TR linked=False input_lines=[{'ItemNo': 'PET-12-1009-TR-MET', 'PlannedQuantity': 3733.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-Triangle-TR-MET Metalisation'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1531]
+2026-06-04 12:08:56 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PET-12-1009-TR-SLT qty=3733.0 wh=FBD-SLT
+2026-06-04 12:08:56 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:08:56 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-24 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:08:57 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141424 DocNum=705
+2026-06-04 12:11:37,731 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:11:37,735 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:12:18,080 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:12:18,083 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:12:29,731 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:12:29,734 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:13:14,951 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:13:14,952 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:13:28,114 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:13:28,115 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:14:01,950 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:14:01,952 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:14:12,822 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:14:12,823 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:14:39,259 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:14:39,260 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:20:13,741 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:20:13,743 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:20:20,727 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:20:20,728 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:20:30,155 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:20:30,157 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:20:39,249 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:20:39,251 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:20:50,816 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:20:50,817 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:21:06,249 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:21:06,251 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:21:26,350 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:21:26,351 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:21:44,343 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:21:44,345 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:30:17,852 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:30:17,853 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:31:06,277 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:31:06,279 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:31:10,987 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:31:10,989 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:31:36,680 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:31:36,681 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:32:00,841 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 12:32:00,842 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 12:58:20 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:58:21 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:58:22 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:58:26 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:58:26 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:58:27 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 12:58:27 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-04 12:59:02 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 12:59:02 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 12:59:10 [INFO] jobcard.api.sap: Batch creating 4 items in SAP.
+2026-06-04 12:59:10 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-EMB') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 12:59:11 [INFO] jobcard.api.sap: Item BOP-12-1003-EMB created successfully.
+2026-06-04 12:59:11 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-COT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 12:59:11 [INFO] jobcard.api.sap: Item BOP-12-1003-COT created successfully.
+2026-06-04 12:59:11 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-MET') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 12:59:11 [INFO] jobcard.api.sap: Item BOP-12-1003-MET created successfully.
+2026-06-04 12:59:11 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-SLT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 12:59:12 [INFO] jobcard.api.sap: Item BOP-12-1003-SLT created successfully.
+2026-06-04 12:59:51,327 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 0, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'BOP-12-1003-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '123', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '123', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Coating', 'process_code': 'COT', 'cards': [{'card_idx': 0, 'item_name': 'BOP-12-1003-COT', 'warehouse': 'OHJW- [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1991]
+2026-06-04 12:59:51 [INFO] jobcard.sap: SAP Item BOP-12-1003-EMB: ItemName updated
+2026-06-04 12:59:52 [INFO] jobcard.sap: SAP Item BOP-12-1003-COT: ItemName updated
+2026-06-04 12:59:52 [INFO] jobcard.sap: SAP Item BOP-12-1003-MET: ItemName updated
+2026-06-04 12:59:53 [INFO] jobcard.sap: SAP Item BOP-12-1003-SLT: ItemName updated
+2026-06-04 12:59:53,231 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-30 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1522]
+2026-06-04 12:59:53,367 INFO: [SAP-PUSH] Step seq=10 item_no=BOP-12-1003-EMB header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 123.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 12:59:53 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-EMB qty=123.0 wh=FBD-EMB
+2026-06-04 12:59:53 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:59:53 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:59:53 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141426 DocNum=706
+2026-06-04 12:59:53,804 INFO: [SAP-PUSH] Step seq=20 item_no=BOP-12-1003-COT header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-EMB', 'PlannedQuantity': 123.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'Embossing'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 12:59:53 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-COT qty=123.0 wh=OHJW-U1
+2026-06-04 12:59:53 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:59:53 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:59:54 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141427 DocNum=707
+2026-06-04 12:59:54,201 INFO: [SAP-PUSH] Step seq=30 item_no=BOP-12-1003-MET header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-COT', 'PlannedQuantity': 123.0, 'Warehouse': 'OHJW-U1', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'Coating'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 12:59:54 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-MET qty=123.0 wh=FBD-MTL
+2026-06-04 12:59:54 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:59:54 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:59:54 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141428 DocNum=708
+2026-06-04 12:59:54,512 INFO: [SAP-PUSH] Step seq=40 item_no=BOP-12-1003-SLT header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-MET', 'PlannedQuantity': 123.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'Metalisation'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 12:59:54 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-SLT qty=123.0 wh=FBD-SLT
+2026-06-04 12:59:54 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 12:59:54 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 12:59:54 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141429 DocNum=709
+2026-06-04 13:11:24,065 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:11:24,068 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:12:44,512 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:12:44,514 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:13:00,297 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:13:00,299 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:13:22,165 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:13:22,166 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:13:53,130 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:13:53,131 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:14:27,963 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:14:27,965 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:17:00,315 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:17:00,317 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 13:19:01 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 13:19:01 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 13:19:01 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 13:19:01 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 13:19:01 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 13:19:01 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 13:19:02 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-04 13:19:42 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 13:19:42 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-04 13:20:02 [INFO] jobcard.api.sap: Batch creating 4 items in SAP.
+2026-06-04 13:20:02 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI-EMB') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 13:20:03 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-EMB created successfully.
+2026-06-04 13:20:03 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI-MET') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 13:20:03 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-MET created successfully.
+2026-06-04 13:20:03 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI-COT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 13:20:03 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-COT created successfully.
+2026-06-04 13:20:03 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI-SLT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-04 13:20:04 [INFO] jobcard.api.sap: Item BOP-12-1003-HRI-SLT created successfully.
+2026-06-04 13:20:21,554 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 0, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'BOP-12-1003-HRI-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '123', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '123', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Metalisation', 'process_code': 'MET', 'cards': [{'card_idx': 0, 'item_name': 'BOP-12-1003-HRI-MET', 'wareh [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1991]
+2026-06-04 13:20:22 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-EMB: ItemName updated
+2026-06-04 13:20:22 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-MET: ItemName updated
+2026-06-04 13:20:23 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-COT: ItemName updated
+2026-06-04 13:20:23 [INFO] jobcard.sap: SAP Item BOP-12-1003-HRI-SLT: ItemName updated
+2026-06-04 13:20:23,541 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-30 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1522]
+2026-06-04 13:20:23,668 INFO: [SAP-PUSH] Step seq=10 item_no=BOP-12-1003-HRI-EMB header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 123.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 13:20:23 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-EMB qty=123.0 wh=FBD-EMB
+2026-06-04 13:20:23 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 13:20:23 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 13:20:24 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141456 DocNum=710
+2026-06-04 13:20:24,031 INFO: [SAP-PUSH] Step seq=20 item_no=BOP-12-1003-HRI-MET header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-HRI-EMB', 'PlannedQuantity': 123.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'BOP 12MM Waves HRI Embossing'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 13:20:24 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-MET qty=123.0 wh=FBD-MTL
+2026-06-04 13:20:24 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 13:20:24 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 13:20:24 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141457 DocNum=711
+2026-06-04 13:20:24,408 INFO: [SAP-PUSH] Step seq=30 item_no=BOP-12-1003-HRI-COT header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-HRI-MET', 'PlannedQuantity': 123.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'BOP 12MM Waves HRI Metalisation'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 13:20:24 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-COT qty=123.0 wh=OHJW-U1
+2026-06-04 13:20:24 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 13:20:24 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 13:20:24 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141458 DocNum=712
+2026-06-04 13:20:24,739 INFO: [SAP-PUSH] Step seq=40 item_no=BOP-12-1003-HRI-SLT header_FG=BOP-12-1003-HRI linked=False input_lines=[{'ItemNo': 'BOP-12-1003-HRI-COT', 'PlannedQuantity': 123.0, 'Warehouse': 'OHJW-U1', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'BOP 12MM Waves HRI Coating'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1545]
+2026-06-04 13:20:24 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=BOP-12-1003-HRI-SLT qty=123.0 wh=FBD-SLT
+2026-06-04 13:20:24 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-04 13:20:24 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-04 13:20:25 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141459 DocNum=713
+2026-06-04 13:57:31,780 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 13:57:31,782 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 14:00:39,467 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 14:00:39,469 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-04 14:02:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:02:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:02:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:02:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:02:35 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:02:35 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-04 14:02:35 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-04 14:02:36 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:02:36 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:02:36 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:02:36 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:02:37 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:02:37 [ERROR] jobcard.sap: SAP request failed: GET /Items('PET-12-1009-TR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-04 14:10:07 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:10:07 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:10:07 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:10:07 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:10:07 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:10:07 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-04 14:12:05 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:12:05 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:12:05 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:12:05 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:12:05 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-04 14:12:05 [ERROR] jobcard.sap: SAP request failed: GET /Items('BOP-12-1003-HRI')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-04 14:24:11,042 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-04 14:24:11,043 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]

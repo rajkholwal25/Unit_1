@@ -17,6 +17,50 @@ from ..utils.thickness import parse_thickness
 generator_bp = Blueprint('generator', __name__)
 
 
+def _parse_generate_request():
+    """Read generate form/JSON fields."""
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form
+    return data
+
+
+def _resolve_pattern_for_generate(data) -> tuple[Pattern | None, str | None]:
+    """Resolve pattern by id, code, or name (active or inactive). Returns (row, error_message)."""
+    pattern_id = data.get('pattern_id')
+    pattern_row = None
+    if pattern_id not in (None, ''):
+        try:
+            pattern_row = Pattern.query.get(int(pattern_id))
+        except (TypeError, ValueError):
+            pattern_row = None
+    if pattern_row:
+        return pattern_row, None
+
+    hint = (
+        (data.get('pattern_name') or data.get('pattern_input') or '').strip()
+    )
+    if not hint:
+        return None, 'Select a pattern from the list or press Enter to create one'
+
+    by_code = Pattern.query.filter(Pattern.pattern_code == hint).first()
+    if by_code:
+        return by_code, None
+    by_name = Pattern.query.filter(
+        db.func.lower(Pattern.pattern_name) == hint.lower()
+    ).first()
+    if by_name:
+        return by_name, None
+    partial = Pattern.query.filter(
+        Pattern.is_active.is_(True),
+        db.func.lower(Pattern.pattern_name).like(f'%{hint.lower()}%'),
+    ).order_by(Pattern.pattern_code).first()
+    if partial:
+        return partial, None
+    return None, f'Pattern not found: {hint}'
+
+
 def _active_coating_codes():
     return {
         c.code.upper()
@@ -38,41 +82,61 @@ def index():
 @generator_bp.route('/generate', methods=['POST'])
 def generate():
     """Generate FG item code only. Routing/process codes are created at job + BOM time."""
-    data = request.form
-    material = data.get('material_type')
+    data = _parse_generate_request()
+    material = (data.get('material_type') or '').strip()
     thickness = parse_thickness(data.get('thickness'))
     coating = (data.get('coating') or '').strip().upper()
-    pattern_id = data.get('pattern_id')
-    if not all([material, thickness is not None, coating, pattern_id]):
-        return jsonify({'error': 'invalid input — select material, thickness, pattern, and coating'}), 400
+
+    if not material:
+        return jsonify({'error': 'Select a material type'}), 400
+    if thickness is None:
+        return jsonify({'error': 'Thickness must be a valid number'}), 400
+    if not coating:
+        return jsonify({'error': 'Select a coating'}), 400
     if coating not in _active_coating_codes():
-        return jsonify({'error': 'invalid or inactive coating'}), 400
-    pattern = Pattern.query.get(int(pattern_id))
+        return jsonify({'error': f'Coating "{coating}" is not active. Choose TR, NTR, etc.'}), 400
+
+    pattern, pat_err = _resolve_pattern_for_generate(data)
+    if pat_err:
+        return jsonify({'error': pat_err}), 400
     if not pattern:
-        return jsonify({'error': 'pattern not found'}), 404
+        return jsonify({'error': 'Pattern not found'}), 404
+
     try:
         fg_code = ItemCodeGeneratorService.generate_fg_code(
             material, thickness, pattern.pattern_code, coating
         )
-        fg_name = ItemCodeGeneratorService.generate_fg_display_name(
+        default_fg_name = ItemCodeGeneratorService.generate_fg_display_name(
             material, thickness, pattern.pattern_name, coating
         )
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
 
+    if not default_fg_name:
+        return jsonify({'error': 'Could not build FG name — check material, thickness, pattern, and coating'}), 400
+
+    fg_name_hint = (data.get('fg_name') or '').strip()
+    fg_name = fg_name_hint if fg_name_hint else default_fg_name
+
     gen_payload = {
         'fg_code': fg_code,
         'fg_name': fg_name,
+        'prefer_fg_name': True,
         'process_items': [],
         'material_type': material,
         'thickness': thickness,
         'coating': coating,
-        'pattern_id': int(pattern_id),
+        'pattern_id': int(pattern.id),
+        'pattern_name': pattern.pattern_name,
+        'pattern_code': pattern.pattern_code,
     }
     sap_preview = SapPushService.preview_item_payloads(gen_payload, current_app.config)
     return jsonify({
         'fg_code': fg_code,
         'fg_name': fg_name,
+        'fg_name_default': default_fg_name,
+        'pattern_name': pattern.pattern_name,
+        'pattern_code': pattern.pattern_code,
         'process_items': [],
         'coating': coating,
         'bom_chain': [],
@@ -118,6 +182,8 @@ def save_local():
         db.session.add(fg)
         db.session.flush()
 
+    if payload.get('fg_name'):
+        payload['prefer_fg_name'] = True
     new_codes = sync_from_generator_save(payload, fg.id, current_app.config)
     db.session.commit()
     msg = f'Saved FG {fg_code}'
@@ -143,6 +209,8 @@ def push_to_sap():
     try:
         push_payload = dict(payload)
         push_payload['process_items'] = []
+        if push_payload.get('fg_name'):
+            push_payload['prefer_fg_name'] = True
         log = client.push_item_master(push_payload)
         fg = GeneratedFGItem.query.filter_by(
             item_code=payload.get('fg_code'),

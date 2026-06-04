@@ -6,6 +6,7 @@ import re
 
 from app.models.reference import ProcessMaster
 from app.services.unit1_processes import UNIT1_PROCESS_CODE_SUFFIXES, unit1_fg_base_code
+from app.utils.thickness import parse_thickness, thickness_display
 
 
 def pattern_segment_for_display(pattern_name: str) -> str:
@@ -24,17 +25,51 @@ def pattern_segment_for_display(pattern_name: str) -> str:
     return segment[:40]
 
 
+def unit1_fg_human_label(
+    material_type: str,
+    thickness,
+    pattern_name: str,
+    coating: str,
+) -> str:
+    """Human FG label for UI/SAP ItemName: ``PET 12MM Triangle TR`` (pattern **name**, not code)."""
+    mat = (material_type or '').strip().upper()
+    th = thickness_display(parse_thickness(thickness) if thickness is not None else thickness)
+    pn = (pattern_name or '').strip()
+    coat = (coating or '').strip().upper()
+    if not mat or th == '—' or not pn or not coat:
+        return ''
+    return f'{mat} {th}MM {pn} {coat}'[:128]
+
+
+def unit1_fg_human_label_from_item_code(
+    item_code: str,
+    *,
+    pattern_name: str | None = None,
+) -> str:
+    """``PET-12-1009-TR`` → ``PET 12MM Triangle TR`` when pattern 1009 = Triangle."""
+    from ..models import Pattern
+
+    base = unit1_fg_base_code((item_code or '').strip())
+    if not base:
+        return ''
+    parts = base.split('-')
+    if len(parts) < 4:
+        return ''
+    mat, th, pat_code, coat = parts[0], parts[1], parts[2], parts[3]
+    pn = (pattern_name or '').strip()
+    if not pn:
+        row = Pattern.query.filter_by(pattern_code=pat_code).first()
+        pn = (row.pattern_name if row else pat_code).strip()
+    return unit1_fg_human_label(mat, th, pn, coat)
+
+
 def unit1_fg_display_name(
     material_type: str,
     thickness,
     pattern_name: str,
     coating: str,
 ) -> str:
-    from .item_code_generator import ItemCodeGeneratorService
-
-    return ItemCodeGeneratorService.generate_fg_display_name(
-        material_type, thickness, pattern_name, coating
-    )
+    return unit1_fg_human_label(material_type, thickness, pattern_name, coating)
 
 
 def unit1_fg_display_name_from_item_code(
@@ -42,33 +77,21 @@ def unit1_fg_display_name_from_item_code(
     *,
     pattern_name: str | None = None,
 ) -> str:
-    """
-    Build FG display name from ItemCode by swapping pattern code → pattern name.
-    ``PET-12-1009-TR`` → ``PET-12-Rectangle-TR`` when pattern 1009 = Rectangle.
-    """
-    from ..models import Pattern
-
-    base = unit1_fg_base_code((item_code or '').strip())
-    if not base:
-        return (item_code or '').strip()
-    parts = base.split('-')
-    if len(parts) < 4:
-        return base
-    mat, th, pat_code, coat = parts[0], parts[1], parts[2], parts[3]
-    name_seg = pat_code
-    if pattern_name:
-        name_seg = pattern_segment_for_display(pattern_name)
-    else:
-        row = Pattern.query.filter_by(pattern_code=pat_code).first()
-        if row:
-            name_seg = pattern_segment_for_display(row.pattern_name)
-    return f'{mat}-{th}-{name_seg}-{coat}'
+    return unit1_fg_human_label_from_item_code(item_code, pattern_name=pattern_name)
 
 
 def resolve_fg_display_name(payload: dict, pattern=None) -> str:
-    """FG ItemName from API payload (explicit fg_name, pattern_id, or fg_code lookup)."""
+    """FG label: derive from ``fg_code`` (pattern name + MM) when possible; else explicit / generator fields."""
     explicit = (payload.get('fg_name') or '').strip()
-    if explicit:
+    fg_code = (payload.get('fg_code') or '').strip()
+    if payload.get('prefer_fg_name') and explicit:
+        return explicit[:128]
+    if fg_code:
+        pn = pattern.pattern_name if pattern else None
+        derived = unit1_fg_human_label_from_item_code(fg_code, pattern_name=pn)
+        if derived:
+            return derived
+    if explicit and explicit != fg_code:
         return explicit
     if pattern is None and payload.get('pattern_id'):
         from ..models import Pattern
@@ -78,12 +101,19 @@ def resolve_fg_display_name(payload: dict, pattern=None) -> str:
     thickness = payload.get('thickness')
     coating = payload.get('coating')
     if pattern and material and thickness is not None and coating:
-        return unit1_fg_display_name(material, thickness, pattern.pattern_name, coating)
-    fg_code = (payload.get('fg_code') or '').strip()
-    if fg_code:
-        pn = pattern.pattern_name if pattern else None
-        return unit1_fg_display_name_from_item_code(fg_code, pattern_name=pn)
-    return ''
+        return unit1_fg_human_label(material, thickness, pattern.pattern_name, coating)
+    return explicit or fg_code or ''
+
+
+def resolve_fg_name_for_snap(fg_code: str, fg_name_hint: str = '') -> str:
+    """Name stored on job header lines: pattern name label, not SAP abbrev or pattern code."""
+    code = (fg_code or '').strip()
+    if code:
+        lbl = unit1_fg_human_label_from_item_code(code)
+        if lbl:
+            return lbl
+    hint = (fg_name_hint or '').strip()
+    return hint or code
 
 
 def build_process_label_map() -> dict[str, str]:
@@ -156,14 +186,13 @@ def unit1_process_item_description(
     if not code:
         return ''
     tail = unit1_process_tail_from_code(code)
-    display_base = unit1_fg_display_name_from_item_code(
+    display_base = unit1_fg_human_label_from_item_code(
         unit1_fg_base_code(code),
         pattern_name=pattern_name,
     )
     if not tail:
         return display_base[:128]
-    display_code = f'{display_base}-{tail}'
     label = unit1_process_label_for_tail(tail, label_map)
     if not label:
         label = tail.replace('-', ' ').title()
-    return f'{display_code} {label}'.strip()[:128]
+    return f'{display_base} {label}'.strip()[:128]

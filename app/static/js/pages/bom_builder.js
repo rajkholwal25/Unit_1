@@ -229,7 +229,10 @@
 
   async function generate() {
     const coating = document.getElementById('coating').value;
-    const thicknessVal = parseFloat(document.getElementById('thickness').value, 10);
+    const thInput = document.getElementById('thickness');
+    const thicknessVal = typeof normalizeThicknessMmInput === 'function'
+      ? normalizeThicknessMmInput(thInput)
+      : parseFloat(thInput.value, 10);
     if (!document.getElementById('material_type').value || !document.getElementById('pattern_id').value ||
         !document.getElementById('template_id').value || !coating) {
       toast('Select material, pattern, coating, and template', 'warning');
@@ -241,7 +244,7 @@
     }
     const fd = new URLSearchParams();
     fd.append('material_type', document.getElementById('material_type').value);
-    fd.append('thickness', document.getElementById('thickness').value);
+    fd.append('thickness', thInput.value);
     fd.append('pattern_id', document.getElementById('pattern_id').value);
     fd.append('coating', coating);
     fd.append('template_id', document.getElementById('template_id').value);

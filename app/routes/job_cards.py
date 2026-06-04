@@ -127,12 +127,14 @@ def _normalize_selected_lines_json(raw: str) -> str:
         fg_name = str(r.get('fg_name') or '').strip()
         if not fg_code:
             continue
+        from app.services.unit1_item_naming import resolve_fg_name_for_snap
+
         out.append({
             'doc_entry': r.get('doc_entry'),
             'so_no': str(r.get('so_no') or '').strip(),
             'line_num': r.get('line_num'),
             'fg_code': fg_code,
-            'fg_name': fg_name,
+            'fg_name': resolve_fg_name_for_snap(fg_code, fg_name),
             'ups': _to_float(r.get('ups')),
             'quantity': _to_float(r.get('quantity')),
             'carton_length_mm': _to_float(r.get('carton_length_mm')),

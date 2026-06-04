@@ -722,10 +722,13 @@ def fg_lines_for_customer_so(
             continue
         qty = r.get(k_q) if k_q else None
         fg_name = (r.get(k_fn) or '').strip() if k_fn else ''
+        from app.services.unit1_item_naming import unit1_fg_human_label_from_item_code
+
+        display_name = unit1_fg_human_label_from_item_code(fg) or fg_name or fg
         out.append({
             'mjd1_code': r.get(k_code),
             'fg_code': fg,
-            'fg_name': fg_name or fg,
+            'fg_name': display_name,
             'dispatch_qty': qty,
         })
     return out

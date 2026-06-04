@@ -1,5 +1,5 @@
 from ..utils.thickness import thickness_for_item_code
-from .unit1_item_naming import pattern_segment_for_display
+from .unit1_item_naming import unit1_fg_human_label
 
 
 class ItemCodeGeneratorService:
@@ -16,11 +16,7 @@ class ItemCodeGeneratorService:
 
     @staticmethod
     def generate_fg_display_name(material_type: str, thickness, pattern_name: str, coating: str) -> str:
-        """SAP ItemName / FG name — uses pattern **name** (e.g. Rectangle)."""
-        mat = material_type.strip().upper()
-        th = thickness_for_item_code(thickness)
-        if not th:
+        """SAP ItemName / FG name — uses pattern **name** (e.g. ``PET 12MM Triangle TR``)."""
+        if thickness_for_item_code(thickness) == '':
             raise ValueError('thickness must be a positive number')
-        pn = pattern_segment_for_display(pattern_name)
-        coat = coating.strip().upper()
-        return f"{mat}-{th}-{pn}-{coat}"
+        return unit1_fg_human_label(material_type, thickness, pattern_name, coating)

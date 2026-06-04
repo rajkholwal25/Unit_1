@@ -1,0 +1,308 @@
+/* ============================================================
+   theme.css — global modern polish layer
+   Loads LAST so it refines main.css / style.css / app.css without
+   touching page structure. Page-specific styles (e.g. BOM design
+   under .job-view-bom-row) keep higher specificity and win.
+   ============================================================ */
+
+:root {
+  --t-bg: #f2f5f9;
+  --t-surface: #ffffff;
+  --t-border: #e6eaf1;
+  --t-border-strong: #d6dce6;
+  --t-text: #0f172a;
+  --t-muted: #64748b;
+  --t-primary: #4f46e5;
+  --t-primary-hover: #4338ca;
+  --t-accent: #7c3aed;
+  --t-radius: 14px;
+  --t-radius-sm: 10px;
+  --t-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --t-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --t-shadow: 0 8px 28px -10px rgba(15, 23, 42, 0.16), 0 2px 8px -4px rgba(15, 23, 42, 0.08);
+  --t-shadow-lg: 0 24px 60px -20px rgba(15, 23, 42, 0.28);
+}
+
+/* —— Base canvas —— */
+body {
+  background:
+    radial-gradient(1200px 460px at 100% -8%, rgba(124, 58, 237, 0.06), transparent 60%),
+    radial-gradient(1000px 420px at -8% 0%, rgba(79, 70, 229, 0.06), transparent 55%),
+    var(--t-bg);
+  background-attachment: fixed;
+  color: var(--t-text);
+}
+
+::selection {
+  background: rgba(79, 70, 229, 0.18);
+}
+
+/* Gentle page entrance (opacity only — transform breaks Bootstrap modals inside .app-content) */
+.app-content {
+  animation: tFadeIn 0.28s ease both;
+}
+@keyframes tFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* —— Top navigation polish —— */
+.app-topnav {
+  background: linear-gradient(90deg, #0b1220 0%, #161f33 55%, #1d2640 100%);
+  backdrop-filter: saturate(140%);
+}
+.app-topnav-link {
+  position: relative;
+}
+.app-topnav-link.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.55), rgba(124, 58, 237, 0.45));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.app-topnav-link--new-job {
+  background: linear-gradient(135deg, var(--t-primary), #6366f1);
+  color: #fff !important;
+  box-shadow: 0 4px 14px -5px rgba(79, 70, 229, 0.8);
+}
+.app-topnav-link--new-job:hover {
+  background: linear-gradient(135deg, #4338ca, #4f46e5);
+  color: #fff !important;
+}
+.app-topnav-brand .brand-icon {
+  box-shadow: 0 4px 12px -3px rgba(124, 58, 237, 0.6);
+}
+
+.app-pagebar {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--t-border);
+}
+
+/* —— Cards & panels —— */
+.card {
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius);
+  box-shadow: var(--t-shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.card.shadow-sm {
+  box-shadow: var(--t-shadow-sm) !important;
+}
+.card.border-0 {
+  border: 1px solid var(--t-border) !important;
+}
+.card-header {
+  border-radius: var(--t-radius) var(--t-radius) 0 0 !important;
+  border-bottom: 1px solid var(--t-border);
+}
+.panel {
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius);
+  box-shadow: var(--t-shadow-sm);
+}
+.panel-header {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* —— Stat cards (dashboard) — modern accent design —— */
+.stat-card {
+  position: relative;
+  border: 1px solid var(--t-border) !important;
+  border-left-width: 1px !important;
+  border-radius: var(--t-radius);
+  overflow: hidden;
+  background: var(--t-surface);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--sc-a, #6366f1), var(--sc-b, #818cf8));
+}
+.stat-card:hover {
+  box-shadow: var(--t-shadow);
+  transform: translateY(-3px);
+}
+.stat-card .stat-number {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.stat-card .stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--t-muted);
+}
+.stat-card.total { --sc-a: #06b6d4; --sc-b: #22d3ee; }
+.stat-card.open { --sc-a: #64748b; --sc-b: #94a3b8; }
+.stat-card.staged { --sc-a: #4f46e5; --sc-b: #6366f1; }
+.stat-card.released { --sc-a: #f59e0b; --sc-b: #fbbf24; }
+.stat-card.closed { --sc-a: #16a34a; --sc-b: #22c55e; }
+.stat-card.cancelled { --sc-a: #dc2626; --sc-b: #ef4444; }
+.stat-card.draft { --sc-a: #64748b; --sc-b: #94a3b8; }
+.stat-card.approved { --sc-a: #4f46e5; --sc-b: #6366f1; }
+.stat-card.in-production { --sc-a: #f59e0b; --sc-b: #fbbf24; }
+.stat-card.completed { --sc-a: #16a34a; --sc-b: #22c55e; }
+
+/* —— Module cards —— */
+.module-card {
+  border-radius: var(--t-radius);
+}
+.module-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: var(--t-shadow);
+}
+.module-card .module-icon {
+  background: linear-gradient(135deg, #eef2ff, #ede9fe);
+  color: var(--t-primary);
+}
+
+/* —— Tables —— */
+.table > :not(caption) > * > * {
+  padding: 0.7rem 0.9rem;
+}
+.table thead th {
+  background: #f7f9fc;
+  color: var(--t-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--t-border);
+}
+.table-hover tbody tr {
+  transition: background 0.12s ease;
+}
+.table-hover tbody tr:hover {
+  background: #f4f7ff;
+}
+.table-responsive.border,
+.table-responsive.rounded {
+  border-radius: var(--t-radius-sm) !important;
+}
+
+/* —— Buttons —— */
+.btn {
+  border-radius: var(--t-radius-sm);
+  font-weight: 600;
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease, border-color 0.16s ease;
+}
+.btn-sm {
+  border-radius: 8px;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--t-primary), #6366f1);
+  border: none;
+  box-shadow: 0 4px 14px -5px rgba(79, 70, 229, 0.65);
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background: linear-gradient(135deg, var(--t-primary-hover), #4f46e5);
+  box-shadow: 0 7px 20px -6px rgba(79, 70, 229, 0.7);
+  transform: translateY(-1px);
+}
+.btn-success {
+  box-shadow: 0 4px 14px -5px rgba(22, 163, 74, 0.55);
+}
+.btn-success:hover {
+  transform: translateY(-1px);
+}
+.btn-outline-secondary {
+  border-color: var(--t-border-strong);
+  color: var(--t-text);
+}
+.btn-outline-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--t-text);
+  transform: translateY(-1px);
+}
+.btn-outline-primary:hover {
+  transform: translateY(-1px);
+}
+
+/* —— Forms —— */
+.form-control,
+.form-select {
+  border-radius: var(--t-radius-sm);
+  border-color: var(--t-border-strong);
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--t-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+}
+.input-group-lg > .form-control,
+.input-group-lg > .input-group-text,
+.input-group-lg > .btn {
+  border-radius: var(--t-radius-sm);
+}
+
+/* —— Badges & status —— */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.status-pill {
+  box-shadow: var(--t-shadow-xs);
+}
+
+/* —— Alerts —— */
+.alert {
+  border-radius: var(--t-radius-sm);
+  box-shadow: var(--t-shadow-xs);
+}
+
+/* —— Modals (must sit above backdrop; modals are moved to <body> via main.js) —— */
+.modal {
+  z-index: 1055;
+}
+.modal-backdrop {
+  z-index: 1050;
+}
+.modal-content {
+  border-radius: var(--t-radius);
+  border: 1px solid var(--t-border);
+  box-shadow: var(--t-shadow-lg);
+  pointer-events: auto;
+}
+
+/* —— Scrollbars (subtle, modern) —— */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: padding-box;
+}
+
+/* —— Section title (forms) —— */
+.section-title {
+  border-bottom-color: var(--t-primary) !important;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .app-content,
+  .card,
+  .btn,
+  .stat-card {
+    animation: none !important;
+    transition: none !important;
+  }
+}

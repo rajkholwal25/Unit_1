@@ -7,6 +7,8 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 {% endif %}
 {% block extra_css %}{% endblock %}
+{# theme polish loads last so it refines main/style/app/datatables #}
+<link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
 {% endblock %}
 {% block content %}{% endblock %}
 {% block extra_scripts %}

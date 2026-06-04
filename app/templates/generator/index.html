@@ -9,6 +9,9 @@
   <div class="panel-header">FG configuration</div>
   <div class="panel-body">
     <form id="genForm" class="vstack gap-3" style="max-width: 480px;" onsubmit="return false;">
+      {% if csrf_token is defined %}
+      <input type="hidden" name="csrf_token" id="genFormCsrf" value="{{ csrf_token() }}">
+      {% endif %}
       <div>
         <label class="form-label" for="material_type">Material type</label>
         <select id="material_type" class="form-select">
@@ -20,7 +23,7 @@
       </div>
       <div>
         <label class="form-label" for="thickness">Thickness</label>
-        <input id="thickness" type="number" class="form-control" value="12" min="0" step="0.001" required>
+        <input id="thickness" type="number" class="form-control" value="12" min="0" step="any" inputmode="decimal" data-thickness-mm required>
       </div>
       <div class="position-relative">
         <label class="form-label" for="pattern_input">Pattern</label>
@@ -52,7 +55,9 @@
       <div class="text-muted small text-uppercase fw-semibold mb-1">FG item code (ItemCode)</div>
       <div class="fg-code" id="fgcode"></div>
       <div class="text-muted small text-uppercase fw-semibold mb-1 mt-2">FG name (ItemName)</div>
-      <div class="fg-code text-body" id="fgname" style="font-size:1.1rem;font-weight:600;"></div>
+      <p class="text-muted small mb-1">Pattern <strong>name</strong> + thickness (MM), not pattern code. Example: <span class="font-monospace">PET 12MM Colgate TR</span></p>
+      <input type="text" class="form-control" id="fgname_input" maxlength="128" placeholder="PET 12MM Colgate TR" style="max-width: 520px;">
+      <div class="form-text" id="fgname_hint"></div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <button type="button" class="btn btn-success" onclick="saveLocal()"><i class="bi bi-save me-1"></i> Save locally</button>
@@ -105,9 +110,34 @@ function renderSuggestions(items){
 
 function hideSuggestions(){ document.getElementById('pattern_suggestions').style.display='none'; }
 function selectSuggestion(id, name, code){
-  document.getElementById('pattern_input').value = code;
+  document.getElementById('pattern_input').value = name;
   document.getElementById('pattern_id').value = id;
   hideSuggestions();
+}
+
+function postHeaders(){
+  const h = { 'Accept': 'application/json' };
+  if (typeof csrfHeaders === 'function') {
+    const c = csrfHeaders();
+    if (c['X-CSRFToken']) h['X-CSRFToken'] = c['X-CSRFToken'];
+  }
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta && meta.getAttribute('content')) h['X-CSRFToken'] = meta.getAttribute('content');
+  const hid = document.getElementById('genFormCsrf');
+  if (hid && hid.value) h['X-CSRFToken'] = hid.value;
+  return h;
+}
+
+function defaultFgNamePreview(){
+  const mat = (document.getElementById('material_type').value || '').trim().toUpperCase();
+  const thEl = document.getElementById('thickness');
+  const th = typeof normalizeThicknessMmInput === 'function' ? normalizeThicknessMmInput(thEl) : parseFloat(thEl.value, 10);
+  const coat = (document.getElementById('coating').value || '').trim().toUpperCase();
+  const patInput = document.getElementById('pattern_input');
+  const patName = (patInput && patInput.value || '').trim();
+  if (!mat || Number.isNaN(th) || th < 0 || !patName || !coat) return '';
+  const thLabel = (th === Math.floor(th)) ? String(Math.floor(th)) : String(th);
+  return (mat + ' ' + thLabel + 'MM ' + patName + ' ' + coat).trim();
 }
 
 async function createOrSelectPattern(name){
@@ -117,7 +147,11 @@ async function createOrSelectPattern(name){
     const data = await res.json();
     const exact = (data.results||[]).find(r => (r.pattern_code && String(r.pattern_code) === name) || (r.pattern_name && r.pattern_name.toLowerCase() === name.toLowerCase()));
     if(exact){ selectSuggestion(exact.id, exact.pattern_name, exact.pattern_code); return exact; }
-    const post = await fetch('/patterns/ajax_create', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pattern_name: name})});
+    const post = await fetch('/patterns/ajax_create', {
+      method:'POST',
+      headers: typeof csrfHeaders === 'function' ? csrfHeaders({'Content-Type':'application/json'}) : {'Content-Type':'application/json'},
+      body: JSON.stringify({pattern_name: name})
+    });
     const body = await post.json();
     if(post.status===201 || post.status===200){ selectSuggestion(body.id, body.pattern_name, body.pattern_code); return body; }
   }catch(e){ console.error(e); }
@@ -129,48 +163,122 @@ input.addEventListener('input', debounce(function(){ document.getElementById('pa
 input.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); createOrSelectPattern(this.value); } if(e.key==='Escape'){ hideSuggestions(); } });
 input.addEventListener('focus', function(){ fetchSuggest(this.value); });
 
-function generate(){
+const thicknessInput = document.getElementById('thickness');
+if (thicknessInput) {
+  thicknessInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (typeof normalizeThicknessMmInput === 'function') normalizeThicknessMmInput(thicknessInput);
+    }
+  });
+}
+
+async function ensurePatternSelected(){
+  const pid = document.getElementById('pattern_id').value;
+  if (pid) return true;
+  const raw = (document.getElementById('pattern_input').value || '').trim();
+  if (!raw) {
+    showAlert('Select a pattern from the list or type a name and press Enter', 'warning');
+    return false;
+  }
+  const created = await createOrSelectPattern(raw);
+  return !!created;
+}
+
+async function generate(){
   const coating = document.getElementById('coating').value;
-  const thicknessVal = parseFloat(document.getElementById('thickness').value, 10);
-  if (!document.getElementById('material_type').value || !document.getElementById('pattern_id').value || !coating) {
-    showAlert('Please select material, pattern, and coating', 'warning');
+  const thInput = document.getElementById('thickness');
+  const thicknessVal = typeof normalizeThicknessMmInput === 'function'
+    ? normalizeThicknessMmInput(thInput)
+    : parseFloat(thInput.value, 10);
+  if (!document.getElementById('material_type').value || !coating) {
+    showAlert('Please select material and coating', 'warning');
     return;
   }
   if (Number.isNaN(thicknessVal) || thicknessVal < 0) {
     showAlert('Thickness must be a valid number (0 or greater)', 'warning');
     return;
   }
+  if (!(await ensurePatternSelected())) return;
+
+  const fgNameInput = document.getElementById('fgname_input');
+  const fgNameHint = (fgNameInput && fgNameInput.value || '').trim();
+
   const payload = new URLSearchParams();
   payload.append('material_type', document.getElementById('material_type').value);
-  payload.append('thickness', document.getElementById('thickness').value);
+  payload.append('thickness', thInput.value);
   payload.append('pattern_id', document.getElementById('pattern_id').value);
+  payload.append('pattern_input', document.getElementById('pattern_input').value);
   payload.append('coating', coating);
-  fetch('/item-generator/generate',{method:'POST',body:payload}).then(r=>r.json()).then(d=>{
-    if (d.error) { showAlert(d.error, 'danger'); return; }
-    document.getElementById('preview').style.display='block';
+  if (fgNameHint) payload.append('fg_name', fgNameHint);
+
+  try {
+    const r = await fetch('/item-generator/generate', {
+      method: 'POST',
+      headers: postHeaders(),
+      body: payload
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.error) {
+      showAlert(d.error || ('Generate failed (' + r.status + ')'), 'danger');
+      return;
+    }
+    document.getElementById('preview').style.display = 'block';
     document.getElementById('fgcode').innerText = d.fg_code;
-    document.getElementById('fgname').innerText = d.fg_name || d.fg_code;
+    const nameVal = d.fg_name || d.fg_name_default || d.fg_code;
+    if (fgNameInput) fgNameInput.value = nameVal;
+    const hintEl = document.getElementById('fgname_hint');
+    if (hintEl) {
+      hintEl.textContent = d.pattern_name
+        ? ('Pattern: ' + d.pattern_name + (d.pattern_code ? ' (code ' + d.pattern_code + ' in ItemCode only)' : ''))
+        : '';
+    }
     const sap = d.sap_item_payloads || {};
-    const uom = sap.unit_of_measure ? `Unit: ${sap.unit_of_measure} (kilograms). ` : '';
+    const uom = sap.unit_of_measure ? 'Unit: ' + sap.unit_of_measure + ' (kilograms). ' : '';
     document.getElementById('sap-preview-note').innerText =
       uom + (sap.uom_note || sap.api || 'POST /b1s/v1/Items for FG code below');
     document.getElementById('sap-payloads').innerText = JSON.stringify(sap, null, 2);
-    window._lastPreview = {
-      fg_code: d.fg_code,
-      fg_name: d.fg_name || d.fg_code,
-      process_items: [],
-      bom_chain: [],
-      material_type: document.getElementById('material_type').value,
-      thickness: parseFloat(document.getElementById('thickness').value, 10),
-      coating: coating,
-      pattern_id: document.getElementById('pattern_id').value,
-    };
+    syncLastPreview(d, coating, thicknessVal);
     document.getElementById('preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }).catch(()=> showAlert('Generate failed', 'danger'));
+  } catch (e) {
+    console.error(e);
+    const msg = (e && e.message) ? e.message : 'Request failed';
+    showAlert('Generate failed: ' + msg, 'danger');
+  }
 }
 
+function syncLastPreview(d, coating, thicknessVal){
+  const fgNameInput = document.getElementById('fgname_input');
+  const th = thicknessVal != null && !Number.isNaN(thicknessVal)
+    ? thicknessVal
+    : parseFloat(document.getElementById('thickness').value, 10);
+  window._lastPreview = {
+    fg_code: d.fg_code,
+    fg_name: (fgNameInput && fgNameInput.value.trim()) || d.fg_name || d.fg_code,
+    prefer_fg_name: true,
+    process_items: [],
+    bom_chain: [],
+    material_type: document.getElementById('material_type').value,
+    thickness: th,
+    coating: coating,
+    pattern_id: document.getElementById('pattern_id').value,
+    pattern_name: d.pattern_name || document.getElementById('pattern_input').value,
+  };
+}
+
+document.getElementById('fgname_input') && document.getElementById('fgname_input').addEventListener('input', function(){
+  if (window._lastPreview) window._lastPreview.fg_name = this.value.trim();
+});
+
 function saveLocal(){
-  fetch('/item-generator/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._lastPreview)})
+  if (!window._lastPreview){ showAlert('Generate FG code first','warning'); return; }
+  const fgNameInput = document.getElementById('fgname_input');
+  if (fgNameInput) window._lastPreview.fg_name = fgNameInput.value.trim() || window._lastPreview.fg_name;
+  window._lastPreview.prefer_fg_name = true;
+  const headers = typeof csrfHeaders === 'function'
+    ? csrfHeaders({'Content-Type':'application/json'})
+    : {'Content-Type':'application/json'};
+  fetch('/item-generator/save',{method:'POST',headers:headers,body:JSON.stringify(window._lastPreview)})
     .then(r=>r.json())
     .then(d=>{
       if(d && (d.success || d.id || d.status === 'saved')) {
@@ -182,7 +290,13 @@ function saveLocal(){
 
 function pushSAP(){
   if(!window._lastPreview){ showAlert('Generate FG code first','warning'); return; }
-  fetch('/item-generator/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._lastPreview)})
+  const fgNameInput = document.getElementById('fgname_input');
+  if (fgNameInput) window._lastPreview.fg_name = fgNameInput.value.trim() || window._lastPreview.fg_name;
+  window._lastPreview.prefer_fg_name = true;
+  const headers = typeof csrfHeaders === 'function'
+    ? csrfHeaders({'Content-Type':'application/json'})
+    : {'Content-Type':'application/json'};
+  fetch('/item-generator/push',{method:'POST',headers:headers,body:JSON.stringify(window._lastPreview)})
     .then(r=>r.json().then(d=>({ok:r.ok, d})))
     .then(({ok, d})=>{
       if(ok && d.status==='ok'){

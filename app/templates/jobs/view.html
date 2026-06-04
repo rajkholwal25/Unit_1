@@ -110,8 +110,8 @@
               <tr>
                 <td class="ps-3 text-muted">{{ line.line_no }}</td>
                 <td>
-                  <div class="fw-medium small">{{ line.sap_fg_item_name_snap or '—' }}</div>
-                  <div class="text-muted" style="font-size:11px">{{ line.sap_fg_item_code or '—' }}</div>
+                  <div class="fw-medium small">{{ line.fg_display_label }}</div>
+                  <div class="text-muted font-monospace" style="font-size:11px">{{ line.sap_fg_item_code or '—' }}</div>
                 </td>
                 <td class="small text-end">{{ line.dispatch_qty }}</td>
                 <td class="small text-end text-muted">

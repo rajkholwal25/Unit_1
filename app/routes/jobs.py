@@ -203,7 +203,7 @@ def _job_upload_stem(job: JobMaster) -> str:
     first_line = job.header_lines.first()
     job_name = (
         job.sap_job_card_title_snap
-        or (first_line.sap_fg_item_name_snap if first_line else None)
+        or (first_line.fg_display_label if first_line else None)
         or job.sap_customer_name_snap
         or 'Job'
     )
@@ -342,7 +342,7 @@ def _first_job_detail_for_line(job: JobMaster, line: JobHeaderLine | None) -> Jo
 def _job_display_name(job: JobMaster, line: JobHeaderLine | None = None) -> str:
     return (
         job.sap_job_card_title_snap
-        or (line.sap_fg_item_name_snap if line else None)
+        or (line.fg_display_label if line else None)
         or job.sap_customer_name_snap
         or job.job_no
     )
@@ -912,17 +912,31 @@ def _resolve_process_code(process_name: str, hinted_code: Optional[str] = None) 
         )
         return None
 
-    # 1. Try hinted code if it's valid in our system
-    if code and ProcessMaster.query.filter_by(process_code=code).first():
-        return code
-    
-    # 2. Try to find by name (case insensitive)
+    from app.services.unit1_processes import normalize_unit1_process_code
+
+    code = normalize_unit1_process_code(code) if code else code
+
+    # 1. Try hinted code if it's valid in our system (prefer active Unit 1 rows)
+    if code:
+        row = (
+            ProcessMaster.query.filter_by(process_code=code, is_active=True).first()
+            or ProcessMaster.query.filter_by(process_code=code).first()
+        )
+        if row:
+            return normalize_unit1_process_code(row.process_code)
+
+    # 2. Try to find by name (case insensitive) — active rows only (avoids legacy COAT vs COT)
     if name:
-        exact = ProcessMaster.query.filter(
-            db.func.lower(ProcessMaster.name) == name.lower()
-        ).first()
+        exact = (
+            ProcessMaster.query.filter(
+                db.func.lower(ProcessMaster.name) == name.lower(),
+                ProcessMaster.is_active.is_(True),
+            )
+            .order_by(ProcessMaster.process_code.desc())
+            .first()
+        )
         if exact:
-            return exact.process_code
+            return normalize_unit1_process_code(exact.process_code)
         
         # 3. Try Fallbacks (and common alternate codes for the same logical process)
         mapped = PROCESS_CODE_FALLBACKS.get(name.lower())
@@ -1666,7 +1680,7 @@ def new_job():
                         'doc_entry': so_entry,
                         'line_num': None,
                         'fg_code': hl.sap_fg_item_code,
-                        'fg_name': hl.sap_fg_item_name_snap,
+                        'fg_name': hl.fg_display_label,
                         'ups': hl.ups or 1,
                         'quantity': float(hl.dispatch_qty) if hl.dispatch_qty else 0.0,
                         'carton_length_mm': float(hl.length) if hl.length else None,
@@ -1836,7 +1850,9 @@ def new_job():
             for idx in range(len(selected_lines)):
                 row = selected_lines[idx] if idx < len(selected_lines) else {}
                 fg_code = str(row.get('fg_code') or '').strip()
-                fg_name = str(row.get('fg_name') or '').strip() or fg_code
+                from app.services.unit1_item_naming import resolve_fg_name_for_snap
+
+                fg_name = resolve_fg_name_for_snap(fg_code, str(row.get('fg_name') or ''))
                 qty = row.get('quantity')
                 try:
                     dispatch_qty = float(qty) if qty not in (None, '') else 0.0
@@ -2117,7 +2133,7 @@ def new_job():
                             ).strip()
                             step.production_order_remarks = po_rm[:254] if po_rm else None
 
-                            fg_full_name = (card_hdr.sap_fg_item_name_snap or card_hdr.sap_fg_item_code or 'FG').strip()
+                            fg_full_name = card_hdr.fg_display_label
                             if is_fg_step:
                                 output_item_name = fg_full_name[:100]
                             elif output_item_code:
@@ -2981,7 +2997,7 @@ def _ensure_bom_routing_items_in_sap(job: JobMaster, bom: Bom, sap: SAPClient) -
     """Create or refresh intermediate routing item codes in SAP for non-FG BOM steps."""
     hdr = job.header_lines.order_by(JobHeaderLine.line_no).first()
     fg_code = (hdr.sap_fg_item_code or '') if hdr else ''
-    fg_name = (hdr.sap_fg_item_name_snap or fg_code or 'FG') if hdr else 'FG'
+    fg_name = hdr.fg_display_label if hdr else 'FG'
     detail = bom.detail_line
     sap_item_group = int(current_app.config.get('SAP_BOM_PROCESS_ITEM_GROUP_CODE', 115))
     sap_item_uom = _unit1_default_uom()

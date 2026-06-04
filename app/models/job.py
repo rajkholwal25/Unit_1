@@ -182,6 +182,18 @@ class JobHeaderLine(db.Model):
         """Same rule as the parent job (open / staged)."""
         return bool(self.job and self.job.is_editable)
 
+    @property
+    def fg_display_label(self) -> str:
+        """Human FG name (pattern name + MM); code stays in ``sap_fg_item_code``."""
+        from app.services.unit1_item_naming import unit1_fg_human_label_from_item_code
+
+        code = (self.sap_fg_item_code or '').strip()
+        if code:
+            lbl = unit1_fg_human_label_from_item_code(code)
+            if lbl:
+                return lbl
+        return (self.sap_fg_item_name_snap or '').strip() or '—'
+
     def __repr__(self) -> str:
         return f'<HeaderLine job={self.job_id} L{self.line_no}>'
 

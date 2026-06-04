@@ -28,6 +28,87 @@ function showToast(message, type) {
   setTimeout(() => div.remove(), 3000);
 }
 
+/**
+ * Normalize thickness (mm) for <input type="number"> — avoids 13 → 12.99 float drift.
+ * Rounds to 3 decimal places; whole numbers display without decimals (13 not 13.000).
+ */
+function normalizeThicknessMmInput(el) {
+  if (!el || el.value === '' || el.value == null) return NaN;
+  const raw = String(el.value).trim().replace(',', '.');
+  const n = parseFloat(raw, 10);
+  if (Number.isNaN(n) || n < 0) return NaN;
+  const rounded = Math.round(n * 1000) / 1000;
+  if (rounded === Math.floor(rounded)) {
+    el.value = String(Math.floor(rounded));
+  } else {
+    el.value = String(rounded);
+  }
+  return rounded;
+}
+
+function bindThicknessInputs(root) {
+  const scope = root || document;
+  scope.querySelectorAll('input[data-thickness-mm]').forEach(function (el) {
+    if (el.dataset.thicknessBound === '1') return;
+    el.dataset.thicknessBound = '1';
+    el.addEventListener('blur', function () {
+      normalizeThicknessMmInput(el);
+    });
+    el.addEventListener('change', function () {
+      normalizeThicknessMmInput(el);
+    });
+  });
+}
+
+/**
+ * Bootstrap modals inside .app-content sit below the body-level backdrop (clicks blocked).
+ * Move all modals to document.body so backdrop + dialog share the same stacking context.
+ */
+function relocateBootstrapModals() {
+  document.querySelectorAll('.modal.fade').forEach(function (el) {
+    if (el.parentElement !== document.body) {
+      document.body.appendChild(el);
+    }
+  });
+}
+
+function cleanupStuckModalState() {
+  document.querySelectorAll('.modal-backdrop').forEach(function (el) {
+    el.remove();
+  });
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('padding-right');
+  document.querySelectorAll('.modal.show').forEach(function (el) {
+    el.classList.remove('show');
+    el.style.removeProperty('display');
+    el.setAttribute('aria-hidden', 'true');
+  });
+}
+
+document.addEventListener('hidden.bs.modal', function () {
+  setTimeout(function () {
+    if (!document.querySelector('.modal.show')) {
+      document.querySelectorAll('.modal-backdrop').forEach(function (el) {
+        el.remove();
+      });
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+    }
+  }, 0);
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && document.querySelectorAll('.modal.show').length === 0) {
+    cleanupStuckModalState();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
-  console.log('BOM Automation UI ready');
+  relocateBootstrapModals();
+  bindThicknessInputs(document);
+  if (document.querySelector('.modal-backdrop') && !document.querySelector('.modal.show')) {
+    cleanupStuckModalState();
+  }
 });

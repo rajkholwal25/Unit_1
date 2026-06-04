@@ -114,7 +114,7 @@
               {% for inv, hl in fg_rows %}
               <tr data-fg-code="{{ (hl.sap_fg_item_code or '')|e }}">
                 <td class="ps-3">
-                  <div class="small fw-medium">{{ hl.sap_fg_item_name_snap or '—' }}</div>
+                  <div class="small fw-medium">{{ hl.fg_display_label }}</div>
                   <div class="font-monospace text-muted" style="font-size:11px">{{ hl.sap_fg_item_code or '—' }}</div>
                   <span class="badge bg-light text-dark border">{{ inv.fg_num }}</span>
                 </td>

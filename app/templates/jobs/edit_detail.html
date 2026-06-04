@@ -30,7 +30,7 @@
     <h1><i class="bi bi-card-text me-2 text-primary"></i>Printing specification</h1>
     <div class="sub">
       Line {{ line.line_no }} · {{ line.sap_fg_item_code or '—' }}
-      {% if line.sap_fg_item_name_snap %} — {{ line.sap_fg_item_name_snap }}{% endif %}
+      {% if line.fg_display_label and line.fg_display_label != '—' %} — {{ line.fg_display_label }}{% endif %}
       <br>
       Same material/print fields as the new job card. BOM-only fields are read-only; change them via <strong>Edit job</strong> (BOM section) or <strong>Edit BOM</strong> on the job view.
     </div>

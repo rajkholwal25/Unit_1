@@ -46,6 +46,7 @@ def get_job_by_no(job_no):
                 'line_no': hl.line_no,
                 'sap_fg_item_code': hl.sap_fg_item_code,
                 'sap_fg_item_name_snap': hl.sap_fg_item_name_snap,
+                'fg_display_label': hl.fg_display_label,
                 'dispatch_qty': float(hl.dispatch_qty) if hl.dispatch_qty else 0,
                 'length': float(hl.length) if hl.length else None,
                 'width': float(hl.width) if hl.width else None,

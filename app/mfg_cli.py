@@ -34,7 +34,7 @@ def register_mfg_commands(app: Flask) -> None:
 
     @app.cli.command('seed-processes')
     def seed_processes():
-        """Unit 1 only: EMB, SLT, MET in process_master."""
+        """Unit 1 only: EMB, SLT, MET, COT in process_master."""
         from .services.unit1_processes import seed_unit1_process_master
 
         click.echo(seed_unit1_process_master())
