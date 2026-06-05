@@ -230,8 +230,8 @@
   async function generate() {
     const coating = document.getElementById('coating').value;
     const thInput = document.getElementById('thickness');
-    const thicknessVal = typeof normalizeThicknessMmInput === 'function'
-      ? normalizeThicknessMmInput(thInput)
+    const thicknessVal = typeof normalizeThicknessMicInput === 'function'
+      ? normalizeThicknessMicInput(thInput)
       : parseFloat(thInput.value, 10);
     if (!document.getElementById('material_type').value || !document.getElementById('pattern_id').value ||
         !document.getElementById('template_id').value || !coating) {

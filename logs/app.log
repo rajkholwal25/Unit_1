@@ -5189,3 +5189,11 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
    }
 }
 
+2026-06-05 14:38:08,355 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-05 14:38:08,357 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-05 14:38:12,360 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-05 14:38:12,361 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-05 14:38:18,028 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-05 14:38:18,030 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-05 14:39:15,649 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-05 14:39:15,652 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]

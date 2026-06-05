@@ -29,10 +29,10 @@ function showToast(message, type) {
 }
 
 /**
- * Normalize thickness (mm) for <input type="number"> — avoids 13 → 12.99 float drift.
+ * Normalize thickness (micron) for <input type="number"> — avoids 13 → 12.99 float drift.
  * Rounds to 3 decimal places; whole numbers display without decimals (13 not 13.000).
  */
-function normalizeThicknessMmInput(el) {
+function normalizeThicknessMicInput(el) {
   if (!el || el.value === '' || el.value == null) return NaN;
   const raw = String(el.value).trim().replace(',', '.');
   const n = parseFloat(raw, 10);
@@ -46,16 +46,32 @@ function normalizeThicknessMmInput(el) {
   return rounded;
 }
 
+/** @deprecated use normalizeThicknessMicInput */
+function normalizeThicknessMmInput(el) {
+  return normalizeThicknessMicInput(el);
+}
+
+window.UNIT1_UNITS = window.UNIT1_UNITS || {
+  thickness: 'mic',
+  thicknessSuffix: 'MIC',
+  length: 'mtr',
+  width: 'mm',
+};
+
+function unit1FgThicknessSuffix() {
+  return (window.UNIT1_UNITS && window.UNIT1_UNITS.thicknessSuffix) || 'MIC';
+}
+
 function bindThicknessInputs(root) {
   const scope = root || document;
-  scope.querySelectorAll('input[data-thickness-mm]').forEach(function (el) {
+  scope.querySelectorAll('input[data-thickness-mic], input[data-thickness-mm]').forEach(function (el) {
     if (el.dataset.thicknessBound === '1') return;
     el.dataset.thicknessBound = '1';
     el.addEventListener('blur', function () {
-      normalizeThicknessMmInput(el);
+      normalizeThicknessMicInput(el);
     });
     el.addEventListener('change', function () {
-      normalizeThicknessMmInput(el);
+      normalizeThicknessMicInput(el);
     });
   });
 }

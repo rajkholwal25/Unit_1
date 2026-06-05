@@ -7,7 +7,7 @@ _THICKNESS_QUANT = Decimal('0.001')
 
 
 def _quantize_thickness(d: Decimal) -> Decimal:
-    """Store/display at most 3 decimal places (mm)."""
+    """Store/display at most 3 decimal places (micron)."""
     return d.quantize(_THICKNESS_QUANT, rounding=ROUND_HALF_UP)
 
 

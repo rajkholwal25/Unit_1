@@ -22,8 +22,8 @@
         </select>
       </div>
       <div>
-        <label class="form-label" for="thickness">Thickness</label>
-        <input id="thickness" type="number" class="form-control" value="12" min="0" step="any" inputmode="decimal" data-thickness-mm required>
+        <label class="form-label" for="thickness">Thickness ({{ unit1_units.thickness }})</label>
+        <input id="thickness" type="number" class="form-control" value="12" min="0" step="any" inputmode="decimal" data-thickness-mic required>
       </div>
       <div class="position-relative">
         <label class="form-label" for="pattern_input">Pattern</label>
@@ -55,8 +55,8 @@
       <div class="text-muted small text-uppercase fw-semibold mb-1">FG item code (ItemCode)</div>
       <div class="fg-code" id="fgcode"></div>
       <div class="text-muted small text-uppercase fw-semibold mb-1 mt-2">FG name (ItemName)</div>
-      <p class="text-muted small mb-1">Pattern <strong>name</strong> + thickness (MM), not pattern code. Example: <span class="font-monospace">PET 12MM Colgate TR</span></p>
-      <input type="text" class="form-control" id="fgname_input" maxlength="128" placeholder="PET 12MM Colgate TR" style="max-width: 520px;">
+      <p class="text-muted small mb-1">Pattern <strong>name</strong> + thickness ({{ unit1_units.thickness|upper }}), not pattern code. Example: <span class="font-monospace">PET 12{{ unit1_units.thickness_suffix }} Colgate TR</span></p>
+      <input type="text" class="form-control" id="fgname_input" maxlength="128" placeholder="PET 12{{ unit1_units.thickness_suffix }} Colgate TR" style="max-width: 520px;">
       <div class="form-text" id="fgname_hint"></div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
@@ -131,13 +131,13 @@ function postHeaders(){
 function defaultFgNamePreview(){
   const mat = (document.getElementById('material_type').value || '').trim().toUpperCase();
   const thEl = document.getElementById('thickness');
-  const th = typeof normalizeThicknessMmInput === 'function' ? normalizeThicknessMmInput(thEl) : parseFloat(thEl.value, 10);
+  const th = typeof normalizeThicknessMicInput === 'function' ? normalizeThicknessMicInput(thEl) : parseFloat(thEl.value, 10);
   const coat = (document.getElementById('coating').value || '').trim().toUpperCase();
   const patInput = document.getElementById('pattern_input');
   const patName = (patInput && patInput.value || '').trim();
   if (!mat || Number.isNaN(th) || th < 0 || !patName || !coat) return '';
   const thLabel = (th === Math.floor(th)) ? String(Math.floor(th)) : String(th);
-  return (mat + ' ' + thLabel + 'MM ' + patName + ' ' + coat).trim();
+  return (mat + ' ' + thLabel + unit1FgThicknessSuffix() + ' ' + patName + ' ' + coat).trim();
 }
 
 async function createOrSelectPattern(name){
@@ -168,7 +168,7 @@ if (thicknessInput) {
   thicknessInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (typeof normalizeThicknessMmInput === 'function') normalizeThicknessMmInput(thicknessInput);
+      if (typeof normalizeThicknessMicInput === 'function') normalizeThicknessMicInput(thicknessInput);
     }
   });
 }
@@ -188,8 +188,8 @@ async function ensurePatternSelected(){
 async function generate(){
   const coating = document.getElementById('coating').value;
   const thInput = document.getElementById('thickness');
-  const thicknessVal = typeof normalizeThicknessMmInput === 'function'
-    ? normalizeThicknessMmInput(thInput)
+  const thicknessVal = typeof normalizeThicknessMicInput === 'function'
+    ? normalizeThicknessMicInput(thInput)
     : parseFloat(thInput.value, 10);
   if (!document.getElementById('material_type').value || !coating) {
     showAlert('Please select material and coating', 'warning');

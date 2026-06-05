@@ -2625,7 +2625,7 @@ def _slip_process_sequence_string_for_bom(bom: Bom) -> str:
 
 
 def _fg_thickness_display_from_item_code(fg_code: str) -> str:
-    """Thickness segment from Unit 1 FG code, e.g. ``PET-12-1002-TR`` → ``12``."""
+    """Thickness in micron from FG code segment, e.g. ``PET-12-1002-TR`` → ``12``."""
     from app.services.unit1_processes import unit1_fg_base_code
     from app.utils.thickness import parse_thickness, thickness_display
 

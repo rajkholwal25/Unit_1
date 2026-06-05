@@ -7,6 +7,7 @@ import re
 from app.models.reference import ProcessMaster
 from app.services.unit1_processes import UNIT1_PROCESS_CODE_SUFFIXES, unit1_fg_base_code
 from app.utils.thickness import parse_thickness, thickness_display
+from app.utils.unit1_units import THICKNESS_SUFFIX
 
 
 def pattern_segment_for_display(pattern_name: str) -> str:
@@ -31,14 +32,14 @@ def unit1_fg_human_label(
     pattern_name: str,
     coating: str,
 ) -> str:
-    """Human FG label for UI/SAP ItemName: ``PET 12MM Triangle TR`` (pattern **name**, not code)."""
+    """Human FG label for UI/SAP ItemName: ``PET 12MIC Triangle TR`` (pattern **name**, not code)."""
     mat = (material_type or '').strip().upper()
     th = thickness_display(parse_thickness(thickness) if thickness is not None else thickness)
     pn = (pattern_name or '').strip()
     coat = (coating or '').strip().upper()
     if not mat or th == '—' or not pn or not coat:
         return ''
-    return f'{mat} {th}MM {pn} {coat}'[:128]
+    return f'{mat} {th}{THICKNESS_SUFFIX} {pn} {coat}'[:128]
 
 
 def unit1_fg_human_label_from_item_code(
@@ -46,7 +47,7 @@ def unit1_fg_human_label_from_item_code(
     *,
     pattern_name: str | None = None,
 ) -> str:
-    """``PET-12-1009-TR`` → ``PET 12MM Triangle TR`` when pattern 1009 = Triangle."""
+    """``PET-12-1009-TR`` → ``PET 12MIC Triangle TR`` when pattern 1009 = Triangle."""
     from ..models import Pattern
 
     base = unit1_fg_base_code((item_code or '').strip())
@@ -81,7 +82,7 @@ def unit1_fg_display_name_from_item_code(
 
 
 def resolve_fg_display_name(payload: dict, pattern=None) -> str:
-    """FG label: derive from ``fg_code`` (pattern name + MM) when possible; else explicit / generator fields."""
+    """FG label: derive from ``fg_code`` (pattern name + micron) when possible; else explicit / generator fields."""
     explicit = (payload.get('fg_name') or '').strip()
     fg_code = (payload.get('fg_code') or '').strip()
     if payload.get('prefer_fg_name') and explicit:

@@ -184,7 +184,7 @@ class JobHeaderLine(db.Model):
 
     @property
     def fg_display_label(self) -> str:
-        """Human FG name (pattern name + MM); code stays in ``sap_fg_item_code``."""
+        """Human FG name (pattern name + micron); code stays in ``sap_fg_item_code``."""
         from app.services.unit1_item_naming import unit1_fg_human_label_from_item_code
 
         code = (self.sap_fg_item_code or '').strip()

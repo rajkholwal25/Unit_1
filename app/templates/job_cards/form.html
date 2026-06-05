@@ -124,14 +124,14 @@
                                         <th>FG name</th>
                                         <th style="width: 10rem;">FG ItemCode</th>
                                         <th style="width: 9rem;">Qty (KGS)</th>
-                                        <th style="width: 8rem;">Width (mm)</th>
+                                        <th style="width: 8rem;">Width ({{ unit1_units.width }})</th>
                                         <th style="width: 3rem;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="sapSelectedLinesBody"></tbody>
                             </table>
                         </div>
-                        <div class="text-muted small mt-1">Film orders: <strong>qty</strong> and <strong>width (mm)</strong> load from the SO; you can edit both here — changes sync back to SAP when you create the job.</div>
+                        <div class="text-muted small mt-1">Film orders: <strong>qty</strong> and <strong>width ({{ unit1_units.width }})</strong> load from the SO; you can edit both here — changes sync back to SAP when you create the job.</div>
                         <div class="text-muted small mt-2" id="sapSelectedLinesHint">No lines selected yet.</div>
                     </div>
                 </div>
@@ -355,7 +355,7 @@
                                 <th scope="col">FG code</th>
                                 <th scope="col">FG name</th>
                                 <th scope="col" class="text-end">Qty</th>
-                                <th scope="col" class="text-end">Width (mm)</th>
+                                <th scope="col" class="text-end">Width ({{ unit1_units.width }})</th>
                             </tr>
                         </thead>
                         <tbody id="sapSoTableBody">
@@ -571,7 +571,7 @@ function unit1FgLabelFromCode(code) {
   if (!m) return '';
   const patCode = m[3];
   const patName = (window.unit1PatternByCode && window.unit1PatternByCode[patCode]) || patCode;
-  return (m[1].toUpperCase() + ' ' + m[2] + 'MM ' + patName + ' ' + m[4].toUpperCase()).trim();
+  return (m[1].toUpperCase() + ' ' + m[2] + (typeof unit1FgThicknessSuffix === 'function' ? unit1FgThicknessSuffix() : 'MIC') + ' ' + patName + ' ' + m[4].toUpperCase()).trim();
 }
 window.unit1FgLabelFromCode = unit1FgLabelFromCode;
 </script>
@@ -3222,7 +3222,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
       return w == null || w === '' || isNaN(parseFloat(w)) || parseFloat(w) <= 0;
     });
     if (missingWidth) {
-      alert('Width (mm) is required on each line — load from SO via Browse or enter a value.');
+      alert('Width ({{ unit1_units.width }}) is required on each line — load from SO via Browse or enter a value.');
       return;
     }
 

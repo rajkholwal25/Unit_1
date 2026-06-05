@@ -58,17 +58,17 @@
 
           <div class="row g-3 mb-3">
             <div class="col-sm-4">
-              <label class="form-label fw-medium">Length (mm)</label>
+              <label class="form-label fw-medium">Length ({{ unit1_units.length }})</label>
               <input type="number" name="length" class="form-control" step="0.01"
                      value="{{ request.form.get('length', '') }}">
             </div>
             <div class="col-sm-4">
-              <label class="form-label fw-medium">Width (mm)</label>
+              <label class="form-label fw-medium">Width ({{ unit1_units.width }})</label>
               <input type="number" name="width" class="form-control" step="0.01"
                      value="{{ request.form.get('width', '') }}">
             </div>
             <div class="col-sm-4">
-              <label class="form-label fw-medium">Height (mm)</label>
+              <label class="form-label fw-medium">Height ({{ unit1_units.width }})</label>
               <input type="number" name="height" class="form-control" step="0.01"
                      value="{{ request.form.get('height', '') }}">
             </div>

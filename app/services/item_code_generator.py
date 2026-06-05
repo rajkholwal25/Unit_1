@@ -16,7 +16,7 @@ class ItemCodeGeneratorService:
 
     @staticmethod
     def generate_fg_display_name(material_type: str, thickness, pattern_name: str, coating: str) -> str:
-        """SAP ItemName / FG name — uses pattern **name** (e.g. ``PET 12MM Triangle TR``)."""
+        """SAP ItemName / FG name — uses pattern **name** (e.g. ``PET 12MIC Triangle TR``)."""
         if thickness_for_item_code(thickness) == '':
             raise ValueError('thickness must be a positive number')
         return unit1_fg_human_label(material_type, thickness, pattern_name, coating)

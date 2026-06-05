@@ -19,8 +19,30 @@ def register_context_processors(app):
         }
 
     @app.context_processor
+    def inject_unit1_units():
+        from app.utils.unit1_units import (
+            LENGTH_UNIT,
+            THICKNESS_SUFFIX,
+            THICKNESS_UNIT,
+            WIDTH_UNIT,
+            format_length_x_width,
+            format_thickness_label,
+        )
+
+        return {
+            'unit1_units': {
+                'thickness': THICKNESS_UNIT,
+                'thickness_suffix': THICKNESS_SUFFIX,
+                'length': LENGTH_UNIT,
+                'width': WIDTH_UNIT,
+            },
+            'format_length_x_width': format_length_x_width,
+            'format_thickness_label': format_thickness_label,
+        }
+
+    @app.context_processor
     def inject_unit1_pattern_map():
-        """Pattern code → name for client-side FG labels (``PET-12-1009-TR`` → ``PET 12MM Triangle TR``)."""
+        """Pattern code → name for client-side FG labels (``PET-12-1009-TR`` → ``PET 12MIC Triangle TR``)."""
         try:
             from app.models import Pattern
 

@@ -69,8 +69,8 @@
                                 <td>{{ job_card.delivery_date.strftime('%d %b %Y') if job_card.delivery_date else '-' }}</td></tr>
                             <tr><td class="text-muted">Priority</td>
                                 <td><span class="badge badge-{{ job_card.priority }}">{{ job_card.priority|title }}</span></td></tr>
-                            <tr><td class="text-muted">Carton (L×W×H mm)</td>
-                                <td>{{ job_card.carton_length_mm or '—' }} × {{ job_card.carton_width_mm or '—' }} × {{ job_card.carton_height_mm or '—' }}</td></tr>
+                            <tr><td class="text-muted">Size (L {{ unit1_units.length }} × W {{ unit1_units.width }})</td>
+                                <td>{{ job_card.carton_length_mm or '—' }} × {{ job_card.carton_width_mm or '—' }}{% if job_card.carton_height_mm %} × {{ job_card.carton_height_mm }}{% endif %}</td></tr>
                             <tr><td class="text-muted">New / repeat</td>
                                 <td>{{ (job_card.job_kind or '-')|title }}</td></tr>
                             <tr><td class="text-muted">SAP PO DocEntry(s)</td>

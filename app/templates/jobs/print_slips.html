@@ -25,8 +25,8 @@
         <thead>
           <tr>
             <th style="width: 28%;">Item code / Item Name</th>
-            <th style="width: 14%;">Width (mm)</th>
-            <th style="width: 12%;">Thickness (mm)</th>
+            <th style="width: 14%;">Width ({{ unit1_units.width }})</th>
+            <th style="width: 12%;">{{ format_thickness_label() }}</th>
             <th style="width: 14%;">Weight (kg)</th>
             <th style="width: 14%;">Wastage (kg)</th>
             <th style="width: 18%;">Total weight (kg)</th>
@@ -511,7 +511,7 @@
           <th style="width: 10%; white-space: nowrap;">Art. No.</th>
           <th style="width: 14%;">Itemcode</th>
           <th class="tight-col">Delivery qty</th>
-          <th style="width: 18%;">Carton Size (mm)</th>
+          <th style="width: 18%;">Length ({{ unit1_units.length }}) × Width ({{ unit1_units.width }})</th>
           <th class="tight-col">UPs</th>
         </tr>
       </thead>
@@ -532,11 +532,11 @@
           </td>
           <td class="text-end tight-col">{{ fmt_num(hl.dispatch_qty or 0) }}</td>
           <td>
-            {% if hl.length %}
-              {{ fmt_num(hl.length) }} × {{ fmt_num(hl.width) }} × {{ fmt_num(hl.height) }}
-            {% else %}
-              —
-            {% endif %}
+            {% if hl.length or hl.width %}
+              {% if hl.length %}{{ fmt_num(hl.length) }} {{ unit1_units.length }}{% endif %}
+              {% if hl.length and hl.width %} × {% endif %}
+              {% if hl.width %}{{ fmt_num(hl.width) }} {{ unit1_units.width }}{% endif %}
+            {% else %}—{% endif %}
           </td>
           <td class="text-center">{{ hl.ups or 1 }}</td>
         </tr>
