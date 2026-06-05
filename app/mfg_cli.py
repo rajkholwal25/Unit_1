@@ -60,3 +60,31 @@ def register_mfg_commands(app: Flask) -> None:
 
         out = run_full_mirror_sync(current_app, scope=scope)
         click.echo(f'SAP mirror sync OK: {out}')
+
+    @app.cli.command('cleanup-duplicate-so-jobs')
+    @click.option(
+        '--execute',
+        is_flag=True,
+        help='Apply cancellations. Default is dry-run preview only.',
+    )
+    def cleanup_duplicate_so_jobs(execute):
+        """Cancel older jobs that share the same SO; keep the latest job per SO."""
+        from app.services.job_so_guard import cancel_duplicate_so_jobs
+
+        out = cancel_duplicate_so_jobs(dry_run=not execute)
+        kept = out.get('kept') or []
+        cancelled = out.get('cancelled') or []
+        if not kept and not cancelled:
+            click.echo('No duplicate SO jobs found.')
+            return
+        click.echo('Keeping (latest per SO):')
+        for row in kept:
+            click.echo(f"  SO {row['so_no']} -> job {row['job_no']}")
+        label = 'Would cancel' if out.get('dry_run') else 'Cancelled'
+        click.echo(f'{label}:')
+        for row in cancelled:
+            click.echo(f"  job {row['job_no']} (SO {row.get('so_no') or '?'})")
+        for row in out.get('errors') or []:
+            click.echo(f"  ERROR job {row['job_no']}: {row['error']}", err=True)
+        if out.get('dry_run'):
+            click.echo('Dry run only. Re-run with --execute to apply.')

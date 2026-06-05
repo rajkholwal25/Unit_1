@@ -34,14 +34,31 @@ def unit1_default_uom() -> str:
 
 
 def sections_for_slip_process_sequence(sections: Any) -> list[dict[str, Any]]:
-    """Return section dicts safe for slip process extraction.
-
-    Note: FG is no longer auto-appended. If the planner wants an FG step, it must be present
-    in the planner sequence and/or BOM sections explicitly.
-    """
+    """Return section dicts safe for slip process extraction."""
     if not isinstance(sections, list):
         return []
     return [s for s in sections if isinstance(s, dict)]
+
+
+def section_has_fg_step(sections: list) -> bool:
+    for s in sections:
+        if not isinstance(s, dict):
+            continue
+        pn = str(s.get('process_name') or '').strip().upper()
+        pc = str(s.get('process_code') or '').strip().upper()
+        if pn == 'FG' or pc in ('FG', 'PK-PACK', 'PKPACK'):
+            return True
+    return False
+
+
+def ensure_final_fg_section(sections: Any) -> list[dict[str, Any]]:
+    """Append a final FG BOM section when missing (last process output → finished FG)."""
+    if not isinstance(sections, list):
+        return []
+    out: list[dict[str, Any]] = [s for s in sections if isinstance(s, dict)]
+    if not section_has_fg_step(out):
+        out.append({'process_name': 'FG', 'process_code': 'FG', 'cards': []})
+    return out
 
 
 def _process_codes_from_sections(
@@ -498,7 +515,7 @@ def _num_converting_steps_for_detail(job: JobMaster, detail_line: JobDetailLine)
 
 
 def fg_planned_qty_pcs(job: JobMaster, detail_line: JobDetailLine, card_hdr: JobHeaderLine) -> float:
-    """Unit 1 FG planned qty in KGS — header dispatch quantity (SO line qty), not sheets × UPS."""
+    """Fallback FG qty when no previous BOM step exists (SO dispatch kg)."""
     if card_hdr is not None:
         try:
             dq = float(card_hdr.dispatch_qty or 0)
@@ -507,6 +524,32 @@ def fg_planned_qty_pcs(job: JobMaster, detail_line: JobDetailLine, card_hdr: Job
         except (TypeError, ValueError):
             pass
     return float(gross_sheet_planned_for_detail(job, detail_line))
+
+
+def fg_planned_qty_for_bom_step(
+    job: JobMaster,
+    detail_line: JobDetailLine,
+    card_hdr: JobHeaderLine,
+    *,
+    prev_step: Any = None,
+    card_planned_qty=None,
+) -> float:
+    """FG step planned qty = quantity from the last process output (required line), not SO dispatch."""
+    if prev_step is not None:
+        try:
+            pq = float(prev_step.planned_qty) if prev_step.planned_qty is not None else 0.0
+            if pq > 0:
+                return pq
+        except (TypeError, ValueError):
+            pass
+    if card_planned_qty not in (None, ''):
+        try:
+            v = float(card_planned_qty)
+            if v > 0:
+                return v
+        except (TypeError, ValueError):
+            pass
+    return fg_planned_qty_pcs(job, detail_line, card_hdr)
 
 
 def persist_bom_payload_block(
@@ -579,18 +622,7 @@ def persist_bom_payload_block(
     if not isinstance(sections, list) or not sections:
         raise ValueError('BOM payload has no sections')
 
-    # Mirror new-job builder: FG is auto-added as the final step if missing.
-    has_fg = False
-    for s in sections:
-        if not isinstance(s, dict):
-            continue
-        pn = str(s.get('process_name') or '').strip().upper()
-        pc = str(s.get('process_code') or '').strip().upper()
-        if pn == 'FG' or pc in ('FG', 'PK-PACK'):
-            has_fg = True
-            break
-    if not has_fg:
-        sections = list(sections) + [{'process_name': 'FG', 'process_code': 'FG', 'cards': []}]
+    sections = ensure_final_fg_section(sections)
 
     sap_item_group = int(current_app.config.get('SAP_BOM_PROCESS_ITEM_GROUP_CODE', 115))
     sap_item_uom = unit1_default_uom()
@@ -815,20 +847,29 @@ def persist_bom_payload_block(
                 card.get('production_order_remarks') or card.get('sap_po_remarks') or ''
             ).strip()
             step.production_order_remarks = po_rm[:254] if po_rm else None
-            try:
-                step_planned = card.get('planned_qty')
-                step.planned_qty = float(step_planned) if step_planned not in (None, '') else None
-            except (TypeError, ValueError):
-                step.planned_qty = None
-            if step.planned_qty is None:
-                if is_fg_step:
-                    try:
-                        step.planned_qty = (
-                            float(fg_planned_qty_pcs(job, detail_line, card_hdr)) if card_hdr else 1.0
+            prev_st_fg = prev_step_by_card_snapshot.get(payload_card_idx)
+            if prev_st_fg is None and len(prev_step_by_card_snapshot) == 1:
+                prev_st_fg = next(iter(prev_step_by_card_snapshot.values()))
+            if is_fg_step:
+                try:
+                    step.planned_qty = float(
+                        fg_planned_qty_for_bom_step(
+                            job,
+                            detail_line,
+                            card_hdr,
+                            prev_step=prev_st_fg,
+                            card_planned_qty=card.get('planned_qty'),
                         )
-                    except Exception:
-                        step.planned_qty = 1.0
-                else:
+                    )
+                except Exception:
+                    step.planned_qty = 1.0
+            else:
+                try:
+                    step_planned = card.get('planned_qty')
+                    step.planned_qty = float(step_planned) if step_planned not in (None, '') else None
+                except (TypeError, ValueError):
+                    step.planned_qty = None
+                if step.planned_qty is None:
                     try:
                         card_q = card.get('planned_qty')
                         if card_q not in (None, ''):

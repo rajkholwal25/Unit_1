@@ -282,13 +282,13 @@
     <div class="card mb-3">
         <div class="card-body">
             <div class="section-title">BOM builder</div>
-            <p class="text-muted small mb-2">One BOM per detail line. Use <strong>Create BOM</strong> on that line’s process block. If SO/FG line count matches detail line count, quantities pair by line index.</p>
+            <p class="text-muted small mb-2">One BOM per detail line. Click <strong>Generate BOM</strong> on each process block to create SAP process items. Then scroll down and click <strong>Create Job</strong> — Generate BOM alone does not save a job card.</p>
             <div id="bomBlocksContainer"></div>
         </div>
     </div>
 
     <div class="d-flex gap-2 mb-4">
-        <button type="submit" class="btn btn-primary btn-lg" id="btn_create_job_submit">
+        <button type="button" class="btn btn-primary btn-lg" id="btn_create_job_submit">
             <i class="bi bi-check-lg me-1"></i>{{ 'Update' if job_card else 'Create' }} Job
         </button>
         <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-outline-secondary btn-lg">Cancel</a>
@@ -341,6 +341,7 @@
             </div>
             <div class="modal-body">
                 <p class="small text-muted mb-2 d-none" id="sapSoFgRepeatHint" role="status"></p>
+                <p class="small text-warning mb-2 d-none" id="sapSoUsedHint" role="status"></p>
                 <label class="form-label small text-muted" for="sapSoFilter">Filter by SO no., FG code or FG name</label>
                 <input type="search" class="form-control mb-3" id="sapSoFilter" autocomplete="off"
                       placeholder="Type to filter…">
@@ -622,6 +623,51 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   var mergedRowsCacheRows = null;
   var mergedRowsCacheAt = 0;
   var SO_LIST_CACHE_MS = 45000;
+  var usedSoByJob = {};
+  var usedSoFetchedAt = 0;
+  var USED_SO_CACHE_MS = 30000;
+
+  function isRejectionJobSeries() {
+    var el = document.getElementById('job_series');
+    return !!(el && el.value === 'Rejection');
+  }
+
+  function normSoNo(v) {
+    var s = String(v == null ? '' : v).trim();
+    return s || '';
+  }
+
+  function jobNoForUsedSo(soNo) {
+    return usedSoByJob[normSoNo(soNo)] || '';
+  }
+
+  function refreshUsedSoNumbers(force) {
+    if (isRejectionJobSeries()) {
+      usedSoByJob = {};
+      return Promise.resolve(usedSoByJob);
+    }
+    if (!force && usedSoFetchedAt && (Date.now() - usedSoFetchedAt) < USED_SO_CACHE_MS) {
+      return Promise.resolve(usedSoByJob);
+    }
+    return fetch('{{ url_for("jobs_api.used_sales_orders") }}', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (data) {
+        usedSoByJob = {};
+        if (Array.isArray(data)) {
+          data.forEach(function (row) {
+            var so = normSoNo(row.so_no);
+            if (so && row.job_no) usedSoByJob[so] = String(row.job_no);
+          });
+        }
+        usedSoFetchedAt = Date.now();
+        return usedSoByJob;
+      })
+      .catch(function () { return usedSoByJob; });
+  }
+
+  window.normSoNo = normSoNo;
+  window.jobNoForUsedSo = jobNoForUsedSo;
+  window.refreshUsedSoNumbers = refreshUsedSoNumbers;
 
   function safeErr(s) {
     return String(s == null ? '' : s).replace(/[<>&]/g, '').slice(0, 160);
@@ -1181,6 +1227,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
 
   window.prefetchSapSoListAfterCustomer = function () {
     if (!customerSelected()) return;
+    refreshUsedSoNumbers(false);
     pullSoRowsFromApi(false)
       .then(function (res) {
         if (!res.ok) return;
@@ -1321,6 +1368,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     if (!soTbody) return;
     soTbody.innerHTML = '';
     const hintEl = document.getElementById('sapSoFgRepeatHint');
+    const usedHintEl = document.getElementById('sapSoUsedHint');
     const jobKindEl = document.getElementById('job_kind');
     const jobKind = jobKindEl && jobKindEl.value ? String(jobKindEl.value) : '';
     const sapJobCardLoaded = !!(
@@ -1343,6 +1391,15 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
         hintEl.classList.remove('d-none');
       } else {
         hintEl.classList.add('d-none');
+      }
+    }
+    if (usedHintEl) {
+      if (!isRejectionJobSeries() && Object.keys(usedSoByJob).length) {
+        usedHintEl.textContent =
+          'Sales orders already linked to another job cannot be selected again. Create or use a different open SO in SAP.';
+        usedHintEl.classList.remove('d-none');
+      } else {
+        usedHintEl.classList.add('d-none');
       }
     }
     if (!mergedRows.length) {
@@ -1380,10 +1437,20 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
       var rowW = resolveRowWidthMm(r);
       const tr = document.createElement('tr');
       const k = lineKey(r);
+      var soNorm = normSoNo(r.so_no);
+      var usedJobNo = !isRejectionJobSeries() && soNorm ? jobNoForUsedSo(soNorm) : '';
+      var soBlocked = !!usedJobNo && !selectedKeys[k];
+      var soCell = esc(r.so_no || '');
+      if (usedJobNo) {
+        soCell += ' <span class="badge text-bg-secondary ms-1">Job ' + esc(usedJobNo) + '</span>';
+      }
       tr.innerHTML =
-        '<td><input type="checkbox" class="form-check-input so-row-check" data-k="' + esc(k) + '"' + (selectedKeys[k] ? ' checked' : '') + '></td>' +
+        '<td><input type="checkbox" class="form-check-input so-row-check" data-k="' + esc(k) + '"' +
+        (selectedKeys[k] ? ' checked' : '') +
+        (soBlocked ? ' disabled' : '') +
+        (soBlocked ? ' title="Already used on job ' + esc(usedJobNo) + '"' : '') + '></td>' +
         '<td class="text-end text-muted">' + (idx + 1) + '</td>' +
-        '<td>' + esc(r.so_no || '') + '</td>' +
+        '<td>' + soCell + '</td>' +
         '<td>' + esc(r.fg_code || '') + '</td>' +
         '<td>' + esc(r.fg_name || '') + '</td>' +
         '<td class="text-end">' + esc(r.quantity != null ? r.quantity : '') + '</td>' +
@@ -1417,7 +1484,9 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
         return;
       }
       soTbody.innerHTML = '<tr><td colspan="7" class="text-muted small py-3 text-center">Loading…</td></tr>';
-      pullSoRowsFromApi(false)
+      refreshUsedSoNumbers(true).then(function () {
+        return pullSoRowsFromApi(false);
+      })
         .then(function (res) {
           if (!res.ok) {
             const msg = res.error && res.error !== 'no_customer' ? safeErr(res.error) : 'Could not load.';
@@ -1484,6 +1553,24 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     soApplyBtn.addEventListener('click', function () {
       const checks = Array.prototype.slice.call(document.querySelectorAll('.so-row-check:checked'));
       if (!checks.length) return;
+      if (!isRejectionJobSeries()) {
+        var blocked = null;
+        checks.forEach(function (ch) {
+          if (blocked) return;
+          var k = ch.getAttribute('data-k');
+          var row = mergedRows.find(function (m) { return lineKey(m) === k; });
+          if (!row) return;
+          var uj = jobNoForUsedSo(row.so_no);
+          if (uj) blocked = { so: normSoNo(row.so_no), job: uj };
+        });
+        if (blocked) {
+          alert(
+            'SO ' + blocked.so + ' is already used on job ' + blocked.job + '. ' +
+            'Choose a different open sales order.'
+          );
+          return;
+        }
+      }
       const inst = bootstrap.Modal.getOrCreateInstance(soModal);
       const existing = {};
       const usedStubIdx = {};
@@ -1629,6 +1716,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     'Metallizing': 'MET',
     'Metallisation': 'MET',
     'Coating': 'COT',
+    'FG': 'FG',
   };
 
   // Process metadata from DB (category, default_workcenter) for special rules like outsourcing.
@@ -1895,7 +1983,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
         bom.innerHTML =
           '<div class="fw-semibold bom-line-title">BOM for line ' + disp + ' of ' + total + '</div>' +
           '<div class="text-muted small mb-2 bom-line-element-label">Element – ' + esc(elLabel) + '</div>' +
-          '<div class="text-muted small mb-2">Each process is created in sequence. Wastage is in the detail line (RM kg); every converting step planned qty = that RM kg (FG step keeps dispatch qty).</div>' +
+          '<div class="text-muted small mb-2">Each process is created in sequence. Wastage is in the detail line (RM kg); every converting step planned qty = that RM kg. The final <strong>FG</strong> step (warehouse <strong>FBD-FG</strong>) is added automatically — its planned qty matches the quantity received from the last process (same as the required item), not the SO dispatch qty.</div>' +
           '<div class="bom-sections-inner"></div>';
         bomContainer.appendChild(bom);
       }
@@ -2241,6 +2329,15 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     return Math.ceil(parseFloat(rmKg) || 0);
   }
 
+  /** FG step header qty = last process output (same as required-item qty), not SO dispatch. */
+  function fgPlannedQtyFromPrev(prev, fallbackKg) {
+    if (prev && prev.planned_qty != null && !isNaN(parseFloat(prev.planned_qty))) {
+      const v = parseFloat(prev.planned_qty);
+      if (v > 0) return v;
+    }
+    return fallbackKg;
+  }
+
   function unit1ProcessItemCode(fgCode, processCode, fullFromModel) {
     if (fullFromModel) return String(fullFromModel).substring(0, 50);
     const base = unit1FgBaseCode(fgCode);
@@ -2270,6 +2367,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     'Metallizing': 'FBD-MTL',
     'Metallisation': 'FBD-MTL',
     'Coating': 'OHJW-U1',
+    'FG': 'FBD-FG',
   };
 
   function warehouseSelectHtml(selectedWh) {
@@ -2289,14 +2387,14 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     h.innerHTML = '<span>' + stepNo + '. ' + title + ' (' + processCode + ')</span>';
     wrap.appendChild(h);
 
+    const isFgStep = isFgProcessTitle(title);
     const metaWh = PROCESS_META_BY_NAME[title] && PROCESS_META_BY_NAME[title].workcenter;
-    const defaultWH = PROCESS_WAREHOUSES[title] || metaWh || 'FBD-RM';
+    const defaultWH = isFgStep ? 'FBD-FG' : (PROCESS_WAREHOUSES[title] || metaWh || 'FBD-RM');
     const defaultUoM = UNIT1_DEFAULT_UOM;
 
     rowModels.forEach(function (r, cardIdx) {
       const fgCode = extractFgNum(r.item_base);
       const pcCode = (processCode || 'PROC').trim();
-      const isFgStep = isFgProcessTitle(title);
       const itemCode = isFgStep
         ? (r.full_item_code || fgCode)
         : unit1ProcessItemCode(fgCode, pcCode, r.full_item_code);
@@ -2495,7 +2593,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
         }
         let headerUom = UNIT1_DEFAULT_UOM;
 
-        if (qtyEl && _shouldAutoWriteBomField(qtyEl)) qtyEl.value = headerQty;
+        if (!isFg && qtyEl && _shouldAutoWriteBomField(qtyEl)) qtyEl.value = headerQty;
         if (uomEl && _shouldAutoWriteBomField(uomEl)) uomEl.value = headerUom;
 
         // Required items quantity update
@@ -2607,6 +2705,15 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
               if (uIn && _shouldAutoWriteBomField(uIn)) uIn.value = UNIT1_DEFAULT_UOM;
            }
         });
+
+        if (isFg) {
+          const prevLink = card.querySelector('.bom-extra-wrap .row[data-is-prev-output="true"]');
+          const prevQtyInp = prevLink && prevLink.querySelector('.bom-item-qty');
+          if (prevQtyInp && qtyEl && _shouldAutoWriteBomField(qtyEl)) {
+            const v = parseFloat(prevQtyInp.value);
+            if (!isNaN(v) && v > 0) qtyEl.value = v;
+          }
+        }
       });
     });
   }
@@ -2675,7 +2782,8 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   function createBomForLine(materialRowIdx, opts) {
     opts = opts || {};
     const line = lineStateFor(materialRowIdx);
-    const seq = line && line.sequence ? line.sequence.map(normalizeProcessName).filter(Boolean) : [];
+    let seq = line && line.sequence ? line.sequence.map(normalizeProcessName).filter(Boolean) : [];
+    if (!seq.some(isFgProcessTitle)) seq.push('FG');
     if (line) line.sequence = seq.slice();
     const outFlags = (line && Array.isArray(line.outsourcing)) ? line.outsourcing : [];
     const lines = resolvedLinesForDetailLine(materialRowIdx);
@@ -2769,7 +2877,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
           const q = parseFloat(ln.quantity) || 0;
           let headerQty;
           if (isFgStep) {
-            headerQty = q > 0 ? q : maxKg;
+            headerQty = fgPlannedQtyFromPrev(prev, q > 0 ? q : maxKg);
           } else if (myConvIdx >= 0) {
             headerQty = plannedKgForConvertStep(sheetPlanned);
           } else {
@@ -2886,7 +2994,15 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
 
     console.log('[DEBUG] Pushing to SAP Batch-Create:', payloadItems);
     if (!payloadItems.length) {
-      alert('No valid SAP Item Codes found in the BOM cards.');
+      bomWrap.classList.remove('d-none');
+      const hint = document.createElement('div');
+      hint.className = 'alert alert-warning alert-dismissible fade show mt-2 mb-0';
+      hint.role = 'alert';
+      hint.innerHTML =
+        '<strong>BOM ready.</strong> No new process item codes needed (e.g. FG-only). ' +
+        'Scroll down and click <strong>Create Job</strong> to save the job card.' +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+      bomWrap.insertBefore(hint, bomWrap.firstChild);
       if (createBtn) {
         createBtn.disabled = false;
         createBtn.innerHTML = originalBtnHtml;
@@ -2937,6 +3053,15 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
            (data.errors && data.errors.length ? (data.errors.length + ' failed.') : '') +
            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
          bomWrap.insertBefore(msg, bomWrap.firstChild);
+
+         const nextStep = document.createElement('div');
+         nextStep.className = 'alert alert-success alert-dismissible fade show mt-2 mb-0';
+         nextStep.role = 'alert';
+         nextStep.innerHTML =
+           '<strong>SAP items synced.</strong> Scroll to the bottom of this page and click ' +
+           '<strong>Create Job</strong> to save the job card in the system (Generate BOM alone does not create a job).' +
+           '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+         bomWrap.insertBefore(nextStep, bomWrap.firstChild);
          
          // Restrict editing of SAP item codes after successful creation/verification
          bomWrap.querySelectorAll('.bom-item-name, .bom-itemcode-input').forEach(function(el) {
@@ -2976,200 +3101,272 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   window.createBomForLine = createBomForLine;
 
   const CREATE_JOB_SUBMIT_ID = 'btn_create_job_submit';
+
+  function bomSectionCountForLine(lineIndex) {
+    const lb = bomContainer.querySelector('.bom-line-block[data-bom-line-index="' + lineIndex + '"]');
+    if (!lb) return 0;
+    const inner = lb.querySelector('.bom-sections-inner');
+    if (!inner) return 0;
+    return inner.querySelectorAll(':scope > .border').length;
+  }
+
+  function serializeBomPayloadFromDom() {
+    const bomPayload = [];
+    const lineBlocks = bomContainer.querySelectorAll('.bom-line-block');
+    lineBlocks.forEach(function (lb) {
+      const lineIndex = parseInt(lb.getAttribute('data-bom-line-index'), 10);
+      if (isNaN(lineIndex)) return;
+      const sectionsInner = lb.querySelector('.bom-sections-inner');
+      const sectionEls = sectionsInner ? sectionsInner.querySelectorAll(':scope > .border') : [];
+      if (sectionEls.length === 0) return;
+      const sections = [];
+      sectionEls.forEach(function (sec) {
+        const processName = sec.getAttribute('data-process-name') || '';
+        const processCode = sec.getAttribute('data-process-code') || '';
+        const cards = [];
+        sec.querySelectorAll('.bom-process-card').forEach(function (card) {
+          const cardIdx = card.getAttribute('data-card-idx');
+          const itemNameEl = card.querySelector('.bom-item-name');
+          const qtyEl = card.querySelector('.bom-planned-qty');
+          const whEl = card.querySelector('.bom-warehouse');
+          const uomEl = card.querySelector('.bom-uom');
+          const reqItems = [];
+          card.querySelectorAll('.bom-extra-wrap .row').forEach(function (r) {
+            const itemEl = r.querySelector('.bom-itemcode-input');
+            const whElRow = r.querySelector('.bom-item-wh');
+            const qEl = r.querySelector('.bom-item-qty');
+            const uomElRow = r.querySelector('.bom-item-uom');
+            reqItems.push({
+              sap_item_code: itemEl ? itemEl.value : '',
+              warehouse: whElRow ? whElRow.value : '',
+              qty_per_job: qEl ? qEl.value : '',
+              uom: uomElRow ? uomElRow.value : '',
+            });
+          });
+          const remEl = card.querySelector('.bom-po-remarks');
+          cards.push({
+            card_idx: cardIdx != null ? parseInt(cardIdx, 10) : 0,
+            item_name: itemNameEl ? itemNameEl.value : '',
+            warehouse: whEl ? whEl.value : '',
+            planned_qty: qtyEl ? qtyEl.value : '',
+            uom: uomEl ? uomEl.value : '',
+            required_items: reqItems,
+            production_order_remarks: remEl ? String(remEl.value || '').trim().substring(0, 254) : '',
+          });
+        });
+        sections.push({
+          process_name: processName,
+          process_code: processCode,
+          cards: cards,
+        });
+      });
+      bomPayload.push({
+        line_index: lineIndex,
+        yield_loss_pct: 0,
+        sections: sections,
+      });
+    });
+    return bomPayload;
+  }
+
+  async function runCreateJobSubmit() {
+    const jcFormSync = document.getElementById('jobCardForm');
+    if (!jcFormSync || jcFormSync.getAttribute('data-submitting') === 'true') return;
+
+    const hid = document.getElementById('customer_id');
+    if (hid && !hid.value) {
+      alert('Please select a customer using Browse.');
+      return;
+    }
+    const selLines = currentSelectedLines();
+    if (!selLines.length) {
+      alert('Please select at least one SO/FG line.');
+      return;
+    }
+    const jobSeriesPre = document.getElementById('job_series');
+    const jobSeriesVal = jobSeriesPre ? jobSeriesPre.value : '';
+    if (jobSeriesVal !== 'Rejection') {
+      const missingSo = selLines.some(function (r) {
+        var de = r.doc_entry;
+        return de == null || de === '';
+      });
+      if (missingSo) {
+        alert('Link each FG line to an open Sales Order using Browse (repeat jobs keep your quantities; pick the matching SO line).');
+        return;
+      }
+      if (typeof window.refreshUsedSoNumbers === 'function') {
+        await window.refreshUsedSoNumbers(true);
+      }
+      var soConflict = null;
+      var seenSo = {};
+      var normSo = window.normSoNo || function (v) { return String(v == null ? '' : v).trim(); };
+      var jobForSo = window.jobNoForUsedSo || function () { return ''; };
+      selLines.forEach(function (r) {
+        if (soConflict) return;
+        var sn = normSo(r.so_no);
+        if (!sn || seenSo[sn]) return;
+        seenSo[sn] = true;
+        var uj = jobForSo(sn);
+        if (uj) soConflict = { so: sn, job: uj };
+      });
+      if (soConflict) {
+        alert(
+          'SO ' + soConflict.so + ' is already used on job ' + soConflict.job + '. ' +
+          'Choose a different open sales order (or cancel the existing job to reuse this SO).'
+        );
+        return;
+      }
+    }
+    const missingWidth = selLines.some(function (r) {
+      const w = (typeof resolveRowWidthMm === 'function') ? resolveRowWidthMm(r) : r.carton_width_mm;
+      return w == null || w === '' || isNaN(parseFloat(w)) || parseFloat(w) <= 0;
+    });
+    if (missingWidth) {
+      alert('Width (mm) is required on each line — load from SO via Browse or enter a value.');
+      return;
+    }
+
+    const seqIndices = typeof getMaterialIndices === 'function' ? getMaterialIndices() : [];
+    const missingSeq = seqIndices.some(function (idx) {
+      const line = state.lines.find(function (l) { return l.line_index === idx; });
+      return !line || !line.sequence || line.sequence.length === 0;
+    });
+    if (missingSeq && seqIndices.length > 0) {
+      alert('Please select a process sequence for all detail lines before creating the job.');
+      return;
+    }
+
+    const delInp = document.getElementById('delivery_date');
+    if (!delInp || !String(delInp.value || '').trim()) {
+      alert('Delivery date is required. Select customer and open SO/FG lines first (due date comes from the sales order).');
+      return;
+    }
+
+    const missingFgInvolved = seqIndices.some(function (idx) {
+      const row = document.getElementById('mat_row_' + idx);
+      if (!row) return true;
+      const hiddenWrap = row.querySelector('.js-fg-involved-hidden');
+      if (!hiddenWrap) return false;
+      return hiddenWrap.querySelectorAll('input[name="detail_fg_involved_' + idx + '[]"]').length < 1;
+    });
+    if (missingFgInvolved && seqIndices.length > 0) {
+      alert('For each detail line, select at least one FG under “FG involved (header)”.');
+      return;
+    }
+
+    const indices = typeof getMaterialIndices === 'function' ? getMaterialIndices() : [];
+    const promises = [];
+    indices.forEach(function (idx) {
+      const line = state.lines.find(function (l) { return l.line_index === idx; });
+      if (!line || !line.sequence || !line.sequence.length) return;
+      const sectionCount = bomSectionCountForLine(idx);
+      const lb = bomContainer.querySelector('.bom-line-block[data-bom-line-index="' + idx + '"]');
+      if (sectionCount > 0) {
+        if (lb) lb.classList.remove('d-none');
+        return;
+      }
+      promises.push(createBomForLine(idx));
+    });
+
+    const submitBtn = document.getElementById(CREATE_JOB_SUBMIT_ID);
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (promises.length > 0) {
+      try {
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Building BOM…';
+        }
+        await Promise.all(promises);
+      } catch (err) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+        }
+        return;
+      }
+    }
+
+    mergeStateFromDom();
+    const bomPayload = serializeBomPayloadFromDom();
+    const bomHidden = document.getElementById('bom_payload_json');
+    if (bomHidden) bomHidden.value = JSON.stringify(bomPayload);
+
+    const detailWithSeq = seqIndices.filter(function (idx) {
+      const line = state.lines.find(function (l) { return l.line_index === idx; });
+      return line && line.sequence && line.sequence.length > 0;
+    });
+    if (detailWithSeq.length) {
+      const missingBom = detailWithSeq.some(function (idx) {
+        const block = bomPayload.find(function (b) { return b.line_index === idx; });
+        return !block || !block.sections || !block.sections.length;
+      });
+      if (missingBom) {
+        alert(
+          'Build the BOM first: for each detail line, choose a process sequence and click ' +
+          '“Generate BOM”, then click “Create Job” at the bottom of the page.'
+        );
+        return;
+      }
+    }
+
+    const formData = new FormData(jcFormSync);
+    formData.set('bom_payload_json', JSON.stringify(bomPayload));
+    const psHidden = document.getElementById('process_sequence_json');
+    if (psHidden) formData.set('process_sequence_json', psHidden.value);
+    try {
+      formData.set('sap_selected_lines_json', JSON.stringify(currentSelectedLines()));
+    } catch (e) {}
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Creating job…';
+    }
+    jcFormSync.setAttribute('data-submitting', 'true');
+
+    try {
+      const postUrl = jcFormSync.getAttribute('action') || window.location.pathname;
+      const res = await fetch(postUrl, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+        redirect: 'follow',
+      });
+      const finalUrl = res.url || postUrl;
+      if (res.ok && finalUrl.indexOf('/jobs/new') === -1) {
+        window.location.assign(finalUrl);
+        return;
+      }
+      const html = await res.text();
+      document.open();
+      document.write(html);
+      document.close();
+    } catch (err) {
+      console.error('[CREATE-JOB] POST failed:', err);
+      alert('Could not save the job card. Check your connection and try again.');
+      jcFormSync.removeAttribute('data-submitting');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    }
+  }
+
+  const btnCreateJob = document.getElementById(CREATE_JOB_SUBMIT_ID);
+  if (btnCreateJob) {
+    btnCreateJob.addEventListener('click', function () {
+      runCreateJobSubmit().catch(function (err) {
+        console.error('[CREATE-JOB]', err);
+        const jc = document.getElementById('jobCardForm');
+        if (jc) jc.removeAttribute('data-submitting');
+        btnCreateJob.disabled = false;
+        alert('Create Job failed: ' + (err && err.message ? err.message : String(err)));
+      });
+    });
+  }
   const jcFormSync = document.getElementById('jobCardForm');
   if (jcFormSync) {
-    jcFormSync.addEventListener('submit', async function (e) {
+    jcFormSync.addEventListener('submit', function (e) {
       e.preventDefault();
-      const submitter = e.submitter;
-      if (!submitter || submitter.id !== CREATE_JOB_SUBMIT_ID) {
-        return;
-      }
-      
-      // Pre-submit validations
-      const hid = document.getElementById('customer_id');
-      if (hid && !hid.value) { 
-        alert('Please select a customer using Browse.'); 
-        return; 
-      }
-      const selLines = currentSelectedLines();
-      if (!selLines.length) { 
-        alert('Please select at least one SO/FG line.'); 
-        return; 
-      }
-      const jobSeriesPre = document.getElementById('job_series');
-      const jobSeriesVal = jobSeriesPre ? jobSeriesPre.value : '';
-      if (jobSeriesVal !== 'Rejection') {
-        const missingSo = selLines.some(function (r) {
-          var de = r.doc_entry;
-          return de == null || de === '';
-        });
-        if (missingSo) {
-          alert('Link each FG line to an open Sales Order using Browse (repeat jobs keep your quantities; pick the matching SO line).');
-          return;
-        }
-      }
-      const missingWidth = selLines.some(function(r) {
-        const w = (typeof resolveRowWidthMm === 'function') ? resolveRowWidthMm(r) : r.carton_width_mm;
-        return w == null || w === '' || isNaN(parseFloat(w)) || parseFloat(w) <= 0;
-      });
-      if (missingWidth) {
-        alert('Width (mm) is required on each line — load from SO via Browse or enter a value.');
-        return;
-      }
-      
-      const seqIndices = typeof getMaterialIndices === 'function' ? getMaterialIndices() : [];
-      const missingSeq = seqIndices.some(function(idx) {
-        const line = state.lines.find(function(l) { return l.line_index === idx; });
-        return !line || !line.sequence || line.sequence.length === 0;
-      });
-      if (missingSeq && seqIndices.length > 0) {
-        alert('Please select a process sequence for all detail lines before creating the job. Production orders cannot be created without a sequence.');
-        return;
-      }
-
-      const delInp = document.getElementById('delivery_date');
-      if (!delInp || !String(delInp.value || '').trim()) {
-        alert('Delivery date is required. Select customer and open SO/FG lines first (due date comes from the sales order).');
-        return;
-      }
-
-      const missingFgInvolved = seqIndices.some(function (idx) {
-        const row = document.getElementById('mat_row_' + idx);
-        if (!row) return true;
-        const hiddenWrap = row.querySelector('.js-fg-involved-hidden');
-        if (!hiddenWrap) return false;
-        return hiddenWrap.querySelectorAll('input[name="detail_fg_involved_' + idx + '[]"]').length < 1;
-      });
-      if (missingFgInvolved && seqIndices.length > 0) {
-        alert('For each detail line, select at least one FG under “FG involved (header)”.');
-        return;
-      }
-
-      // Auto-generate missing BOMs
-      const indices = typeof getMaterialIndices === 'function' ? getMaterialIndices() : [];
-      const promises = [];
-      indices.forEach(function(idx) {
-          const line = state.lines.find(function(l) { return l.line_index === idx; });
-          if (line && line.sequence && line.sequence.length > 0) {
-              const lb = bomContainer.querySelector('.bom-line-block[data-bom-line-index="' + idx + '"]');
-              if (!lb || lb.classList.contains('d-none')) {
-                  promises.push(createBomForLine(idx));
-              }
-          }
-      });
-      
-      if (promises.length > 0) {
-          const submitBtn = jcFormSync.querySelector('button[type="submit"]');
-          const originalText = submitBtn ? submitBtn.innerHTML : '';
-          try {
-              if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Auto-creating BOMs...';
-              }
-              await Promise.all(promises);
-          } catch (err) {
-              // Errors already alerted in createBomForLine
-              if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-              }
-              return;
-          }
-      }
-
-      // Final serialization
-      mergeStateFromDom();
-      const bomPayload = [];
-      const lineBlocks = bomContainer.querySelectorAll('.bom-line-block');
-      console.log('[BOM-SERIALIZE] Found', lineBlocks.length, 'bom-line-block elements');
-      lineBlocks.forEach(function (lb) {
-        const lineIndex = parseInt(lb.getAttribute('data-bom-line-index'), 10);
-        if (isNaN(lineIndex)) return;
-        const sectionsInner = lb.querySelector('.bom-sections-inner');
-        const sectionEls = sectionsInner ? sectionsInner.querySelectorAll(':scope > .border') : [];
-        console.log('[BOM-SERIALIZE] lineBlock idx=', lineIndex, 'sections=', sectionEls.length);
-        if (sectionEls.length === 0) return;
-        const sections = [];
-        sectionEls.forEach(function (sec) {
-          const processName = sec.getAttribute('data-process-name') || '';
-          const processCode = sec.getAttribute('data-process-code') || '';
-          const cards = [];
-          sec.querySelectorAll('.bom-process-card').forEach(function (card) {
-            const cardIdx = card.getAttribute('data-card-idx');
-            const itemNameEl = card.querySelector('.bom-item-name');
-            const qtyEl = card.querySelector('.bom-planned-qty');
-            const whEl = card.querySelector('.bom-warehouse');
-            const uomEl = card.querySelector('.bom-uom');
-            const reqItems = [];
-            card.querySelectorAll('.bom-extra-wrap .row').forEach(function (r) {
-              const itemEl = r.querySelector('.bom-itemcode-input');
-              const whElRow = r.querySelector('.bom-item-wh');
-              const qEl = r.querySelector('.bom-item-qty');
-              const uomElRow = r.querySelector('.bom-item-uom');
-              reqItems.push({
-                sap_item_code: itemEl ? itemEl.value : '',
-                warehouse: whElRow ? whElRow.value : '',
-                qty_per_job: qEl ? qEl.value : '',
-                uom: uomElRow ? uomElRow.value : '',
-              });
-            });
-            const remEl = card.querySelector('.bom-po-remarks');
-            cards.push({
-              card_idx: cardIdx != null ? parseInt(cardIdx, 10) : 0,
-              item_name: itemNameEl ? itemNameEl.value : '',
-              warehouse: whEl ? whEl.value : '',
-              planned_qty: qtyEl ? qtyEl.value : '',
-              uom: uomEl ? uomEl.value : '',
-              required_items: reqItems,
-              production_order_remarks: remEl ? String(remEl.value || '').trim().substring(0, 254) : '',
-            });
-          });
-          sections.push({
-            process_name: processName,
-            process_code: processCode,
-            cards: cards,
-          });
-        });
-        bomPayload.push({
-          line_index: lineIndex,
-          yield_loss_pct: 0,
-          sections: sections,
-        });
-      });
-
-      const bomHidden = document.getElementById('bom_payload_json');
-      if (bomHidden) bomHidden.value = JSON.stringify(bomPayload);
-
-      const detailWithSeq = seqIndices.filter(function (idx) {
-        const line = state.lines.find(function (l) { return l.line_index === idx; });
-        return line && line.sequence && line.sequence.length > 0;
-      });
-      if (detailWithSeq.length) {
-        const missingBom = detailWithSeq.some(function (idx) {
-          const block = bomPayload.find(function (b) { return b.line_index === idx; });
-          return !block || !block.sections || !block.sections.length;
-        });
-        if (missingBom) {
-          alert('Select process sequence and build BOM (Generate BOM) for each detail line before creating the job.');
-          return;
-        }
-      }
-      
-      console.log('[BOM-SUBMIT] bomPayload length:', bomPayload.length);
-
-      // Ensure the submitted hidden JSON matches the latest in-memory selection
-      // (repeat-linking replaces placeholders in memory; hidden may be stale otherwise).
-      try {
-        const selHidden = document.getElementById('sap_selected_lines_json');
-        if (selHidden && typeof currentSelectedLines === 'function') {
-          selHidden.value = JSON.stringify(currentSelectedLines());
-        }
-      } catch (e) {}
-      
-      const submitBtn = document.getElementById(CREATE_JOB_SUBMIT_ID);
-      if (submitBtn) submitBtn.disabled = true;
-      jcFormSync.setAttribute('data-submitting', 'true');
-      HTMLFormElement.prototype.submit.call(jcFormSync);
     });
   }
 

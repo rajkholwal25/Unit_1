@@ -33,6 +33,8 @@ from app.services.bom_edit_payload import (
     SAP_OUTSOURCE_LINK_WAREHOUSE,
     bom_block_from_saved_bom,
     detail_material_row_index,
+    ensure_final_fg_section,
+    fg_planned_qty_for_bom_step,
     fg_planned_qty_pcs,
     gross_sheet_planned_for_detail,
     persist_bom_payload_block,
@@ -41,6 +43,7 @@ from app.services.bom_edit_payload import (
 )
 from app.services.sap_job_client import SAPClient, SAPClientError
 from app.services.sap_mjd1 import upsert_omjd_job_card, find_omjd_by_ver_entry
+from app.services.job_so_guard import validate_so_numbers_for_new_job
 from app.utils.auth import role_required
 from app.utils.sales_rep import resolve_sales_rep_display_name
 
@@ -902,7 +905,7 @@ def _resolve_process_code(process_name: str, hinted_code: Optional[str] = None) 
     # FG is a special pseudo-step in the UI; when present it must map to a real ProcessMaster row.
     # BomStep.process_code FK must reference a real row — prefer PK-PACK (seeded), else any FG row you add.
     if name.upper() == 'FG' or (code and code.upper() == 'FG'):
-        for candidate in ('PK-PACK', 'FG'):
+        for candidate in ('FG', 'PK-PACK'):
             row = ProcessMaster.query.filter_by(process_code=candidate).first()
             if row:
                 return row.process_code
@@ -1604,6 +1607,7 @@ def new_job():
     customers = SapCustomerMirror.query.order_by(SapCustomerMirror.card_name).all()
 
     if request.method == 'POST':
+        current_app.logger.info('[CREATE-JOB] POST /jobs/new received')
         customer_id_raw = request.form.get('customer_id', '').strip()
         selected_lines_raw = request.form.get('sap_selected_lines_json', '').strip()
         bom_payload_raw = request.form.get('bom_payload_json', '').strip()
@@ -1755,6 +1759,24 @@ def new_job():
             except (TypeError, ValueError):
                 so_entry = None
             so_num_snap = str(first.get('so_no') or '').strip() or None
+
+            so_guard_err = validate_so_numbers_for_new_job(
+                (row.get('so_no') for row in selected_lines),
+                job_series=job_series,
+            )
+            if so_guard_err:
+                flash(so_guard_err, 'danger')
+                return render_template(
+                    'job_cards/form.html',
+                    job_card=None,
+                    customers=customers,
+                    materials=[],
+                    process_sequence={'lines': []},
+                    sap_configured=sap_configured,
+                    sap_selected_lines=selected_lines if isinstance(selected_lines, list) else [],
+                    default_delivery_date='',
+                    mjd1_customer_name='',
+                )
 
         # Each detail line must list at least one header FG (multi-FG BOM / SAP linkage).
         # IMPORTANT: Detail lines can be more than the number of selected FG header lines.
@@ -2019,6 +2041,7 @@ def new_job():
                     if not isinstance(sections, list) or not sections:
                         current_app.logger.warning(f"BOM block skipped: sections empty or not list for line_index={line_idx_i}")
                         continue
+                    sections = ensure_final_fg_section(sections)
                     # Link BOM to the detail line for this material row index.
                     detail_line = detail_by_idx.get(line_idx_i)
                     if not detail_line:
@@ -2036,13 +2059,13 @@ def new_job():
                         if not isinstance(sec, dict):
                             continue
                         process_name = str(sec.get('process_name') or '').strip()
-                        is_fg_step = process_name.strip().upper() == 'FG'
                         process_code = _resolve_process_code(
                             process_name,
                             hinted_code=str(sec.get('process_code') or '').strip(),
                         )
                         if not process_code:
                             continue
+                        is_fg_step = _is_fg_packaging_process_code(process_code)
 
                         # Backend-authoritative outsourcing rule:
                         # If process_master.category == 'outsourcing', do NOT create a BOM step.
@@ -2078,6 +2101,14 @@ def new_job():
                                 allowed_hdr_idxs.append(int(x))
                             except (TypeError, ValueError):
                                 continue
+                        if is_fg_step and not cards:
+                            if allowed_hdr_idxs:
+                                cards = [{'card_idx': hi} for hi in allowed_hdr_idxs]
+                            else:
+                                cards = [{'card_idx': 0}]
+                        from app.services.mfg_warehouse import warehouse_for_process_code
+
+                        fg_step_wh = warehouse_for_process_code('FG')
                         for c_idx, card in enumerate(cards):
                             if not isinstance(card, dict):
                                 continue
@@ -2102,18 +2133,35 @@ def new_job():
                                 step_name=process_name or process_code,
                                 seq_no=seq + c_idx, # Ensure unique seq_no if multiple cards
                             )
-                            step.sap_warehouse = card.get('warehouse')
+                            card_wh = (str(card.get('warehouse') or '').strip() or None)
+                            if is_fg_step and (not card_wh or card_wh.upper() == 'II-RM'):
+                                card_wh = fg_step_wh
+                            step.sap_warehouse = card_wh
                             step.uom = card.get('uom')
-                            try:
-                                step_planned = card.get('planned_qty')
-                                step.planned_qty = float(step_planned) if step_planned not in (None, '') else None
-                            except (TypeError, ValueError):
-                                step.planned_qty = None
-                            if is_fg_step and step.planned_qty is None:
+                            prev_st_fg = last_step_by_card.get(payload_card_idx)
+                            if prev_st_fg is None and len(last_step_by_card) == 1:
+                                prev_st_fg = next(iter(last_step_by_card.values()))
+                            if is_fg_step:
                                 try:
-                                    step.planned_qty = float(fg_planned_qty_pcs(job, detail_line, card_hdr))
+                                    step.planned_qty = float(
+                                        fg_planned_qty_for_bom_step(
+                                            job,
+                                            detail_line,
+                                            card_hdr,
+                                            prev_step=prev_st_fg,
+                                            card_planned_qty=card.get('planned_qty'),
+                                        )
+                                    )
                                 except Exception:
                                     step.planned_qty = float(card_hdr.dispatch_qty or 1) if card_hdr else 1.0
+                            else:
+                                try:
+                                    step_planned = card.get('planned_qty')
+                                    step.planned_qty = (
+                                        float(step_planned) if step_planned not in (None, '') else None
+                                    )
+                                except (TypeError, ValueError):
+                                    step.planned_qty = None
 
                             if is_fg_step:
                                 # FG step must use the existing FG item code (do not create new item codes).
@@ -2153,6 +2201,7 @@ def new_job():
                                     sales_uom=step.uom or sap_item_uom,
                                 )
 
+                            inputs_added = False
                             for req in (card.get('required_items') or []):
                                 if not isinstance(req, dict):
                                     continue
@@ -2226,6 +2275,35 @@ def new_job():
                                         SAP_OUTSOURCE_LINK_WAREHOUSE if force_ohjw else req.get('warehouse')
                                     ),
                                 )
+                                inputs_added = True
+                            if is_fg_step and not inputs_added:
+                                prev_st = last_step_by_card.get(payload_card_idx)
+                                if prev_st is None and len(last_step_by_card) == 1:
+                                    prev_st = next(iter(last_step_by_card.values()))
+                                prev_code = (prev_st.output_item_code or '').strip() if prev_st else ''
+                                if not prev_code:
+                                    prev_code = (prev_outputs_by_card.get(payload_card_idx) or '').strip()
+                                if prev_code:
+                                    try:
+                                        link_qty = float(prev_st.planned_qty) if prev_st and prev_st.planned_qty is not None else float(step.planned_qty or 1)
+                                    except (TypeError, ValueError):
+                                        link_qty = float(step.planned_qty or 1)
+                                    link_wh = (
+                                        (str(prev_st.sap_warehouse or '').strip()[:20] if prev_st else '')
+                                        or fg_step_wh
+                                    )
+                                    add_input(
+                                        step=step,
+                                        input_type='raw_material',
+                                        sap_item_code=prev_code[:50],
+                                        description=_synthetic_display_name_for_process_item_code(
+                                            job, detail_line, prev_code
+                                        )[:200]
+                                        or f'Output of {prev_st.step_name if prev_st else "prior step"}',
+                                        uom=(prev_st.uom if prev_st else None) or step.uom or _unit1_default_uom(),
+                                        qty_per_job=link_qty,
+                                        sap_warehouse=link_wh,
+                                    )
                             # Record output code for next section's fallback
                             prev_outputs_by_card[payload_card_idx] = output_item_code
                             last_step_by_card[payload_card_idx] = step
@@ -2237,7 +2315,7 @@ def new_job():
 
                     bom.slip_process_sequence_json = slip_process_sequence_json_from_planner_and_sections(
                         planner_by_idx.get(line_idx_i),
-                        block.get('sections'),
+                        sections,
                         resolve_process_code=_resolve_process_code,
                     )
 
@@ -2846,26 +2924,38 @@ def _is_fg_output_item_for_job(job: JobMaster, output_item_code: str) -> bool:
 
 
 def _sync_bom_step_planned_qty_from_headers(job: JobMaster, bom: Bom) -> None:
-    """Refresh planned_qty for FG/PK steps from header dispatch qty (Unit 1: KGS).
-
-    **FG / PK-PACK** steps use ``fg_planned_qty_pcs`` (header kg). Other steps keep BOM
-    builder planned_qty (kg per process); not overwritten with a different SO field.
-    """
+    """Refresh FG/PK step planned_qty from the previous process output (not SO dispatch)."""
     detail = bom.detail_line
-    for st in bom.steps.order_by(BomStep.seq_no).all():
+    steps_list = list(bom.steps.order_by(BomStep.seq_no).all())
+    for i, st in enumerate(steps_list):
         hl = _header_line_for_bom_step(job, st.output_item_code)
         pcode = (st.process_code or '').strip().upper()
-        if (
+        if not (
             detail
             and hl
             and _is_fg_packaging_process_code(pcode)
             and _is_fg_output_item_for_job(job, (st.output_item_code or '').strip())
         ):
-            try:
-                st.planned_qty = Decimal(str(fg_planned_qty_pcs(job, detail, hl)))
-            except Exception:
-                st.planned_qty = Decimal(str(float(hl.dispatch_qty or 1)))
             continue
+        prev_qty = None
+        for j in range(i - 1, -1, -1):
+            pst = steps_list[j]
+            if pst.planned_qty is None:
+                continue
+            try:
+                v = float(pst.planned_qty)
+                if v > 0:
+                    prev_qty = v
+                    break
+            except (TypeError, ValueError):
+                continue
+        try:
+            if prev_qty is not None:
+                st.planned_qty = Decimal(str(prev_qty))
+            else:
+                st.planned_qty = Decimal(str(fg_planned_qty_pcs(job, detail, hl)))
+        except Exception:
+            st.planned_qty = Decimal(str(float(hl.dispatch_qty or 1)))
 
 
 def _patch_bom_linked_production_orders(job: JobMaster, bom: Bom) -> list[str]:

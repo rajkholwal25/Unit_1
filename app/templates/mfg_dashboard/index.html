@@ -256,7 +256,7 @@
                                 <td>{{ j.sap_so_number_snap or '—' }}</td>
                                 <td class="text-muted small font-monospace">{% if fl %}{{ fl.sap_fg_item_code or '—' }}{% else %}—{% endif %}</td>
                                 <td class="text-end pe-3 text-muted small">{% if fl and fl.dispatch_qty is not none %}{{ fl.dispatch_qty }}{% else %}—{% endif %}</td>
-                                <td>{% set _status = j.overall_status %}{% include 'partials/status_badge.html' %}</td>
+                                <td>{% set status = j.overall_status %}{% include 'partials/status_badge.html' %}</td>
                                 <td class="text-muted small">{{ j.created_at.strftime('%d %b %Y') }}</td>
                             </tr>
                             {% else %}

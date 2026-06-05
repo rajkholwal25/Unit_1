@@ -8,6 +8,8 @@ UNIT1_PROCESS_ROWS = (
     ('SLT', 'Slitting', 'converting', 'FBD-SLT'),
     ('MET', 'Metalisation', 'converting', 'FBD-MTL'),
     ('COT', 'Coating', 'converting', 'OHJW-U1'),
+    # Final step (Unit 2 style): consumes last process output → finished FG in FBD-FG + SAP PO.
+    ('FG', 'FG', 'finishing', 'FBD-FG'),
 )
 
 UNIT1_PROCESS_CODES = frozenset(code for code, *_ in UNIT1_PROCESS_ROWS)

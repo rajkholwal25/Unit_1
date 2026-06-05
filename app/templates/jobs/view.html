@@ -16,7 +16,7 @@
       <div>
         <div class="job-view-title mb-2">
           {{ job.job_no }}
-          {% set _status = job.overall_status %}
+          {% set status = job.overall_status %}
           {% include 'partials/status_badge.html' %}
           <span class="badge rounded-pill ms-1
             {% if job.priority == 'urgent' %}bg-danger

@@ -2,8 +2,20 @@ from flask import Blueprint, jsonify
 from flask_login import login_required
 from app.models import JobMaster
 from app.models.reference import ProcessMaster
+from app.services.job_so_guard import so_number_usage_map
 
 jobs_api_bp = Blueprint('jobs_api', __name__, url_prefix='/api/jobs')
+
+
+@jobs_api_bp.route('/used-sales-orders')
+@login_required
+def used_sales_orders():
+    """SO numbers already linked to a non-cancelled job (one SO → one job)."""
+    usage = so_number_usage_map()
+    return jsonify([
+        {'so_no': so_no, 'job_no': job_no}
+        for so_no, job_no in sorted(usage.items(), key=lambda x: x[0])
+    ])
 
 
 def _repeat_process_sequence_from_bom(active_bom):

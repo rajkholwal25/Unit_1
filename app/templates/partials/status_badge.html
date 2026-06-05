@@ -1,10 +1,24 @@
 {#
-  Reusable status badge. Expects `job` in context with `job.overall_status`
-  OR `line` with `line.line_status`.
-  Usage: {% set status = job.overall_status %} {% include 'partials/status_badge.html' %}
-  Or just call it where job is in scope.
+  Reusable status badge for JobMaster / header lines.
+
+  Pass any one of:
+    {% set status = job.overall_status %}
+    {% set _status = job.overall_status %}
+    {% include 'partials/status_badge.html' %}  (with `job`, `j`, or `line` in scope)
 #}
-{% set _status = status if status is defined else (job.overall_status if job is defined else (line.line_status if line is defined else '')) %}
+{% if _status is not defined %}
+  {% if status is defined %}
+    {% set _status = status %}
+  {% elif job is defined %}
+    {% set _status = job.overall_status %}
+  {% elif j is defined %}
+    {% set _status = j.overall_status %}
+  {% elif line is defined %}
+    {% set _status = line.line_status %}
+  {% else %}
+    {% set _status = '' %}
+  {% endif %}
+{% endif %}
 {% set _map = {
   'draft':            ('secondary', 'Draft'),
   'pending_approval': ('warning',   'Pending Approval'),
@@ -18,5 +32,5 @@
   'open':             ('success',   'Open'),
   'staged':           ('warning',   'Staged'),
 } %}
-{% set _color, _label = _map.get(_status, ('secondary', _status | title)) %}
+{% set _color, _label = _map.get(_status, ('secondary', _status | replace('_', ' ') | title)) %}
 <span class="badge bg-{{ _color }}">{{ _label }}</span>

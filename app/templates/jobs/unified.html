@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% set _list_ep = list_endpoint|default('jobs.list_jobs') %}
+{% set _is_mfg = (_list_ep == 'mfg_dashboard.index') %}
 {% set _statuses = status_choices|default(['open', 'staged', 'released', 'closed', 'cancelled']) %}
+{% set _fg_map = primary_fg_by_job|default({}) %}
 {% block title %}{{ page_title|default('Jobs') }}{% endblock %}
 
 {% block content %}
@@ -33,6 +35,7 @@
             {% endfor %}
           </select>
         </div>
+        {% if not _is_mfg %}
         <div class="col-sm-3 col-md-2">
           <label class="form-label small mb-1">Priority</label>
           <select name="priority" class="form-select form-select-sm">
@@ -42,6 +45,7 @@
             {% endfor %}
           </select>
         </div>
+        {% endif %}
         <div class="col-auto">
           <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-search me-1"></i>Filter</button>
           <a href="{{ url_for(_list_ep) }}" class="btn btn-outline-secondary btn-sm ms-1">Clear</a>
@@ -58,8 +62,12 @@
             <tr>
               <th class="ps-3">Job No.</th>
               <th>Customer</th>
+              {% if _is_mfg %}
+              <th>FG</th>
+              {% else %}
               <th>Components</th>
               <th>Priority</th>
+              {% endif %}
               <th>Status</th>
               <th>Delivery</th>
               <th>Created</th>
@@ -73,14 +81,18 @@
                 <a href="{{ url_for('jobs.view_job', job_id=job.id) }}" class="fw-medium text-decoration-none">{{ job.job_no }}</a>
               </td>
               <td>{{ job.sap_customer_name_snap or '—' }}</td>
+              {% if _is_mfg %}
+              <td class="font-monospace small">{{ _fg_map.get(job.job_no) or '—' }}</td>
+              {% else %}
               <td><span class="badge bg-light text-dark border">{{ job.header_line_count }}</span></td>
               <td>
                 <span class="badge rounded-pill {% if job.priority == 'urgent' %}bg-danger{% elif job.priority == 'normal' %}bg-secondary{% else %}bg-light text-dark{% endif %}">
                   {{ job.priority | title }}
                 </span>
               </td>
+              {% endif %}
               <td>
-                {% set _status = job.overall_status %}
+                {% set status = job.overall_status %}
                 {% include 'partials/status_badge.html' %}
               </td>
               <td class="text-muted small">{{ job.delivery_date.strftime('%d %b %Y') if job.delivery_date else '—' }}</td>
@@ -102,19 +114,19 @@
         <nav>
           <ul class="pagination pagination-sm mb-0">
             <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for(_list_ep, page=pagination.prev_num, status=status_filter, customer=customer_filter, priority=priority_filter) }}">&laquo;</a>
+              <a class="page-link" href="{{ url_for(_list_ep, page=pagination.prev_num, status=status_filter, customer=customer_filter, priority=priority_filter if not _is_mfg else none) }}">&laquo;</a>
             </li>
             {% for p in pagination.iter_pages() %}
               {% if p %}
               <li class="page-item {% if p == pagination.page %}active{% endif %}">
-                <a class="page-link" href="{{ url_for(_list_ep, page=p, status=status_filter, customer=customer_filter, priority=priority_filter) }}">{{ p }}</a>
+                <a class="page-link" href="{{ url_for(_list_ep, page=p, status=status_filter, customer=customer_filter, priority=priority_filter if not _is_mfg else none) }}">{{ p }}</a>
               </li>
               {% else %}
               <li class="page-item disabled"><span class="page-link">…</span></li>
               {% endif %}
             {% endfor %}
             <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-              <a class="page-link" href="{{ url_for(_list_ep, page=pagination.next_num, status=status_filter, customer=customer_filter, priority=priority_filter) }}">&raquo;</a>
+              <a class="page-link" href="{{ url_for(_list_ep, page=pagination.next_num, status=status_filter, customer=customer_filter, priority=priority_filter if not _is_mfg else none) }}">&raquo;</a>
             </li>
           </ul>
         </nav>

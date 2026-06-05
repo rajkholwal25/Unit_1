@@ -299,7 +299,7 @@
           });
         }
 
-        if (qtyEl && shouldAutoWrite(qtyEl)) qtyEl.value = headerQty;
+        if (!isFg && qtyEl && shouldAutoWrite(qtyEl)) qtyEl.value = headerQty;
         if (uomEl && shouldAutoWrite(uomEl)) uomEl.value = headerUom;
 
         card.querySelectorAll('.bom-extra-wrap .row').forEach(function (ext) {
@@ -440,6 +440,15 @@
             if (uIn) uIn.value = UNIT1_DEFAULT_UOM;
           }
         });
+
+        if (isFg) {
+          const prevLink = card.querySelector('.bom-extra-wrap .row[data-is-prev-output="true"]');
+          const prevQtyInp = prevLink && prevLink.querySelector('.bom-item-qty');
+          if (prevQtyInp && qtyEl && shouldAutoWrite(qtyEl)) {
+            const v = parseFloat(prevQtyInp.value);
+            if (!isNaN(v) && v > 0) qtyEl.value = v;
+          }
+        }
       });
     });
   }
