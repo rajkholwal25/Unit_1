@@ -18,6 +18,7 @@ from .mfg_bom import Bom, BomStep, BomStepInput  # noqa: F401
 from .audit import JobStatusHistory, IntegrationEvent  # noqa: F401
 from .reference import ProcessMaster  # noqa: F401
 from .sap_mirror import SapCustomerMirror, SapMirrorSyncState, SapItemMirror  # noqa: F401
+from .roll_grn import RollGrnEntry  # noqa: F401
 
 __all__ = [
     'User',
@@ -43,4 +44,5 @@ __all__ = [
     'SapCustomerMirror',
     'SapMirrorSyncState',
     'SapItemMirror',
+    'RollGrnEntry',
 ]

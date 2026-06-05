@@ -36,7 +36,24 @@ def fmt_dt(value):
         return str(value)
 
 
+def fmt_decimal(value):
+    """Display numeric DB values without float artifacts (4.600 → 4.6)."""
+    if value is None or value == '':
+        return '—'
+    try:
+        from decimal import Decimal, InvalidOperation
+
+        d = Decimal(str(value))
+        s = format(d.normalize(), 'f')
+        if '.' in s:
+            s = s.rstrip('0').rstrip('.')
+        return s
+    except (InvalidOperation, TypeError, ValueError):
+        return str(value)
+
+
 def register_template_filters(app):
     app.template_filter('fmt_json')(fmt_json)
     app.template_filter('fmt_seq')(fmt_seq)
     app.template_filter('fmt_dt')(fmt_dt)
+    app.template_filter('fmt_decimal')(fmt_decimal)

@@ -29,21 +29,39 @@ function showToast(message, type) {
 }
 
 /**
- * Normalize thickness (micron) for <input type="number"> — avoids 13 → 12.99 float drift.
- * Rounds to 3 decimal places; whole numbers display without decimals (13 not 13.000).
+ * Format a decimal for inputs without float drift (4.6 stays 4.6, 13 stays 13).
+ * Pure string math — never uses Number()/toFixed() so binary float cannot rewrite the value.
+ */
+function formatDecimalInputValue(raw, maxDecimals) {
+  const s = String(raw == null ? '' : raw).trim().replace(',', '.');
+  if (s === '' || s === '.' || s === '-' || s === '-.') return '';
+  const m = s.match(/^(-?)(\d*)(?:\.(\d*))?$/);
+  if (!m) return s;
+  const dp = Math.max(0, Math.min(6, parseInt(maxDecimals, 10) || 3));
+  const sign = m[1] || '';
+  let intPart = m[2] === '' ? '0' : m[2];
+  let frac = m[3] || '';
+  if (frac.length > dp) frac = frac.slice(0, dp);
+  frac = frac.replace(/0+$/, '');
+  if (intPart.length > 1) intPart = intPart.replace(/^0+/, '') || '0';
+  let out = sign + intPart;
+  if (frac.length) out += '.' + frac;
+  return out;
+}
+
+function normalizeDecimalInput(el, maxDecimals) {
+  if (!el || el.value === '' || el.value == null) return NaN;
+  const formatted = formatDecimalInputValue(el.value, maxDecimals);
+  if (formatted === '') return NaN;
+  el.value = formatted;
+  return Number(formatted);
+}
+
+/**
+ * Normalize thickness (micron) for <input type="number">.
  */
 function normalizeThicknessMicInput(el) {
-  if (!el || el.value === '' || el.value == null) return NaN;
-  const raw = String(el.value).trim().replace(',', '.');
-  const n = parseFloat(raw, 10);
-  if (Number.isNaN(n) || n < 0) return NaN;
-  const rounded = Math.round(n * 1000) / 1000;
-  if (rounded === Math.floor(rounded)) {
-    el.value = String(Math.floor(rounded));
-  } else {
-    el.value = String(rounded);
-  }
-  return rounded;
+  return normalizeDecimalInput(el, 3);
 }
 
 /** @deprecated use normalizeThicknessMicInput */
@@ -67,14 +85,32 @@ function bindThicknessInputs(root) {
   scope.querySelectorAll('input[data-thickness-mic], input[data-thickness-mm]').forEach(function (el) {
     if (el.dataset.thicknessBound === '1') return;
     el.dataset.thicknessBound = '1';
-    el.addEventListener('blur', function () {
+    function onNorm() {
       normalizeThicknessMicInput(el);
-    });
-    el.addEventListener('change', function () {
-      normalizeThicknessMicInput(el);
-    });
+    }
+    el.addEventListener('blur', onNorm);
+    el.addEventListener('change', onNorm);
   });
 }
+
+function bindDecimalInputs(root) {
+  const scope = root || document;
+  scope.querySelectorAll('input[data-decimal-input]').forEach(function (el) {
+    if (el.dataset.decimalBound === '1') return;
+    el.dataset.decimalBound = '1';
+    const dp = parseInt(el.getAttribute('data-decimal-places') || '3', 10);
+    function onNorm() {
+      normalizeDecimalInput(el, dp);
+    }
+    if (el.value) onNorm();
+    el.addEventListener('blur', onNorm);
+    el.addEventListener('change', onNorm);
+  });
+}
+
+window.formatDecimalInputValue = formatDecimalInputValue;
+window.normalizeDecimalInput = normalizeDecimalInput;
+window.bindDecimalInputs = bindDecimalInputs;
 
 /**
  * Bootstrap modals inside .app-content sit below the body-level backdrop (clicks blocked).
@@ -124,6 +160,7 @@ document.addEventListener('keydown', function (e) {
 document.addEventListener('DOMContentLoaded', function () {
   relocateBootstrapModals();
   bindThicknessInputs(document);
+  bindDecimalInputs(document);
   if (document.querySelector('.modal-backdrop') && !document.querySelector('.modal.show')) {
     cleanupStuckModalState();
   }

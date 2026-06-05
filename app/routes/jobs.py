@@ -2918,28 +2918,12 @@ def edit_job(job_id):
     detail_lines = job.detail_lines.order_by(JobDetailLine.detail_no).all()
 
     if request.method == 'POST':
-        # Customer, job type category, and series are fixed at job creation.
-        job_kind = (request.form.get('job_kind') or '').strip().lower()
-        if job_kind not in ('new', 'repeat'):
-            job_kind = 'repeat' if any((hl.job_type or '').strip().lower() == 'repeat' for hl in header_lines) else 'new'
-        for hl in header_lines:
-            hl.job_type = job_kind
-        if job_kind == 'new':
-            job.original_job_no = None
-        else:
-            job.original_job_no = (request.form.get('original_job_no') or '').strip() or None
-
-        pr = (request.form.get('priority') or 'normal').strip()
-        job.priority = pr if pr in ('low', 'normal', 'urgent') else 'normal'
-
         del_raw = request.form.get('delivery_date', '').strip()
         job.delivery_date = parse_sap_date(del_raw) if del_raw else None
         job.remarks = (request.form.get('job_remarks') or '').strip() or None
 
         for hl in header_lines:
-            hl.length = _decimal_or_none(request.form.get(f'hl_{hl.id}_length'))
             hl.width = _decimal_or_none(request.form.get(f'hl_{hl.id}_width'))
-            hl.height = _decimal_or_none(request.form.get(f'hl_{hl.id}_height'))
 
         for dl in detail_lines:
             _apply_non_bom_job_detail_fields(dl, f'dl_{dl.id}')

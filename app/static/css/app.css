@@ -65,9 +65,13 @@ body {
   border-radius: 0.5rem;
   padding: 0.65rem 0.85rem;
 }
-.job-view-page .job-view-status-panel .form-select,
+.job-view-page .job-view-status-panel .form-select {
+  min-width: 11rem;
+  width: auto;
+  max-width: none;
+}
 .job-view-page .job-view-status-panel .form-control {
-  max-width: 10rem;
+  min-width: 10rem;
 }
 .job-view-page .job-view-meta {
   color: #64748b;

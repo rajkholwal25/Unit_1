@@ -31,7 +31,7 @@
     <h1><i class="bi bi-pencil-square me-2 text-primary"></i>Edit job</h1>
     <div class="sub">
       Customer cannot be changed after the job is created.
-      You can update New/Repeat, priority, delivery date, remarks, carton dimensions (L × W × H), and detail-line material/print fields.
+      You can update delivery date, remarks, FG line width, and detail-line material/print fields.
       BOM-only values (FG codes, qty, ups, element, raw mat, sheets, wastage) stay read-only here — use <strong>Edit BOM</strong> on the job view to change those.
     </div>
   </div>
@@ -42,25 +42,8 @@
     <div class="card mb-3 shadow-sm">
       <div class="card-body">
         <div class="section-title">Header — Customer &amp; SAP</div>
-        <p class="text-muted small mb-3">Customer and SO remain locked. New/Repeat can be corrected here.</p>
+        <p class="text-muted small mb-3">Customer and SO remain locked after job creation.</p>
         <div class="row g-3">
-          <div class="col-md-4">
-            {% set current_kind = (header_lines[0].job_type if header_lines else 'new')|lower %}
-            <label class="form-label">New / Repeat</label>
-            <select class="form-select" name="job_kind" id="job_kind">
-              <option value="new" {% if current_kind == 'new' %}selected{% endif %}>New</option>
-              <option value="repeat" {% if current_kind == 'repeat' %}selected{% endif %}>Repeat</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Original job no.</label>
-            <input type="text" class="form-control" name="original_job_no" id="original_job_no"
-                   value="{{ job.original_job_no or '' }}"
-                   placeholder="Required only for Repeat/Rejection">
-          </div>
-        </div>
-
-        <div class="row g-3 mt-1">
           <div class="col-md-6">
             <label class="form-label text-muted small">Customer</label>
             <div class="form-control bg-light">
@@ -79,20 +62,12 @@
         </div>
 
         <div class="row g-3 mt-1">
-          <div class="col-md-3">
-            <label class="form-label">Priority</label>
-            <select class="form-select" name="priority" id="priority">
-              <option value="normal" {% if job.priority == 'normal' %}selected{% endif %}>Normal</option>
-              <option value="low" {% if job.priority == 'low' %}selected{% endif %}>Low</option>
-              <option value="urgent" {% if job.priority == 'urgent' %}selected{% endif %}>Urgent</option>
-            </select>
-          </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <label class="form-label">Delivery date</label>
             <input type="date" class="form-control" name="delivery_date" id="delivery_date"
                    value="{{ job.delivery_date.isoformat() if job.delivery_date else '' }}">
           </div>
-          <div class="col-md-6">
+          <div class="col-md-8">
             <label class="form-label" for="job_remarks">Remarks <span class="text-muted fw-normal small">(optional)</span></label>
             <textarea class="form-control" name="job_remarks" id="job_remarks" rows="2" maxlength="65535"
                       placeholder="Short note saved on the job">{{ job.remarks or '' }}</textarea>
@@ -103,8 +78,8 @@
 
     <div class="card mb-3 shadow-sm">
       <div class="card-body">
-        <div class="section-title">Selected SO / FG lines (carton mm)</div>
-        <p class="text-muted small mb-2">Ups and quantity are read-only; only carton dimensions (L, W, H) can be edited.</p>
+        <div class="section-title">Selected SO / FG lines</div>
+        <p class="text-muted small mb-2">Ups and quantity are read-only; only width ({{ unit1_units.width }}) can be edited.</p>
         <div class="table-responsive border rounded">
           <table class="table table-sm align-middle mb-0 edit-so-table">
             <thead class="table-light">
@@ -113,9 +88,7 @@
                 <th>FG</th>
                 <th class="text-end">Ups</th>
                 <th class="text-end">Quantity</th>
-                <th class="text-end" style="min-width:6rem;">L ({{ unit1_units.length }})</th>
-                <th class="text-end" style="min-width:6rem;">W ({{ unit1_units.width }})</th>
-                <th class="text-end pe-3" style="min-width:6rem;">H ({{ unit1_units.width }})</th>
+                <th class="text-end pe-3" style="min-width:6rem;">W ({{ unit1_units.width }})</th>
               </tr>
             </thead>
             <tbody>
@@ -128,12 +101,10 @@
                 </td>
                 <td class="text-end small text-muted">{{ hl.ups or 1 }}</td>
                 <td class="text-end small text-muted">{{ hl.dispatch_qty }}</td>
-                <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="hl_{{ hl.id }}_length" value="{{ hl.length if hl.length is not none else '' }}"></td>
-                <td><input type="number" step="0.01" class="form-control form-control-sm text-end" name="hl_{{ hl.id }}_width" value="{{ hl.width if hl.width is not none else '' }}"></td>
-                <td class="pe-3"><input type="number" step="0.01" class="form-control form-control-sm text-end" name="hl_{{ hl.id }}_height" value="{{ hl.height if hl.height is not none else '' }}"></td>
+                <td class="pe-3"><input type="number" step="0.01" class="form-control form-control-sm text-end" name="hl_{{ hl.id }}_width" value="{{ hl.width if hl.width is not none else '' }}"></td>
               </tr>
               {% else %}
-              <tr><td colspan="7" class="text-center text-muted py-4 small">No header lines.</td></tr>
+              <tr><td colspan="5" class="text-center text-muted py-4 small">No header lines.</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -183,25 +154,4 @@
     </div>
   </form>
 </div>
-<script>
-(function () {
-  const kind = document.getElementById('job_kind');
-  const original = document.getElementById('original_job_no');
-  if (!kind || !original) return;
-
-  function syncOriginalJobNo() {
-    if (kind.value === 'new') {
-      original.value = '';
-      original.disabled = true;
-      original.placeholder = 'Cleared for New jobs';
-    } else {
-      original.disabled = false;
-      original.placeholder = 'Original job number';
-    }
-  }
-
-  kind.addEventListener('change', syncOriginalJobNo);
-  syncOriginalJobNo();
-})();
-</script>
 {% endblock %}

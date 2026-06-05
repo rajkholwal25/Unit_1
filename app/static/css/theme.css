@@ -231,6 +231,24 @@ body {
   border-radius: var(--t-radius-sm);
   border-color: var(--t-border-strong);
 }
+
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-width: 5.5rem;
+  padding-right: 2.25rem;
+  text-align: left;
+  text-align-last: left;
+  background-position: right 0.65rem center;
+  background-size: 14px 11px;
+}
+
+.form-select-sm {
+  padding-right: 2rem;
+  background-position: right 0.55rem center;
+}
+
 .form-control:focus,
 .form-select:focus {
   border-color: var(--t-primary);
@@ -294,6 +312,97 @@ body {
 /* —— Section title (forms) —— */
 .section-title {
   border-bottom-color: var(--t-primary) !important;
+}
+
+/* —— DataTables controls (length menu, search, pagination) —— */
+.dataTables_wrapper .dataTables_length label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--t-muted);
+  white-space: nowrap;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_length .form-select {
+  display: inline-block;
+  width: auto !important;
+  min-width: 4.75rem;
+  max-width: none;
+  padding: 0.35rem 2.25rem 0.35rem 0.65rem !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--t-text);
+  text-align: left;
+  background-position: right 0.65rem center !important;
+  background-size: 14px 11px;
+  border-radius: 8px;
+  border-color: var(--t-border-strong);
+  box-shadow: var(--t-shadow-xs);
+}
+
+.dataTables_wrapper .dataTables_length select:focus,
+.dataTables_wrapper .dataTables_length .form-select:focus {
+  border-color: var(--t-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
+}
+
+.dataTables_wrapper .dataTables_filter label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--t-muted);
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  min-width: 12rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border-color: var(--t-border-strong);
+}
+
+.dataTables_wrapper .dataTables_info {
+  font-size: 0.8125rem;
+  color: var(--t-muted);
+  padding-top: 0.75rem !important;
+}
+
+.dataTables_wrapper .dataTables_paginate {
+  padding-top: 0.5rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .pagination {
+  gap: 0.2rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .page-link {
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--t-text);
+  border-color: var(--t-border-strong);
+}
+
+.dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
+  background: linear-gradient(135deg, var(--t-primary), #6366f1);
+  border-color: transparent;
+}
+
+.dataTables_wrapper > .row:first-child {
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.dataTables_wrapper > .row:last-child {
+  align-items: center;
+  margin-top: 0.75rem;
+  padding: 0 0.25rem;
 }
 
 /* Respect reduced motion */

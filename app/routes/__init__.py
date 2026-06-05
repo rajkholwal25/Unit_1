@@ -20,6 +20,7 @@ def register_blueprints(app):
     from .job_cards import job_cards_bp
     from .admin import admin_bp
     from .sap_integration import sap_bp
+    from .roll_grn import roll_grn_bp
     from .api.reference import ref_api_bp
     from .api.sap import sap_api_bp
     from .api.jobs_api import jobs_api_bp
@@ -42,6 +43,7 @@ def register_blueprints(app):
     app.register_blueprint(job_cards_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(sap_bp)
+    app.register_blueprint(roll_grn_bp)
     app.register_blueprint(ref_api_bp)
     app.register_blueprint(sap_api_bp)
     app.register_blueprint(jobs_api_bp)
