@@ -18,56 +18,50 @@
 {%- endmacro %}
 
 {% macro detail_elements_block(dl) %}
+    {% set slip_row = (slip_detail_by_no or {}).get(dl.detail_no, {}) %}
     <div class="mt-2">
       <div class="slip-meta mb-1"><strong>Line {{ dl.detail_no }}</strong> — {{ dl.element_name or '—' }}</div>
       <table class="slip-table">
         <thead>
           <tr>
-            <th style="width: 22%;">Item code / Mill / grade</th>
-            <th style="width: 18%;">Size (mm)</th>
-            <th style="width: 10%;">Thickness/GSM</th>
-            <th style="width: 12%;">Sheets</th>
-            <th style="width: 12%;">Wastage</th>
-            <th style="width: 14%;">Total sheets</th>
-            <th style="width: 12%;">Die no</th>
+            <th style="width: 28%;">Item code / Item Name</th>
+            <th style="width: 14%;">Width (mm)</th>
+            <th style="width: 12%;">Thickness (mm)</th>
+            <th style="width: 14%;">Weight (kg)</th>
+            <th style="width: 14%;">Wastage (kg)</th>
+            <th style="width: 18%;">Total weight (kg)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>
-              <div><strong>{{ dl.raw_material_item_code or '—' }}</strong></div>
-              <div class="muted">{{ dl.mill or '—' }}{% if dl.paper_brand %} / {{ 'GBD' if dl.paper_brand == 'DGB' else dl.paper_brand }}{% endif %}</div>
+              <div class="font-monospace"><strong>{{ slip_row.get('raw_item_code') or dl.raw_material_item_code or '—' }}</strong></div>
+              <div>{{ slip_row.get('raw_item_name') or '—' }}</div>
             </td>
             <td class="text-center">
-              {% if dl.sheet_length %}{{ fmt_num(dl.sheet_length) }} × {{ fmt_num(dl.sheet_width) }}{% else %}—{% endif %}
+              {% if slip_row.get('width_mm') is not none %}{{ fmt_num(slip_row.width_mm) }}{% else %}—{% endif %}
             </td>
-            <td class="text-center">{{ dl.gsm or '—' }}</td>
-            {% set _waste = (dl.wastage_sheets or 0) %}
-            {% set _gross = (dl.total_sheets if dl.total_sheets is not none else None) %}
-            {% set _net = (_gross - _waste) if (_gross is not none and _waste is not none) else None %}
-            <td class="text-end">{{ _net if _net is not none else '—' }}</td>
-            <td class="text-end">{{ _waste or 0 }}</td>
-            <td class="text-end">{{ _gross if _gross is not none else '—' }}</td>
-            <td class="text-center">{{ dl.die_no or '—' }}</td>
-          </tr>
-          <tr>
-            <th>Front colours</th>
-            <td colspan="6">{{ dl.front_colours or '—' }}</td>
-          </tr>
-          <tr>
-            <th>Back colours</th>
-            <td colspan="6">{{ dl.back_colours or '—' }}</td>
+            <td class="text-center">{{ slip_row.get('thickness') or '—' }}</td>
+            <td class="text-end">
+              {% if slip_row.get('weight_net') is not none %}{{ fmt_num(slip_row.weight_net) }}{% else %}—{% endif %}
+            </td>
+            <td class="text-end">
+              {% if slip_row.get('weight_wastage') is not none %}{{ fmt_num(slip_row.weight_wastage) }}{% else %}—{% endif %}
+            </td>
+            <td class="text-end">
+              {% if slip_row.get('weight_total') is not none %}{{ fmt_num(slip_row.weight_total) }}{% else %}—{% endif %}
+            </td>
           </tr>
           <tr>
             <th>Process sequence</th>
-            <td colspan="6">
+            <td colspan="5">
               {% set seq = process_seq_by_detail_no.get(dl.detail_no) %}
               {{ seq if seq else '—' }}
             </td>
           </tr>
           <tr>
             <th>Special instructions</th>
-            <td colspan="6">{{ dl.special_instructions or '—' }}</td>
+            <td colspan="5">{{ dl.special_instructions or '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -272,6 +266,22 @@
   }
   .slip-grid td {
     height: 28px;
+  }
+  .slip-checklist-manual {
+    width: 100%;
+  }
+  .slip-checklist-manual .slip-checklist-label {
+    text-align: left;
+    vertical-align: middle;
+    padding: 6px 8px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .slip-checklist-manual .slip-manual-blank {
+    min-height: 42px;
+    height: 42px;
+    background: #fff;
+    vertical-align: middle;
   }
   .slip-kv {
     width: 100%;
@@ -482,32 +492,13 @@
 
   <div class="mt-2">
     <table class="slip-kv">
-      <colgroup>
-        <col style="width: 1%;">
-        <col style="width: 71%;">
-        <col style="width: 1%;">
-        <col style="width: 27%;">
-      </colgroup>
       <tr>
         <td class="kv-key"><strong>Customer</strong></td>
         <td>{{ job.sap_customer_name_snap or '—' }}</td>
-        <td class="kv-key"><strong>Job type</strong></td>
-        <td>{{ (job.job_type_cat or 'Mono') }}</td>
       </tr>
       <tr>
         <td class="kv-key"><strong>SO no</strong></td>
         <td>{{ job.sap_so_number_snap or '—' }}</td>
-        <td class="kv-key"><strong>New / Repeat</strong></td>
-        <td>
-          {% set _kind = (header_lines[0].job_type if header_lines else '') %}
-          {% if (_kind or '')|lower == 'repeat' %}
-            Repeat{% if repeat_original_job_no_for_slip %} ({{ repeat_original_job_no_for_slip }}){% endif %}
-          {% elif (_kind or '')|lower == 'new' %}
-            New
-          {% else %}
-            {{ (_kind or '—') | title }}
-          {% endif %}
-        </td>
       </tr>
     </table>
   </div>
@@ -609,104 +600,19 @@
   </header>
 
   <div class="mt-2">
-    <table class="slip-table slip-grid slip2-table">
+    <table class="slip-table slip-checklist-manual">
       <colgroup>
-        <col style="width: var(--slip2-section-col-w);">
-        <col>
-        <col>
-        <col>
-        <col>
+        <col style="width: 28%;">
         <col>
       </colgroup>
       <tbody>
         <tr>
-          <th class="slip2-section-col" rowspan="2">Pre<br>Press</th>
-          <td>Key line</td>
-          <td>Coating blanket</td>
-          <td>Foil block</td>
-          <td>EMB block</td>
-          <td>Spot UV</td>
+          <th class="slip-checklist-label">Cylinder Number</th>
+          <td class="slip-manual-blank" aria-label="Cylinder Number — write by hand"></td>
         </tr>
         <tr>
-          <td>Positive</td>
-          <td>Epson Print</td>
-          <td>Customer sample</td>
-          <td>Die/Plotter</td>
-          <td>Sign &amp; stamp</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="mt-3">
-    <table class="slip-table slip-grid slip2-table">
-      <colgroup>
-        <col style="width: var(--slip2-section-col-w);">
-        <col>
-        <col>
-        <col>
-      </colgroup>
-      <tbody>
-        <tr>
-          <th class="slip2-section-col">QC</th>
-          <td>Shade ref</td>
-          <td>QC remarks</td>
-          <td>Sign &amp; stamp</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="mt-3">
-    <table class="slip-table slip-grid slip2-table">
-      <colgroup>
-        <col style="width: var(--slip2-section-col-w);">
-        <col>
-        <col>
-        <col>
-        <col>
-      </colgroup>
-      <tbody>
-        <tr>
-          <th class="slip2-section-col" rowspan="2">IMS</th>
-          <td>Ink drawdown</td>
-          <td>Ink CMYK</td>
-          <td>Ink other</td>
-          <td rowspan="2" class="align-middle">Sign &amp; stamp</td>
-        </tr>
-        <tr>
-          <td>Conventional Ink</td>
-          <td>UV Ink</td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="mt-3">
-    <table class="slip-table slip-grid slip2-table">
-      <colgroup>
-        <col style="width: var(--slip2-section-col-w);">
-        <col style="width: 15%;">
-        <col style="width: 15%;">
-        <col style="width: 20%;">
-        <col style="width: 50%;">
-      </colgroup>
-      <tbody>
-        <tr>
-          <th class="slip2-section-col">Press</th>
-          <td>Plate</td>
-          <td>Board</td>
-          <td>
-            <div class="press-blanket">
-              <span class="label">Blanket</span>
-              <span class="split" aria-hidden="true">
-                <div>New</div>
-                <div>Old</div>
-              </span>
-            </div>
-          </td>
-          <td>Spl. Coating</td>
+          <th class="slip-checklist-label">Chemical Batch</th>
+          <td class="slip-manual-blank" aria-label="Chemical Batch — write by hand"></td>
         </tr>
       </tbody>
     </table>

@@ -2624,6 +2624,88 @@ def _slip_process_sequence_string_for_bom(bom: Bom) -> str:
     return ','.join(bom.slip_process_sequence_codes) if bom else ''
 
 
+def _fg_thickness_display_from_item_code(fg_code: str) -> str:
+    """Thickness segment from Unit 1 FG code, e.g. ``PET-12-1002-TR`` → ``12``."""
+    from app.services.unit1_processes import unit1_fg_base_code
+    from app.utils.thickness import parse_thickness, thickness_display
+
+    base = unit1_fg_base_code((fg_code or '').strip())
+    if not base:
+        return '—'
+    parts = base.split('-')
+    if len(parts) < 2:
+        return '—'
+    disp = thickness_display(parse_thickness(parts[1]))
+    return disp if disp != '—' else '—'
+
+
+def _slip_detail_rows_ctx(job, detail_lines: list) -> dict[int, dict]:
+    """Unit 1 ELEMENTS slip values: width from SO/header, weights in kg, thickness from FG code."""
+    from sqlalchemy import func
+
+    ctx: dict[int, dict] = {}
+    fallback_headers = list(job.header_lines.all())
+    rm_codes: set[str] = set()
+    for dl in detail_lines:
+        code = (dl.raw_material_item_code or '').strip()
+        if code:
+            rm_codes.add(code.upper())
+    mirror_names: dict[str, str] = {}
+    if rm_codes:
+        rows = SapItemMirror.query.filter(
+            func.upper(SapItemMirror.item_code).in_(list(rm_codes))
+        ).all()
+        mirror_names = {
+            (r.item_code or '').strip().upper(): (r.item_name or '').strip()
+            for r in rows
+        }
+
+    for dl in detail_lines:
+        width_mm = None
+        fg_code_for_thickness = None
+        net_weight = None
+        inv_rows = list(dl.fg_involved.all())
+        if inv_rows:
+            dispatch_sum = 0.0
+            has_dispatch = False
+            for inv in inv_rows:
+                hl = inv.header_line
+                if hl and width_mm is None and hl.width is not None:
+                    width_mm = hl.width
+                code = (inv.sap_fg_item_code or '').strip()
+                if code and not fg_code_for_thickness:
+                    fg_code_for_thickness = code
+                if hl and hl.dispatch_qty is not None:
+                    dispatch_sum += float(hl.dispatch_qty)
+                    has_dispatch = True
+            if has_dispatch:
+                net_weight = dispatch_sum
+        elif fallback_headers:
+            hl0 = fallback_headers[0]
+            if hl0.width is not None:
+                width_mm = hl0.width
+            fg_code_for_thickness = (hl0.sap_fg_item_code or '').strip() or None
+            if hl0.dispatch_qty is not None:
+                net_weight = float(hl0.dispatch_qty)
+
+        gross = float(dl.total_sheets) if dl.total_sheets is not None else None
+        waste = float(dl.wastage_sheets or 0)
+        if net_weight is None and gross is not None:
+            net_weight = gross - waste
+
+        rm_code = (dl.raw_material_item_code or '').strip()
+        ctx[dl.detail_no] = {
+            'raw_item_code': rm_code or None,
+            'raw_item_name': mirror_names.get(rm_code.upper(), '') if rm_code else None,
+            'width_mm': width_mm,
+            'thickness': _fg_thickness_display_from_item_code(fg_code_for_thickness or ''),
+            'weight_net': net_weight,
+            'weight_wastage': waste,
+            'weight_total': gross,
+        }
+    return ctx
+
+
 def _sap_order_line_matches_job(line: dict, job_no: str) -> bool:
     """Whether a SAP SO line is explicitly linked to this job via RDR1.U_JEntry."""
     wanted = (job_no or '').strip()
@@ -2768,6 +2850,8 @@ def print_job(job_id):
         if original_exists_locally:
             repeat_original_job_no_for_slip = job.original_job_no
 
+    slip_detail_by_no = _slip_detail_rows_ctx(job, detail_lines)
+
     return render_template(
         'jobs/print_slips.html',
         job=job,
@@ -2779,6 +2863,7 @@ def print_job(job_id):
         itemcode_by_fg=itemcode_by_fg,
         frgnname_by_fg=frgnname_by_fg,
         process_seq_by_detail_no=process_seq_by_detail_no,
+        slip_detail_by_no=slip_detail_by_no,
         repeat_original_job_no_for_slip=repeat_original_job_no_for_slip,
         sap_configured=sap_configured,
         print_date=dt.utcnow().strftime('%d/%m/%Y'),

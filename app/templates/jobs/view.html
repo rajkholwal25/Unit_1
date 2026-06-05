@@ -138,7 +138,7 @@
     <div class="card border-0 shadow-sm mt-3">
       <div class="card-header bg-white py-3 border-bottom">
         <span class="fw-semibold">Manufacturing lines</span>
-        <span class="text-muted small ms-2">raw material · yield · linked FG</span>
+        <span class="text-muted small ms-2">raw material · linked FG</span>
       </div>
       <div class="card-body">
         {% for jdl in detail_lines %}
@@ -154,11 +154,7 @@
               <span class="text-muted">Raw material</span>
               <div class="font-monospace fw-medium">{{ jdl.raw_material_item_code or '—' }}</div>
             </div>
-            <div class="col-md-3">
-              <span class="text-muted">Yield loss</span>
-              <div>{{ jdl.yield_loss_pct if jdl.yield_loss_pct is not none else '—' }}%</div>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
               <span class="text-muted">Total (KGS)</span>
               <div>{{ jdl.total_sheets if jdl.total_sheets is not none else '—' }}</div>
             </div>
