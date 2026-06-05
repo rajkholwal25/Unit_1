@@ -5129,3 +5129,63 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
    }
 }
 
+2026-06-05 11:07:50 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-05 11:07:50 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-05 11:07:50 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-05 11:07:50 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-05 11:07:51 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-05 11:07:51 [ERROR] jobcard.sap: SAP request failed: GET /Items('SHR-15-1001-TR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
