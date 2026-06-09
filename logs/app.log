@@ -5692,3 +5692,439 @@ app.services.sap_job_client.SAPClientError: SAP login connection error: HTTPSCon
 2026-06-09 10:14:54,700 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
 2026-06-09 10:15:01,707 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
 2026-06-09 10:15:01,707 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:17:10 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 10:17:13 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 10:17:13 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 10:17:13 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 10:17:13 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 10:17:13 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 10:17:14 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-09 10:21:37 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:21:37 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:22:00 [INFO] jobcard.api.sap: Batch creating 5 items in SAP.
+2026-06-09 10:22:01 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-EMB: ItemName updated
+2026-06-09 10:22:01 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-EMB already exists or verified.
+2026-06-09 10:22:01 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-MET: ItemName updated
+2026-06-09 10:22:01 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-MET already exists or verified.
+2026-06-09 10:22:01 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR-COT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-09 10:22:01 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-COT created successfully.
+2026-06-09 10:22:01 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR-REW') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-09 10:22:01 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-REW created successfully.
+2026-06-09 10:22:02 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-SLT: ItemName updated
+2026-06-09 10:22:02 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-SLT already exists or verified.
+2026-06-09 10:23:04,744 INFO: [CREATE-JOB] POST /jobs/new received [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1610]
+2026-06-09 10:23:05,147 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 0, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'PAP-44-1010-NTR-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '525', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '525', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Metallisation', 'process_code': 'MET', 'cards': [{'card_idx': 0, 'item_name': 'PAP-44-1010-NTR-MET', 'ware [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:2013]
+2026-06-09 10:23:05 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-EMB: ItemName updated
+2026-06-09 10:23:06 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-MET: ItemName updated
+2026-06-09 10:23:06 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-COT: ItemName updated
+2026-06-09 10:23:06 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-REW: ItemName updated
+2026-06-09 10:23:07 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-SLT: ItemName updated
+2026-06-09 10:23:07,205 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-30 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1525]
+2026-06-09 10:23:07,452 INFO: [SAP-PUSH] Step seq=10 item_no=PAP-44-1010-NTR-EMB header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 525.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-09 10:23:07 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-EMB qty=525.0 wh=FBD-EMB
+2026-06-09 10:23:07 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-09 10:23:07 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-09 10:23:07 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141540 DocNum=732
+2026-06-09 10:23:07,886 INFO: [SAP-PUSH] Step seq=20 item_no=PAP-44-1010-NTR-MET header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-EMB', 'PlannedQuantity': 525.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Embossing'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-09 10:23:07 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-MET qty=525.0 wh=FBD-MTL
+2026-06-09 10:23:07 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-09 10:23:07 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141541 DocNum=733
+2026-06-09 10:23:08,138 INFO: [SAP-PUSH] Step seq=30 item_no=PAP-44-1010-NTR-COT header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-MET', 'PlannedQuantity': 525.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Metallisation'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-COT qty=525.0 wh=OHJW-U1
+2026-06-09 10:23:08 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-09 10:23:08 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141542 DocNum=734
+2026-06-09 10:23:08,367 INFO: [SAP-PUSH] Step seq=40 item_no=PAP-44-1010-NTR-REW header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-COT', 'PlannedQuantity': 525.0, 'Warehouse': 'OHJW-U1', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Coating'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-REW qty=525.0 wh=FBD-SLT
+2026-06-09 10:23:08 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-09 10:23:08 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141543 DocNum=735
+2026-06-09 10:23:08,617 INFO: [SAP-PUSH] Step seq=50 item_no=PAP-44-1010-NTR-SLT header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-REW', 'PlannedQuantity': 525.0, 'Warehouse': 'FBD-SLT', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Rewinding'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-SLT qty=525.0 wh=FBD-SLT
+2026-06-09 10:23:08 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-09 10:23:08 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141544 DocNum=736
+2026-06-09 10:23:08,855 INFO: [SAP-PUSH] Step seq=60 item_no=PAP-44-1010-NTR header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-SLT', 'PlannedQuantity': 525.0, 'Warehouse': 'FBD-SLT', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Slitting'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-09 10:23:08 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR qty=525.0 wh=FBD-FG
+2026-06-09 10:23:08 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-09 10:23:08 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-30 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-09 10:23:09 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141545 DocNum=737
+2026-06-09 10:26:16 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-09 10:26:17 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-09 10:26:17 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-09 10:26:17 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-09 10:26:17 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-09 10:26:17 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-09 10:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:27:32 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:27:58 [ERROR] jobcard.sap: SAP request failed: PATCH /ProductionOrders(141541) status=400 body={
+   "error" : {
+      "code" : -10,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Item must have a valid warehouse  [ProductionOrderLines.Warehouse][line: 2]"
+      }
+   }
+}
+
+2026-06-09 10:27:58,751 WARNING: [SAP-PATCH-PO] full lines: SAP PATCH /ProductionOrders(141541) failed: 400 {
+   "error" : {
+      "code" : -10,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Item must have a valid warehouse  [ProductionOrderLines.Warehouse][line: 2]"
+      }
+   }
+}
+ [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:3858]
+2026-06-09 10:28:25 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:28:25 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:28:40,137 WARNING: [SAP-PUSH] Skipping duplicate component: step=20 item=ADH0000047 [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1303]
+2026-06-09 10:28:40 [ERROR] jobcard.sap: SAP request failed: PATCH /ProductionOrders(141541) status=400 body={
+   "error" : {
+      "code" : -10,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Item must have a valid warehouse  [ProductionOrderLines.Warehouse][line: 2]"
+      }
+   }
+}
+
+2026-06-09 10:28:40,217 WARNING: [SAP-PATCH-PO] full lines: SAP PATCH /ProductionOrders(141541) failed: 400 {
+   "error" : {
+      "code" : -10,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Item must have a valid warehouse  [ProductionOrderLines.Warehouse][line: 2]"
+      }
+   }
+}
+ [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:3858]
+2026-06-09 10:40:10 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:40:11 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:42:44,888 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:42:44,890 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:42:50,380 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:42:50,381 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:42:54,599 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:42:54,600 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:43:09,169 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:43:09,170 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:44:01 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:44:02 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:44:26,175 WARNING: [SAP-PUSH] Skipping duplicate component: step=20 item=ADH0000047 [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1303]
+2026-06-09 10:44:26,176 WARNING: [SAP-PUSH] Skipping duplicate component: step=20 item=ADH0000047 [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1303]
+2026-06-09 10:44:26 [ERROR] jobcard.sap: SAP request failed: PATCH /ProductionOrders(141541) status=400 body={
+   "error" : {
+      "code" : -10,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Item must have a valid warehouse  [ProductionOrderLines.Warehouse][line: 2]"
+      }
+   }
+}
+
+2026-06-09 10:44:26,263 WARNING: [SAP-PATCH-PO] full lines: SAP PATCH /ProductionOrders(141541) failed: 400 {
+   "error" : {
+      "code" : -10,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Item must have a valid warehouse  [ProductionOrderLines.Warehouse][line: 2]"
+      }
+   }
+}
+ [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:3897]
+2026-06-09 10:46:16,307 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:46:16,308 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:47:08 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:47:09 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 10:47:15,467 WARNING: [SAP-PUSH] Skipping duplicate component: step=20 item=ADH0000047 [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1303]

@@ -3680,6 +3680,30 @@ def edit_bom_spec(job_id, bom_id):
     )
 
 
+def _edit_po_warehouse_options(step: BomStep, input_rows: list) -> list[str]:
+    """Dropdown choices for component line warehouses (Unit 1 FBD + common SAP codes)."""
+    from app.services.unit1_processes import UNIT1_WAREHOUSE_OPTIONS
+
+    opts: list[str] = []
+    seen: set[str] = set()
+
+    def _add(wh: str | None) -> None:
+        w = (wh or '').strip()
+        if w and w not in seen:
+            opts.append(w)
+            seen.add(w)
+
+    for w in UNIT1_WAREHOUSE_OPTIONS:
+        _add(w)
+    for w in ('WH-STR', 'OHJW-U1'):
+        _add(w)
+    _add(step.sap_warehouse)
+    _add(step.warehouse)
+    for row in input_rows:
+        _add(getattr(row.get('inp'), 'sap_warehouse', None))
+    return opts
+
+
 @jobs_bp.route('/<int:job_id>/bom-steps/<int:step_id>/edit-po', methods=['GET', 'POST'])
 @login_required
 @role_required('admin', 'planner')
@@ -3713,6 +3737,7 @@ def edit_po_step(job_id, step_id):
             step=step,
             bom=bom,
             input_rows=input_rows,
+            warehouse_options=_edit_po_warehouse_options(step, input_rows),
             **extra,
         )
 
@@ -3722,11 +3747,28 @@ def edit_po_step(job_id, step_id):
         base_fg = (hl.sap_fg_item_code or '').strip() if hl else ''
         sap_item_group = int(current_app.config.get('SAP_BOM_PROCESS_ITEM_GROUP_CODE', 115))
 
+        delete_inp_ids: set[int] = set()
+        for raw_id in request.form.getlist('delete_inp_ids'):
+            try:
+                delete_inp_ids.add(int(raw_id))
+            except (TypeError, ValueError):
+                pass
+        for inp_id in delete_inp_ids:
+            inp_del = BomStepInput.query.get(inp_id)
+            if not inp_del or inp_del.bom_step_id != step.id:
+                continue
+            if _is_previous_step_linkage_input(bom, step, inp_del):
+                flash('The linkage row cannot be removed from this screen.', 'danger')
+                return _render()
+            db.session.delete(inp_del)
+
         parsed_existing: list[
             tuple[BomStepInput, str, str, Optional[str], str, str]
         ] = []
         for row in input_rows:
             inp = row['inp']
+            if inp.id in delete_inp_ids:
+                continue
             if row['is_linkage']:
                 continue
             raw_code = request.form.get(f'inp_{inp.id}_sap_item_code') or ''
@@ -3742,6 +3784,13 @@ def edit_po_step(job_id, step_id):
                 flash(
                     f'Component SAP code cannot be empty (row id {inp.id}). '
                     'Remove the line in the BOM studio if it should not exist.',
+                    'danger',
+                )
+                return _render()
+            if not wh_line:
+                flash(
+                    f'Warehouse is required for component {code}. '
+                    'Select a line warehouse from the dropdown.',
                     'danger',
                 )
                 return _render()
@@ -3777,6 +3826,13 @@ def edit_po_step(job_id, step_id):
             if auto_nm and not desc:
                 desc = auto_nm[:200]
             wh_n = (new_whs[i].strip()[:20] if i < len(new_whs) else '') or None
+            if not wh_n:
+                flash(
+                    f'Warehouse is required for new component {code}. '
+                    'Select a line warehouse from the dropdown.',
+                    'danger',
+                )
+                return _render()
             uom_n = (new_uoms[i].strip()[:10] if i < len(new_uoms) else '') or _unit1_default_uom()
             parsed_new.append((code, q_dec, desc, wh_n, uom_n))
 
@@ -3870,6 +3926,7 @@ def edit_po_step(job_id, step_id):
                 step=step,
                 bom=bom,
                 input_rows=input_rows_err,
+                warehouse_options=_edit_po_warehouse_options(step, input_rows_err),
             )
         finally:
             if sap_client is not None:

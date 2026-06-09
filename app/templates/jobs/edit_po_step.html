@@ -83,8 +83,8 @@
         </div>
 
         <div class="section-title mt-2">Required components</div>
-        <p class="text-muted small mb-2">Rows marked <span class="badge bg-secondary edit-po-linkage-badge">Link</span> consume the prior step’s output and cannot be edited here.
-          For other lines, type at least two characters in <strong>SAP item code</strong> to search item master (OITM), same as the new job BOM builder.</p>
+        <p class="text-muted small mb-2">Rows marked <span class="badge bg-secondary edit-po-linkage-badge">Link</span> consume the prior step’s output and cannot be edited or removed here.
+          Other lines can be edited, removed (<strong>&times;</strong>), or added below. Type at least two characters in <strong>SAP item code</strong> to search item master (OITM).</p>
 
         <div class="table-responsive border rounded edit-po-mat">
           <table class="table table-sm align-middle mb-0">
@@ -101,7 +101,7 @@
             <tbody id="po-inputs-tbody">
               {% for row in input_rows %}
               {% set inp = row.inp %}
-              <tr class="{% if row.is_linkage %}table-light{% endif %}">
+              <tr class="{% if row.is_linkage %}table-light{% else %}existing-po-line{% endif %}"{% if not row.is_linkage %} data-inp-id="{{ inp.id }}"{% endif %}>
                 <td class="ps-3">
                   {% if row.is_linkage %}
                   <span class="font-monospace small">{{ inp.sap_item_code or '—' }}</span>
@@ -123,7 +123,7 @@
                   {% if row.is_linkage %}
                   <span class="small text-muted">{{ inp.uom or '—' }}</span>
                   {% else %}
-                  <input type="text" name="inp_{{ inp.id }}_uom" class="form-control form-control-sm"
+                  <input type="text" name="inp_{{ inp.id }}_uom" class="form-control form-control-sm edit-po-line-uom"
                          value="{{ inp.uom or '' }}" maxlength="10">
                   {% endif %}
                 </td>
@@ -139,13 +139,19 @@
                   {% if row.is_linkage %}
                   <span class="small text-muted">{{ inp.sap_warehouse or '—' }}</span>
                   {% else %}
-                  <input type="text" name="inp_{{ inp.id }}_sap_warehouse" class="form-control form-control-sm"
-                         value="{{ inp.sap_warehouse or '' }}" maxlength="20" placeholder="Default">
+                  <select name="inp_{{ inp.id }}_sap_warehouse" class="form-select form-select-sm edit-po-line-wh">
+                    <option value="">— Select —</option>
+                    {% for wh in warehouse_options %}
+                    <option value="{{ wh }}"{% if inp.sap_warehouse == wh %} selected{% endif %}>{{ wh }}</option>
+                    {% endfor %}
+                  </select>
                   {% endif %}
                 </td>
                 <td class="pe-3 text-end">
                   {% if row.is_linkage %}
                   <span class="badge bg-secondary edit-po-linkage-badge">Link</span>
+                  {% else %}
+                  <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 remove-existing-po-line" title="Remove line">&times;</button>
                   {% endif %}
                 </td>
               </tr>
@@ -170,13 +176,18 @@
               <input type="text" name="new_description" class="form-control form-control-sm" maxlength="200" placeholder="Description">
             </td>
             <td>
-              <input type="text" name="new_uom" class="form-control form-control-sm" maxlength="10" value="PCS" placeholder="PCS">
+              <input type="text" name="new_uom" class="form-control form-control-sm edit-po-line-uom" maxlength="10" placeholder="UoM">
             </td>
             <td>
               <input type="text" name="new_qty_per_job" class="form-control form-control-sm" inputmode="decimal" placeholder="Qty">
             </td>
             <td>
-              <input type="text" name="new_sap_warehouse" class="form-control form-control-sm" maxlength="20" placeholder="WH">
+              <select name="new_sap_warehouse" class="form-select form-select-sm edit-po-line-wh">
+                <option value="">— Select —</option>
+                {% for wh in warehouse_options %}
+                <option value="{{ wh }}">{{ wh }}</option>
+                {% endfor %}
+              </select>
             </td>
             <td class="pe-3 text-end">
               <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 remove-new-po-line" title="Remove">&times;</button>
@@ -222,14 +233,21 @@
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (data) {
         if (!Array.isArray(data) || data.error) return;
-        window.__sapItemUomCache = window.__sapItemUomCache || {};
+        window.__sapItemMetaCache = window.__sapItemMetaCache || {};
         if (!dl) return;
         dl.innerHTML = '';
         data.forEach(function (it) {
           var code = String(it.item_code || '').trim();
           var uom = String(it.uom || '').trim();
+          var wh = String(it.default_warehouse || '').trim();
           var nm = String(it.item_name || '').trim();
-          if (code) window.__sapItemUomCache[code.toUpperCase()] = uom;
+          if (code) {
+            window.__sapItemMetaCache[code.toUpperCase()] = {
+              uom: uom,
+              warehouse: wh,
+              name: nm,
+            };
+          }
           var o = document.createElement('option');
           o.value = code + (nm ? (' — ' + nm) : '');
           dl.appendChild(o);
@@ -239,22 +257,43 @@
       .catch(function () {});
   }
 
-  function tryPrefillRowFromCache(itemInput) {
+  function tryPrefillRowFromCache(itemInput, opts) {
+    opts = opts || {};
     if (!itemInput) return;
     var tr = itemInput.closest('tr');
     if (!tr) return;
-    var uIn = tr.querySelector('input[name$="_uom"], input[name="new_uom"]');
+    var uIn = tr.querySelector('.edit-po-line-uom');
+    var whIn = tr.querySelector('.edit-po-line-wh');
     var dIn = tr.querySelector('input[name$="_description"], input[name="new_description"]');
     var code = codeFromItemField(itemInput);
     if (!code) return;
-    var cache = window.__sapItemUomCache || {};
-    var uom = cache[code] || cache[code.toUpperCase()];
-    if (uIn && uom && !String(uIn.value || '').trim()) uIn.value = uom;
+    var meta = (window.__sapItemMetaCache || {})[code] || (window.__sapItemMetaCache || {})[code.toUpperCase()];
+    if (!meta) return;
+    var uom = meta.uom || '';
+    var wh = meta.warehouse || '';
+    if (uIn && uom && (opts.forceUom || uIn.getAttribute('data-user-edited') !== '1')) {
+      uIn.value = uom;
+    }
+    if (whIn && wh && !String(whIn.value || '').trim()) {
+      var hasOpt = Array.prototype.some.call(whIn.options || [], function (o) {
+        return o.value === wh;
+      });
+      if (hasOpt) whIn.value = wh;
+      else {
+        var extra = document.createElement('option');
+        extra.value = wh;
+        extra.textContent = wh;
+        whIn.appendChild(extra);
+        whIn.value = wh;
+      }
+    }
     if (dIn) {
-      var raw = String(itemInput.value || '').trim();
-      var nm = '';
-      if (raw.indexOf('\u2014') >= 0) nm = raw.split(/\u2014/).slice(1).join('\u2014').trim();
-      else if (raw.indexOf(' — ') >= 0) nm = raw.split(' — ').slice(1).join(' — ').trim();
+      var nm = meta.name || '';
+      if (!nm) {
+        var raw = String(itemInput.value || '').trim();
+        if (raw.indexOf('\u2014') >= 0) nm = raw.split(/\u2014/).slice(1).join('\u2014').trim();
+        else if (raw.indexOf(' — ') >= 0) nm = raw.split(' — ').slice(1).join(' — ').trim();
+      }
       if (nm && !String(dIn.value || '').trim()) dIn.value = nm.substring(0, 200);
     }
   }
@@ -266,9 +305,24 @@
   });
   tbody.addEventListener('click', function (e) {
     var t = e.target;
-    if (t && t.classList && t.classList.contains('remove-new-po-line')) {
-      var tr = t.closest('tr');
-      if (tr && tr.classList.contains('new-po-line')) tr.remove();
+    if (!t || !t.classList) return;
+    if (t.classList.contains('remove-new-po-line')) {
+      var trNew = t.closest('tr');
+      if (trNew && trNew.classList.contains('new-po-line')) trNew.remove();
+      return;
+    }
+    if (t.classList.contains('remove-existing-po-line')) {
+      var trEx = t.closest('tr');
+      if (!trEx || !form) return;
+      var inpId = trEx.getAttribute('data-inp-id');
+      if (!inpId) return;
+      if (!window.confirm('Remove this component line from the production order?')) return;
+      var hid = document.createElement('input');
+      hid.type = 'hidden';
+      hid.name = 'delete_inp_ids';
+      hid.value = inpId;
+      form.appendChild(hid);
+      trEx.remove();
     }
   });
 
@@ -291,9 +345,16 @@
     var code = codeFromItemField(el);
     if (!code) return;
     fetchSapItemCodes(code, function () {
-      tryPrefillRowFromCache(el);
+      tryPrefillRowFromCache(el, { forceUom: true });
     });
   });
+
+  tbody.addEventListener('input', function (e) {
+    var el = e.target;
+    if (el && el.classList && el.classList.contains('edit-po-line-uom')) {
+      el.setAttribute('data-user-edited', '1');
+    }
+  }, true);
 })();
 </script>
 {% endblock %}

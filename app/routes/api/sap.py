@@ -344,31 +344,43 @@ def items_search():
         c = r.get('ItemCode')
         if c:
             codes.append(str(c).strip())
-    mirror_uom_by_code: dict[str, str] = {}
+    mirror_meta_by_code: dict[str, dict[str, str]] = {}
     if codes:
         mrows = (
             SapItemMirror.query.filter(SapItemMirror.item_code.in_(codes))
             .all()
         )
-        mirror_uom_by_code = {m.item_code: (m.uom or '') for m in mrows if m and m.item_code}
+        for m in mrows:
+            if m and m.item_code:
+                mirror_meta_by_code[m.item_code] = {
+                    'uom': (m.uom or '').strip(),
+                    'default_warehouse': (m.default_warehouse or '').strip(),
+                }
 
     out = []
     for r in rows:
         code = (r.get('ItemCode') or '').strip()
         if not code:
             continue
+        meta = mirror_meta_by_code.get(code) or {}
         # Prefer UoM from mirror; fall back to any UoM-like field from live payload.
         uom = (
-            mirror_uom_by_code.get(code)
+            meta.get('uom')
             or r.get('UoM')
             or r.get('InventoryUOM')
             or r.get('SalesUnit')
+            or ''
+        )
+        default_wh = (
+            meta.get('default_warehouse')
+            or r.get('DefaultWarehouse')
             or ''
         )
         out.append({
             'item_code': code,
             'item_name': r.get('ItemName') or '',
             'uom': uom or '',
+            'default_warehouse': default_wh or '',
         })
     return jsonify(out)
 

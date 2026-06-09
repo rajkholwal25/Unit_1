@@ -60,16 +60,6 @@
               {% endfor %}
             </nav>
             <div class="app-topnav-dropdown dropdown">
-              <button type="button" class="app-topnav-link dropdown-toggle{% if request.path.startswith('/grn') %} active{% endif %}" id="grnDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
-                <i class="bi bi-upc-scan"></i>
-                <span>GRN Batch</span>
-              </button>
-              <ul class="dropdown-menu app-topnav-dropdown-menu" aria-labelledby="grnDropdown">
-                <li><a class="dropdown-item" href="{{ url_for('roll_grn.upload') }}"><i class="bi bi-file-earmark-arrow-up me-2"></i>Upload GRN Batch</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('roll_grn.index') }}"><i class="bi bi-list-check me-2"></i>Created GRN Batch Numbers</a></li>
-              </ul>
-            </div>
-            <div class="app-topnav-dropdown dropdown">
               <button type="button" class="app-topnav-link dropdown-toggle{% if request.path.startswith('/sap') %} active{% endif %}" id="sapIntegrationDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
                 <i class="bi bi-cloud-arrow-up"></i>
                 <span>SAP Integration</span>
