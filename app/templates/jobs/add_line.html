@@ -37,8 +37,8 @@
           <div class="row g-3 mb-3">
             <div class="col-sm-4">
               <label class="form-label fw-medium">Dispatch Qty <span class="text-danger">*</span></label>
-              <input type="number" name="dispatch_qty" class="form-control" min="1" required
-                     value="{{ request.form.get('dispatch_qty', '') }}">
+              <input type="text" inputmode="decimal" autocomplete="off" name="dispatch_qty" class="form-control" required
+                     value="{{ request.form.get('dispatch_qty', '') }}" data-decimal-input data-decimal-places="2">
             </div>
             <div class="col-sm-4">
               <label class="form-label fw-medium">Ups <span class="text-danger">*</span></label>
@@ -59,18 +59,18 @@
           <div class="row g-3 mb-3">
             <div class="col-sm-4">
               <label class="form-label fw-medium">Length ({{ unit1_units.length }})</label>
-              <input type="number" name="length" class="form-control" step="0.01"
-                     value="{{ request.form.get('length', '') }}">
+              <input type="text" inputmode="decimal" autocomplete="off" name="length" class="form-control"
+                     value="{{ request.form.get('length', '') }}" data-decimal-input data-decimal-places="2">
             </div>
             <div class="col-sm-4">
               <label class="form-label fw-medium">Width ({{ unit1_units.width }})</label>
-              <input type="number" name="width" class="form-control" step="0.01"
-                     value="{{ request.form.get('width', '') }}">
+              <input type="text" inputmode="decimal" autocomplete="off" name="width" class="form-control"
+                     value="{{ request.form.get('width', '') }}" data-decimal-input data-decimal-places="2">
             </div>
             <div class="col-sm-4">
               <label class="form-label fw-medium">Height ({{ unit1_units.width }})</label>
-              <input type="number" name="height" class="form-control" step="0.01"
-                     value="{{ request.form.get('height', '') }}">
+              <input type="text" inputmode="decimal" autocomplete="off" name="height" class="form-control"
+                     value="{{ request.form.get('height', '') }}" data-decimal-input data-decimal-places="2">
             </div>
           </div>
 

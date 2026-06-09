@@ -1921,11 +1921,14 @@ def new_job():
                         paper_supplied_by=_normalize_paper_supplied_by(
                             request.form.get(f'mat_paper_supplied_{idx}', None)
                         ),
-                        wastage_pct=request.form.get(f'mat_wastage_pct_{idx}') or 0,
+                        wastage_pct=None,
                         wastage_sheets=request.form.get(f'mat_wastage_sheets_{idx}') or None,
                         sheet_length=request.form.get(f'mat_length_{idx}') or None,
                         sheet_width=request.form.get(f'mat_width_{idx}') or None,
                         gsm=request.form.get(f'mat_gsm_{idx}') or None,
+                        thickness_mic=request.form.get(f'mat_thickness_mic_{idx}') or None,
+                        chemical_coating_gsm=request.form.get(f'mat_chemical_gsm_{idx}') or None,
+                        metallisation_gsm=request.form.get(f'mat_metallisation_gsm_{idx}') or None,
                         print_style=request.form.get(f'mat_print_style_{idx}', '').strip() or None,
                         print_type=request.form.get(f'mat_print_type_{idx}', '').strip() or None,
                         front_colours=request.form.get(f'mat_front_colours_{idx}', '').strip() or None,
@@ -1971,11 +1974,14 @@ def new_job():
                 detail.paper_supplied_by = _normalize_paper_supplied_by(
                     request.form.get(f'mat_paper_supplied_{idx}', None)
                 )
-                detail.wastage_pct = request.form.get(f'mat_wastage_pct_{idx}') or 0
+                detail.wastage_pct = None
                 detail.wastage_sheets = request.form.get(f'mat_wastage_sheets_{idx}') or None
                 detail.sheet_length = request.form.get(f'mat_length_{idx}') or None
                 detail.sheet_width = request.form.get(f'mat_width_{idx}') or None
                 detail.gsm = request.form.get(f'mat_gsm_{idx}') or None
+                detail.thickness_mic = request.form.get(f'mat_thickness_mic_{idx}') or None
+                detail.chemical_coating_gsm = request.form.get(f'mat_chemical_gsm_{idx}') or None
+                detail.metallisation_gsm = request.form.get(f'mat_metallisation_gsm_{idx}') or None
                 detail.print_style = request.form.get(f'mat_print_style_{idx}', '').strip() or None
                 detail.print_type = request.form.get(f'mat_print_type_{idx}', '').strip() or None
                 detail.front_colours = request.form.get(f'mat_front_colours_{idx}', '').strip() or None

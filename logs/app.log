@@ -6128,3 +6128,208 @@ app.services.sap_job_client.SAPClientError: SAP login connection error: HTTPSCon
 }
 
 2026-06-09 10:47:15,467 WARNING: [SAP-PUSH] Skipping duplicate component: step=20 item=ADH0000047 [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1303]
+2026-06-09 12:23:04,559 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:23:04,560 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:23:11,997 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:23:11,998 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:23:18,287 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:23:18,288 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:23:27,547 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:23:27,548 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:23:46,778 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:23:46,779 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:23:50,751 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:23:50,752 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:27:38,341 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:27:38,343 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:32:24 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:32:28 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:32:28 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:32:31 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:32:31 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:32:31 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:32:31 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-09 12:32:54 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 12:32:54 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 12:35:06 [INFO] jobcard.api.sap: Batch creating 5 items in SAP.
+2026-06-09 12:35:06 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-EMB already exists or verified.
+2026-06-09 12:35:06 [INFO] jobcard.sap: SAP Item 12-T-FLFC-1001-1302-MET: ItemName updated
+2026-06-09 12:35:06 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-MET already exists or verified.
+2026-06-09 12:35:06 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-COT already exists or verified.
+2026-06-09 12:35:06 [ERROR] jobcard.sap: SAP request failed: GET /Items('12-T-FLFC-1001-1302-REW') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-09 12:35:06 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-REW created successfully.
+2026-06-09 12:35:06 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-SLT already exists or verified.
+2026-06-09 12:42:00,771 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:42:00,773 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:42:14,133 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:42:14,134 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 12:44:29 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:44:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:44:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:44:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:44:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:44:34 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-09 12:44:34 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-09 12:44:50 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 12:44:50 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-09 12:46:21 [INFO] jobcard.api.sap: Batch creating 5 items in SAP.
+2026-06-09 12:46:21 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-EMB already exists or verified.
+2026-06-09 12:46:21 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-MET already exists or verified.
+2026-06-09 12:46:21 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-COT already exists or verified.
+2026-06-09 12:46:21 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-REW already exists or verified.
+2026-06-09 12:46:21 [INFO] jobcard.api.sap: Item 12-T-FLFC-1001-1302-SLT already exists or verified.
+2026-06-09 12:50:05,015 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 12:50:05,016 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]

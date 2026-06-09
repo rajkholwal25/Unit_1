@@ -8,6 +8,8 @@
   const bomHidden = document.getElementById('bom_payload_json');
   if (!form || !bomContainer || !bomHidden) return;
 
+  if (window.bindDecimalInputs) window.bindDecimalInputs(bomContainer);
+
   const itemsSearchUrl = form.getAttribute('data-items-search-url') || '';
   const UNIT1_DEFAULT_UOM = (form.getAttribute('data-unit1-uom') || 'KGS').trim() || 'KGS';
 
@@ -567,7 +569,7 @@
       '<div class="col-md-3"><select class="form-select form-select-sm bom-item-wh">' +
       warehouseOptionsHtml(defaultWh || 'II-DIE') +
       '</select></div>' +
-      '<div class="col-md-2"><input type="number" step="0.01" class="form-control form-control-sm bom-item-qty" placeholder="Qty" value="' +
+      '<div class="col-md-2"><input type="text" inputmode="decimal" autocomplete="off" data-decimal-input data-decimal-places="2" class="form-control form-control-sm bom-item-qty" placeholder="Qty" value="' +
       esc(qty || '') + '"></div>' +
       '<div class="col-md-2"><input type="text" class="form-control form-control-sm bom-item-uom" placeholder="UoM" value="' +
       esc(defaultUom || '') + '"></div>' +
@@ -589,7 +591,10 @@
         top.insertBefore(wrap, addBtn);
       }
       if (!wrap) wrap = extraWrapForCard(card);
-      if (wrap) addExtraRow(wrap, '', '', 'FBD-EMB', UNIT1_DEFAULT_UOM);
+      if (wrap) {
+        addExtraRow(wrap, '', '', 'FBD-EMB', UNIT1_DEFAULT_UOM);
+        if (window.bindDecimalInputs) window.bindDecimalInputs(wrap);
+      }
       return;
     }
     const rmBtn = e.target.closest('.bom-rm-extra');

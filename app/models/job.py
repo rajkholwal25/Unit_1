@@ -232,10 +232,13 @@ class JobDetailLine(db.Model):
     # wastage_sheets is a stored computed value — call compute_wastage() before save
     wastage_sheets = db.Column(db.Integer, default=0, nullable=True)
 
-    # Sheet dimensions
+    # Sheet dimensions (Unit 1: raw roll length mtr, width mm)
     sheet_length = db.Column(db.Numeric(8, 2), nullable=True)
     sheet_width = db.Column(db.Numeric(8, 2), nullable=True)
     gsm = db.Column(db.Integer, nullable=True)
+    thickness_mic = db.Column(db.Numeric(6, 2), nullable=True)
+    chemical_coating_gsm = db.Column(db.Numeric(8, 3), nullable=True)
+    metallisation_gsm = db.Column(db.Numeric(8, 3), nullable=True)
 
     # Printing spec
     print_style = db.Column(db.String(50), nullable=True)     # sheetfed / web / roll

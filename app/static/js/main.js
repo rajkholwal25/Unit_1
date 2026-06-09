@@ -108,8 +108,31 @@ function bindDecimalInputs(root) {
   });
 }
 
+function parseDecimalField(raw, maxDecimals) {
+  const s = formatDecimalInputValue(raw, maxDecimals);
+  if (s === '') return NaN;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/** Display a numeric value in a decimal text input without float drift. */
+function formatDecimalForInput(num, maxDecimals) {
+  if (num == null || num === '') return '';
+  if (typeof num === 'number' && !Number.isFinite(num)) return '';
+  return formatDecimalInputValue(String(num), maxDecimals);
+}
+
+function setDecimalInputValue(el, num, maxDecimals) {
+  if (!el) return;
+  const dp = maxDecimals == null ? 3 : maxDecimals;
+  el.value = formatDecimalForInput(num, dp);
+}
+
 window.formatDecimalInputValue = formatDecimalInputValue;
 window.normalizeDecimalInput = normalizeDecimalInput;
+window.parseDecimalField = parseDecimalField;
+window.formatDecimalForInput = formatDecimalForInput;
+window.setDecimalInputValue = setDecimalInputValue;
 window.bindDecimalInputs = bindDecimalInputs;
 
 /**

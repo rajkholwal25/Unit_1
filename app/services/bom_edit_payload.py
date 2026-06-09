@@ -448,12 +448,9 @@ def bom_block_from_saved_bom(
 
 
 def gross_sheet_planned_for_detail(job: JobMaster, detail_line: JobDetailLine) -> int:
-    """Unit 1 gross RM/input kg (legacy columns: total_sheets / wastage_sheets).
+    """Unit 1 gross raw-film kg (total_sheets) from width + coating gsm, else legacy fallback."""
+    from app.utils.unit1_rm_calc import aggregate_rm_plans, ceil_kg
 
-    Uses ``detail_line.total_sheets`` when set; else ``max(dispatch_qty)`` × (1 + yield loss %)
-    + absolute wastage kg.
-    """
-    from app.utils.unit1_yield import detail_yield_loss_pct, rm_input_kg_from_fg
     header_lines = list(job.header_lines.order_by(JobHeaderLine.line_no).all())
     allowed_hdr_idxs: list[int] = []
     for inv in detail_line.fg_involved.all():
@@ -470,12 +467,32 @@ def gross_sheet_planned_for_detail(job: JobMaster, detail_line: JobDetailLine) -
     if kg_planned > 0:
         return max(1, int(kg_planned + 0.999999))
 
-    net_max_kg = 0.0
+    fg_pairs: list[tuple[float, float]] = []
     for hi in allowed_hdr_idxs:
         hl2 = header_lines[hi]
         q = float(hl2.dispatch_qty or 0)
-        if q > net_max_kg:
-            net_max_kg = q
+        w = float(hl2.width or 0)
+        if q > 0:
+            fg_pairs.append((q, w))
+
+    try:
+        raw_w = float(detail_line.sheet_width or 0)
+    except (TypeError, ValueError):
+        raw_w = 0.0
+    if raw_w > 0 and fg_pairs:
+        agg = aggregate_rm_plans(
+            fg_pairs,
+            raw_width_mm=raw_w,
+            film_gsm=detail_line.gsm,
+            thickness_mic=getattr(detail_line, 'thickness_mic', None),
+            rm_item_code=detail_line.raw_material_item_code,
+            chemical_gsm=getattr(detail_line, 'chemical_coating_gsm', None) or 0,
+            metallisation_gsm=getattr(detail_line, 'metallisation_gsm', None) or 0,
+        )
+        if agg.get('ok'):
+            return max(1, ceil_kg(agg['total_raw_film_kg']))
+
+    net_max_kg = max((q for q, _w in fg_pairs), default=0.0)
     try:
         wastage_kg = float(detail_line.wastage_sheets or 0)
     except (TypeError, ValueError):
@@ -534,14 +551,8 @@ def fg_planned_qty_for_bom_step(
     prev_step: Any = None,
     card_planned_qty=None,
 ) -> float:
-    """FG step planned qty = quantity from the last process output (required line), not SO dispatch."""
-    if prev_step is not None:
-        try:
-            pq = float(prev_step.planned_qty) if prev_step.planned_qty is not None else 0.0
-            if pq > 0:
-                return pq
-        except (TypeError, ValueError):
-            pass
+    """Unit 1 FG planned qty = SO dispatch kg (order qty), not upstream process mass."""
+    _ = prev_step
     if card_planned_qty not in (None, ''):
         try:
             v = float(card_planned_qty)
