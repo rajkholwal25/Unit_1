@@ -563,8 +563,16 @@
   }
 })();
 </script>
+<script type="application/json" id="unit1-pattern-by-code-data">{{ unit1_pattern_by_code | tojson }}</script>
 <script>
-window.unit1PatternByCode = {{ unit1_pattern_by_code | tojson }};
+(function () {
+  var el = document.getElementById('unit1-pattern-by-code-data');
+  try {
+    window.unit1PatternByCode = JSON.parse(el && el.textContent ? el.textContent : '{}') || {};
+  } catch (e) {
+    window.unit1PatternByCode = {};
+  }
+})();
 function unit1FgLabelFromCode(code) {
   const c = String(code || '').trim();
   const m = c.match(/^([A-Za-z]+)-(\d+(?:\.\d+)?)-([^-]+)-([A-Za-z]+)$/);
@@ -1707,13 +1715,12 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   };
   window.loadStateFromHidden();
 
-  const PROCESS_PRESETS = ['Embossing', 'Slitting', 'Metalisation', 'Coating'];
+  const PROCESS_PRESETS = ['Embossing', 'Slitting', 'Rewinding', 'Metallisation', 'Coating'];
 
   const PROCESS_CODES = {
     'Embossing': 'EMB',
     'Slitting': 'SLT',
-    'Metalisation': 'MET',
-    'Metallizing': 'MET',
+    'Rewinding': 'REW',
     'Metallisation': 'MET',
     'Coating': 'COT',
     'FG': 'FG',
@@ -1726,8 +1733,9 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   const PROCESS_CODE_ALIASES = {
     'EMB': 'Embossing',
     'SLT': 'Slitting',
-    'MET': 'Metalisation',
-    'MTL': 'Metalisation',
+    'REW': 'Rewinding',
+    'MET': 'Metallisation',
+    'MTL': 'Metallisation',
     'COT': 'Coating',
   };
   (function fetchProcessMeta() {
@@ -1757,6 +1765,13 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   function normalizeProcessName(value) {
     const raw = String(value == null ? '' : value).trim();
     if (!raw) return '';
+    const legacyProcessNames = {
+      'metalisation': 'Metallisation',
+      'metallizing': 'Metallisation',
+      'metallization': 'Metallisation',
+    };
+    const legacy = legacyProcessNames[raw.toLowerCase()];
+    if (legacy) return legacy;
     if (PROCESS_CODES[raw]) return raw;
     if (PROCESS_META_BY_NAME[raw]) return raw;
     const lower = raw.toLowerCase();
@@ -1947,7 +1962,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
         '<div class="row g-2 align-items-end mb-2">' +
           '<div class="col-md-12">' +
             '<label class="form-label small mb-0">Search & Add Process</label>' +
-            '<input type="text" class="form-control form-control-sm process-search-in" placeholder="Type to filter (Embossing, Slitting, Metalisation…)" autocomplete="off">' +
+            '<input type="text" class="form-control form-control-sm process-search-in" placeholder="Type to filter (Embossing, Slitting, Rewinding…)" autocomplete="off">' +
           '</div>' +
         '</div>' +
         '<div class="mb-3 d-flex flex-wrap gap-2 process-preset-wrap">' + presetButtonsHtml() + '</div>' +
@@ -2350,7 +2365,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     // FG identity is always 4 segments: material-thickness-pattern-coating.
     // The coating code (HRI, TR, ALO, …) is part of the FG code, NOT a process,
     // so only strip process suffixes appended as a 5th+ segment.
-    const suffixes = ['EMB', 'SLT', 'MET', 'MTL', 'HRI', 'COAT', 'COT', 'ALOX', 'FG', 'RM'];
+    const suffixes = ['EMB', 'SLT', 'REW', 'MET', 'MTL', 'HRI', 'COAT', 'COT', 'ALOX', 'FG', 'RM'];
     let parts = String(code || 'FG').trim().toUpperCase().split('-');
     while (parts.length > 4 && suffixes.indexOf(parts[parts.length - 1]) >= 0) parts.pop();
     return parts.join('-') || 'FG';
@@ -2363,8 +2378,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   const PROCESS_WAREHOUSES = {
     'Embossing': 'FBD-EMB',
     'Slitting': 'FBD-SLT',
-    'Metalisation': 'FBD-MTL',
-    'Metallizing': 'FBD-MTL',
+    'Rewinding': 'FBD-SLT',
     'Metallisation': 'FBD-MTL',
     'Coating': 'OHJW-U1',
     'FG': 'FBD-FG',

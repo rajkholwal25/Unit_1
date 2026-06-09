@@ -7,6 +7,7 @@ class WarehouseMappingService:
         'MET': 'FBD-MTL',
         'MTL': 'FBD-MTL',
         'SLT': 'FBD-SLT',
+        'REW': 'FBD-SLT',
         'HRI': 'FBD-HRI',
         'COT': 'OHJW-U1',
         'COAT': 'FBD-COAT',

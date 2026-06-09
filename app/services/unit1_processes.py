@@ -6,7 +6,8 @@ from app.models.reference import ProcessMaster
 UNIT1_PROCESS_ROWS = (
     ('EMB', 'Embossing', 'converting', 'FBD-EMB'),
     ('SLT', 'Slitting', 'converting', 'FBD-SLT'),
-    ('MET', 'Metalisation', 'converting', 'FBD-MTL'),
+    ('REW', 'Rewinding', 'converting', 'FBD-SLT'),
+    ('MET', 'Metallisation', 'converting', 'FBD-MTL'),
     ('COT', 'Coating', 'converting', 'OHJW-U1'),
     # Final step (Unit 2 style): consumes last process output → finished FG in FBD-FG + SAP PO.
     ('FG', 'FG', 'finishing', 'FBD-FG'),
@@ -34,7 +35,7 @@ UNIT1_DEFAULT_UOM = 'KGS'
 
 # Process suffixes appended to FG base item code (Unit 1: PET-12-1009-TR-EMB, not …-GEN-EMB).
 UNIT1_PROCESS_CODE_SUFFIXES = frozenset(
-    {'EMB', 'SLT', 'MET', 'MTL', 'HRI', 'COAT', 'COT', 'ALOX', 'FG', 'RM', 'PK', 'PACK'}
+    {'EMB', 'SLT', 'REW', 'MET', 'MTL', 'HRI', 'COAT', 'COT', 'ALOX', 'FG', 'RM', 'PK', 'PACK'}
 )
 
 
@@ -79,7 +80,7 @@ UNIT1_WAREHOUSE_OPTIONS = (
 
 
 def seed_unit1_process_master() -> str:
-    """Upsert Unit 1 processes (EMB, SLT, MET, COT) and deactivate other rows."""
+    """Upsert Unit 1 processes (EMB, SLT, REW, MET, COT) and deactivate other rows."""
     active_codes = set(UNIT1_PROCESS_CODES)
     for code, name, cat, wc in UNIT1_PROCESS_ROWS:
         row = ProcessMaster.query.filter_by(process_code=code).first()

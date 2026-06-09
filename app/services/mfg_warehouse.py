@@ -19,7 +19,7 @@ def warehouse_for_process_code(process_code: str) -> str:
 def process_wh_by_tail() -> dict:
     """Tail / process_code → warehouse for BOM studio (Unit 1 FBD-*)."""
     tails = [
-        'EMB', 'MET', 'MTL', 'SLT', 'HRI', 'COT', 'COAT', 'ALO', 'ALOX', 'MAT',
+        'EMB', 'MET', 'MTL', 'SLT', 'REW', 'HRI', 'COT', 'COAT', 'ALO', 'ALOX', 'MAT',
         'FG', 'PK-PACK', 'RM', 'PRI', 'PRIB', 'LAM', 'DIE', 'CORU', 'PST',
     ]
     return {t: WarehouseMappingService.for_process(t) for t in tails}

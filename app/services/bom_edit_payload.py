@@ -644,7 +644,8 @@ def persist_bom_payload_block(
     PROCESS_WAREHOUSES_BY_TITLE = {
         'Embossing': warehouse_for_process_code('EMB'),
         'Slitting': warehouse_for_process_code('SLT'),
-        'Metallizing': warehouse_for_process_code('MET'),
+        'Rewinding': warehouse_for_process_code('REW'),
+        'Metallisation': warehouse_for_process_code('MET'),
         'Heat seal': warehouse_for_process_code('HRI'),
         'Coating': warehouse_for_process_code('COT'),
         'FG': warehouse_for_process_code('FG'),
@@ -676,6 +677,12 @@ def persist_bom_payload_block(
 
     def _process_wh_for_title(title: str) -> str:
         t = (title or '').strip()
+        legacy_titles = {
+            'metalisation': 'Metallisation',
+            'metallizing': 'Metallisation',
+            'metallization': 'Metallisation',
+        }
+        t = legacy_titles.get(t.lower(), t)
         return PROCESS_WAREHOUSES_BY_TITLE.get(t) or default_sap_warehouse()
 
     def _resolve_required_item_wh(

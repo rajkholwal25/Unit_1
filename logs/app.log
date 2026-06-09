@@ -5223,3 +5223,472 @@ WHERE %(param_1)s = job_detail_line.job_id ORDER BY job_detail_line.detail_no]
 2026-06-08 09:44:25,467 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
 2026-06-08 09:44:29,068 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
 2026-06-08 09:44:29,069 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-08 09:54:50 [ERROR] jobcard.api.sap: SAP mirror refresh failed scope=all
+Traceback (most recent call last):
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connection.py", line 198, in _new_conn
+    sock = connection.create_connection(
+        (self._dns_host, self.port),
+    ...<2 lines>...
+        socket_options=self.socket_options,
+    )
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\util\connection.py", line 85, in create_connection
+    raise err
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\util\connection.py", line 73, in create_connection
+    sock.connect(sa)
+    ~~~~~~~~~~~~^^^^
+TimeoutError: [WinError 10060] A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connectionpool.py", line 793, in urlopen
+    response = self._make_request(
+        conn,
+    ...<10 lines>...
+        **response_kw,
+    )
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connectionpool.py", line 491, in _make_request
+    raise new_e
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connectionpool.py", line 467, in _make_request
+    self._validate_conn(conn)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connectionpool.py", line 1099, in _validate_conn
+    conn.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connection.py", line 616, in connect
+    self.sock = sock = self._new_conn()
+                       ~~~~~~~~~~~~~~^^
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connection.py", line 207, in _new_conn
+    raise ConnectTimeoutError(
+    ...<2 lines>...
+    ) from e
+urllib3.exceptions.ConnectTimeoutError: (<urllib3.connection.HTTPSConnection object at 0x000002585008DA90>, 'Connection to 192.168.3.6 timed out. (connect timeout=120)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\adapters.py", line 667, in send
+    resp = conn.urlopen(
+        method=request.method,
+    ...<9 lines>...
+        chunked=chunked,
+    )
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+        method, url, error=new_e, _pool=self, _stacktrace=sys.exc_info()[2]
+    )
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\urllib3\util\retry.py", line 515, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='192.168.3.6', port=50000): Max retries exceeded with url: /b1s/v1/Login (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002585008DA90>, 'Connection to 192.168.3.6 timed out. (connect timeout=120)'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_job_client.py", line 263, in login
+    resp = self._session.post(f'{self.base_url}/Login', json=payload, timeout=t)
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\sessions.py", line 637, in post
+    return self.request("POST", url, data=data, json=json, **kwargs)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\Mohit\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\requests\adapters.py", line 688, in send
+    raise ConnectTimeout(e, request=request)
+requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='192.168.3.6', port=50000): Max retries exceeded with url: /b1s/v1/Login (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002585008DA90>, 'Connection to 192.168.3.6 timed out. (connect timeout=120)'))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Mohit\Downloads\Unit_1\app\routes\api\sap.py", line 499, in _run
+    run_full_mirror_sync(app, scope=scope)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_mirror_sync.py", line 143, in run_full_mirror_sync
+    out['customers'] = sync_customers_from_sap()
+                       ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_mirror_sync.py", line 35, in sync_customers_from_sap
+    for row in client.fetch_business_partners_by_series(series):
+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_job_client.py", line 622, in fetch_business_partners_by_series
+    data = self.get(
+        '/BusinessPartners',
+    ...<8 lines>...
+        },
+    )
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_job_client.py", line 343, in get
+    return self._call('GET', endpoint, params=params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_job_client.py", line 298, in _call
+    self.login()
+    ~~~~~~~~~~^^
+  File "C:\Users\Mohit\Downloads\Unit_1\app\services\sap_job_client.py", line 265, in login
+    raise SAPClientError(f'SAP login connection error: {e}') from e
+app.services.sap_job_client.SAPClientError: SAP login connection error: HTTPSConnectionPool(host='192.168.3.6', port=50000): Max retries exceeded with url: /b1s/v1/Login (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x000002585008DA90>, 'Connection to 192.168.3.6 timed out. (connect timeout=120)'))
+2026-06-08 09:56:46 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'DocumentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-08 09:56:49 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'OrderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-08 09:56:50 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'Lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-08 09:56:50 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'documentLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-08 09:56:52 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'orderLines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-08 09:56:52 [ERROR] jobcard.sap: SAP request failed: GET /Orders status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Cannot expand invalid navigation property 'lines' for entity type 'Document'"
+      }
+   }
+}
+
+2026-06-08 09:57:02 [INFO] jobcard.sap: SAP /Orders lines: $expand not available; using child URL /Orders(...)/'DocumentLines'
+2026-06-08 11:07:12 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-08 11:07:15 [ERROR] jobcard.sap: SAP request failed: GET /Items status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Query string error - invalid function parameter"
+      }
+   }
+}
+
+2026-06-08 11:07:59 [INFO] jobcard.api.sap: Batch creating 3 items in SAP.
+2026-06-08 11:07:59 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR-EMB') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-08 11:08:00 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-EMB created successfully.
+2026-06-08 11:08:00 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR-MET') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-08 11:08:00 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-MET created successfully.
+2026-06-08 11:08:00 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR-SLT') status=404 body={
+   "error" : {
+      "code" : -2028,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "No matching records found (ODBC -2028)"
+      }
+   }
+}
+
+2026-06-08 11:08:01 [INFO] jobcard.api.sap: Item PAP-44-1010-NTR-SLT created successfully.
+2026-06-08 11:10:16,284 INFO: [CREATE-JOB] POST /jobs/new received [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1610]
+2026-06-08 11:10:16,700 INFO: BOM payload type=list, len=1, raw=[{'line_index': 0, 'yield_loss_pct': 0, 'sections': [{'process_name': 'Embossing', 'process_code': 'EMB', 'cards': [{'card_idx': 0, 'item_name': 'PAP-44-1010-NTR-EMB', 'warehouse': 'FBD-EMB', 'planned_qty': '315', 'uom': 'KGS', 'required_items': [{'sap_item_code': 'PET-12-BSCF', 'warehouse': 'FBD-RM', 'qty_per_job': '315', 'uom': 'KGS'}], 'production_order_remarks': ''}]}, {'process_name': 'Metalisation', 'process_code': 'MET', 'cards': [{'card_idx': 0, 'item_name': 'PAP-44-1010-NTR-MET', 'wareh [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:2013]
+2026-06-08 11:10:18 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-EMB: ItemName updated
+2026-06-08 11:10:19 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-MET: ItemName updated
+2026-06-08 11:10:19 [INFO] jobcard.sap: SAP Item PAP-44-1010-NTR-SLT: ItemName updated
+2026-06-08 11:10:19,806 INFO: [SAP-PUSH] PostingDate=2025-01-01 DueDate=2026-06-18 (override_date=True) [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1525]
+2026-06-08 11:10:20,184 INFO: [SAP-PUSH] Step seq=10 item_no=PAP-44-1010-NTR-EMB header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PET-12-BSCF', 'PlannedQuantity': 315.0, 'Warehouse': 'FBD-RM', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PET-12-BSCF'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-08 11:10:20 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-EMB qty=315.0 wh=FBD-EMB
+2026-06-08 11:10:20 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-08 11:10:20 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-18 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-08 11:10:21 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141533 DocNum=728
+2026-06-08 11:10:21,413 INFO: [SAP-PUSH] Step seq=20 item_no=PAP-44-1010-NTR-MET header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-EMB', 'PlannedQuantity': 315.0, 'Warehouse': 'FBD-EMB', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Embossing'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-08 11:10:21 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-MET qty=315.0 wh=FBD-MTL
+2026-06-08 11:10:21 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-08 11:10:21 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-18 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-08 11:10:21 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141534 DocNum=729
+2026-06-08 11:10:21,923 INFO: [SAP-PUSH] Step seq=30 item_no=PAP-44-1010-NTR-SLT header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-MET', 'PlannedQuantity': 315.0, 'Warehouse': 'FBD-MTL', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Metalisation'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-08 11:10:21 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR-SLT qty=315.0 wh=FBD-SLT
+2026-06-08 11:10:21 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-08 11:10:21 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-18 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-08 11:10:22 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141535 DocNum=730
+2026-06-08 11:10:22,342 INFO: [SAP-PUSH] Step seq=40 item_no=PAP-44-1010-NTR header_FG=PAP-44-1010-NTR linked=False input_lines=[{'ItemNo': 'PAP-44-1010-NTR-SLT', 'PlannedQuantity': 315.0, 'Warehouse': 'FBD-SLT', 'ProductionOrderIssueType': 'im_Manual', 'ItemName': 'PAP 44MIC FERCEE RED 300 ML NTR Slitting'}] [in C:\Users\Mohit\Downloads\Unit_1\app\routes\jobs.py:1548]
+2026-06-08 11:10:22 [INFO] jobcard.sap: SAP → POST /ProductionOrders item=PAP-44-1010-NTR qty=315.0 wh=FBD-FG
+2026-06-08 11:10:22 [ERROR] jobcard.sap: SAP request failed: POST /ProductionOrders status=400 body={
+   "error" : {
+      "code" : -5002,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Date deviates from due date range  [OWOR.DueDate]"
+      }
+   }
+}
+
+2026-06-08 11:10:22 [WARNING] jobcard.sap: SAP OWOR.DueDate validation failed (due=2026-06-18 post=2025-01-01). Retrying with DueDate=PostingDate.
+2026-06-08 11:10:23 [INFO] jobcard.sap: SAP → Created ProductionOrder DocEntry=141536 DocNum=731
+2026-06-08 11:11:55 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:11:57 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:11:58 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:11:59 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:11:59 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:02 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-08 11:12:03 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:04 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:05 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:05 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:05 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:05 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-08 11:12:09 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:09 [ERROR] jobcard.sap: SAP request failed: GET /BusinessPartnerCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:09 [ERROR] jobcard.sap: SAP request failed: GET /CatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:10 [ERROR] jobcard.sap: SAP request failed: GET /ItemsCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:11 [ERROR] jobcard.sap: SAP request failed: GET /ItemCatalogNumber status=400 body={
+   "error" : {
+      "code" : 200,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Unrecognized resource path."
+      }
+   }
+}
+
+2026-06-08 11:12:11 [ERROR] jobcard.sap: SAP request failed: GET /Items('PAP-44-1010-NTR')/ItemCatalogNumbers status=400 body={
+   "error" : {
+      "code" : 201,
+      "message" : {
+         "lang" : "en-us",
+         "value" : "Invalid query option: ItemCatalogNumbers is an invalid property."
+      }
+   }
+}
+
+2026-06-09 10:09:52,552 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:09:52,554 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:10:09,949 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:10:09,949 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:14:45,628 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:14:45,629 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:14:54,699 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:14:54,700 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
+2026-06-09 10:15:01,707 INFO: Application startup [in C:\Users\Mohit\Downloads\Unit_1\app\core\logging_config.py:21]
+2026-06-09 10:15:01,707 INFO: Logging initialized; file=C:\Users\Mohit\Downloads\Unit_1\logs\app.log level=INFO [in C:\Users\Mohit\Downloads\Unit_1\app\logging_config.py:60]
