@@ -1,4 +1,4 @@
-"""Create and allocate sequential GRN numbers (R000001, R000002, …)."""
+"""Create and allocate sequential GRN batch numbers (R000001, R000002, …)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import re
 
 from sqlalchemy import func
 
-from app.extensions import db
 from app.models.roll_grn import RollGrnEntry
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
@@ -55,62 +54,6 @@ def _decimal_or_none(val):
         return None
 
 
-def create_roll_grn_from_form(form, *, created_by_id: int | None) -> RollGrnEntry:
-    supplier_name = (form.get('supplier_name') or '').strip()
-    supplier_roll_number = (form.get('supplier_roll_number') or '').strip()
-    film_type = (form.get('film_type') or '').strip()
-    coating = (form.get('coating') or '').strip()
-
-    width_mm = _decimal_or_none(form.get('width_mm'))
-    thickness_mic = _decimal_or_none(form.get('thickness_mic'))
-    length_mtr = _decimal_or_none(form.get('length_mtr'))
-    gross_weight_kg = _decimal_or_none(form.get('gross_weight_kg'))
-    net_weight_kg = _decimal_or_none(form.get('net_weight_kg'))
-    core_weight_kg = _decimal_or_none(form.get('core_weight_kg'))
-
-    missing = []
-    if not supplier_name:
-        missing.append('Supplier Name')
-    if not supplier_roll_number:
-        missing.append('Roll Number')
-    if not film_type:
-        missing.append('Film Type')
-    if not coating:
-        missing.append('Chemical Coating')
-    if width_mm is None or width_mm <= 0:
-        missing.append('Width (mm)')
-    if thickness_mic is None:
-        missing.append('Thickness (mic)')
-    if length_mtr is None or length_mtr <= 0:
-        missing.append('Length (mtr)')
-    if gross_weight_kg is None or gross_weight_kg <= 0:
-        missing.append('Gross Weight (kg)')
-    if net_weight_kg is None or net_weight_kg <= 0:
-        missing.append('Net weight (kg)')
-
-    if missing:
-        raise ValueError('Required: ' + ', '.join(missing))
-
-    grn_number = allocate_next_grn_number()
-    entry = RollGrnEntry(
-        grn_number=grn_number,
-        supplier_name=supplier_name[:200],
-        supplier_roll_number=supplier_roll_number[:100],
-        film_type=film_type[:50],
-        coating=coating[:50],
-        width_mm=width_mm,
-        thickness_mic=thickness_mic,
-        length_mtr=length_mtr,
-        gross_weight_kg=gross_weight_kg,
-        net_weight_kg=net_weight_kg,
-        core_weight_kg=core_weight_kg,
-        created_by_id=created_by_id,
-    )
-    db.session.add(entry)
-    db.session.commit()
-    return entry
-
-
 def list_roll_grns():
     return (
         RollGrnEntry.query.order_by(RollGrnEntry.id.desc())
@@ -124,4 +67,16 @@ def get_roll_grn_by_number(grn_number: str) -> RollGrnEntry | None:
         return None
     return RollGrnEntry.query.filter(
         func.upper(RollGrnEntry.grn_number) == norm
+    ).first()
+
+
+def get_roll_grn_by_supplier_roll(supplier_name: str, supplier_roll_number: str) -> RollGrnEntry | None:
+    """Match existing raw by supplier + roll number (case-insensitive) for re-upload dedup."""
+    sup = (supplier_name or '').strip()
+    roll = (supplier_roll_number or '').strip()
+    if not sup or not roll:
+        return None
+    return RollGrnEntry.query.filter(
+        func.lower(RollGrnEntry.supplier_name) == sup.lower(),
+        func.lower(RollGrnEntry.supplier_roll_number) == roll.lower(),
     ).first()

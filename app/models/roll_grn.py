@@ -1,4 +1,4 @@
-"""Raw-material roll GRN entries (internal GRN number per supplier roll)."""
+"""Raw-material roll GRN batch entries (internal batch number per supplier roll, from Excel import)."""
 
 from datetime import datetime
 

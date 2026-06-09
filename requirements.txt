@@ -15,4 +15,5 @@ PyMySQL>=1.1.1
 htmx
 alpinejs
 gunicorn
+openpyxl>=3.1
 

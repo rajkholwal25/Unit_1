@@ -1,83 +1,84 @@
-{% extends 'base.html' %}
-{% block title %}Created GRN Numbers — {{ site_title }}{% endblock %}
-
-{% block content %}
-<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-2">
-  <div>
-    <h1 class="page-title"><i class="bi bi-list-check me-2"></i>Created GRN Numbers</h1>
-    <p class="page-subtitle">All raw-material roll entries with internal GRN numbers.</p>
-  </div>
-  {% if current_user.is_admin or current_user.can_edit_job_card() %}
-  <a href="{{ url_for('roll_grn.create') }}" class="btn btn-primary">
-    <i class="bi bi-plus-lg me-1"></i>Create GRN Number
-  </a>
-  {% endif %}
-</div>
-
-<div class="panel">
-  <div class="panel-body p-0">
-    {% if entries %}
-    <div class="table-responsive">
-      <table class="table table-hover table-modern mb-0" id="grnTable">
-        <thead>
-          <tr>
-            <th>GRN Number</th>
-            <th>Supplier</th>
-            <th>Roll No.</th>
-            <th>Film</th>
-            <th>Chemical Coating</th>
-            <th class="text-end">Width ({{ unit1_units.width }})</th>
-            <th class="text-end">Thickness ({{ unit1_units.thickness }})</th>
-            <th class="text-end">Net (kg)</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in entries %}
-          <tr>
-            <td>
-              <a href="{{ url_for('roll_grn.view', grn_number=e.grn_number) }}" class="fw-semibold font-monospace text-decoration-none">
-                {{ e.grn_number }}
-              </a>
-            </td>
-            <td>{{ e.supplier_name }}</td>
-            <td class="font-monospace small">{{ e.supplier_roll_number }}</td>
-            <td>{{ e.film_type }}</td>
-            <td>{{ e.coating }}</td>
-            <td class="text-end">{{ e.width_mm|fmt_decimal }}</td>
-            <td class="text-end">{{ e.thickness_mic|fmt_decimal }}</td>
-            <td class="text-end">{{ e.net_weight_kg|fmt_decimal }}</td>
-            <td class="text-muted small">{{ e.created_at.strftime('%d/%m/%Y %H:%M') if e.created_at else '—' }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="text-center text-muted py-5">
-      <i class="bi bi-inbox fs-2 d-block mb-2"></i>
-      No GRN entries yet.
-      {% if current_user.is_admin or current_user.can_edit_job_card() %}
-      <div class="mt-2">
-        <a href="{{ url_for('roll_grn.create') }}" class="btn btn-sm btn-primary">Create first GRN</a>
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
-  </div>
-</div>
-{% endblock %}
-
-{% block page_scripts %}
-<script>
-$(function () {
-  if ($('#grnTable').length) {
-    $('#grnTable').DataTable({
-      order: [[0, 'desc']],
-      pageLength: 25,
-      columnDefs: [{ orderable: false, targets: [] }]
-    });
-  }
-});
-</script>
-{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Created GRN Batch Numbers — {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-2">
+  <div>
+    <h1 class="page-title"><i class="bi bi-list-check me-2"></i>Created GRN Batch Numbers</h1>
+    <p class="page-subtitle">All raw-material rolls imported from Excel with internal GRN batch numbers.</p>
+  </div>
+  {% if current_user.is_admin or current_user.can_edit_job_card() %}
+  <a href="{{ url_for('roll_grn.upload') }}" class="btn btn-primary">
+    <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload GRN Batch
+  </a>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-body p-0">
+    {% if entries %}
+    <div class="table-responsive">
+      <table class="table table-hover table-modern mb-0" id="grnTable">
+        <thead>
+          <tr>
+            <th>GRN Batch Number</th>
+            <th>Supplier</th>
+            <th>Roll No.</th>
+            <th>Film</th>
+            <th>Chemical Coating</th>
+            <th class="text-end">Width ({{ unit1_units.width }})</th>
+            <th class="text-end">Thickness ({{ unit1_units.thickness }})</th>
+            <th class="text-end">Net (kg)</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in entries %}
+          <tr>
+            <td>
+              <a href="{{ url_for('roll_grn.view', grn_number=e.grn_number) }}" class="fw-semibold font-monospace text-decoration-none">
+                {{ e.grn_number }}
+              </a>
+            </td>
+            <td>{{ e.supplier_name }}</td>
+            <td class="font-monospace small">{{ e.supplier_roll_number }}</td>
+            <td>{{ e.film_type }}</td>
+            <td>{{ e.coating }}</td>
+            <td class="text-end">{{ e.width_mm|fmt_decimal }}</td>
+            <td class="text-end">{{ e.thickness_mic|fmt_decimal }}</td>
+            <td class="text-end">{{ e.net_weight_kg|fmt_decimal }}</td>
+            <td class="text-muted small">{{ e.created_at.strftime('%d/%m/%Y %H:%M') if e.created_at else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+      No GRN batch entries yet.
+      {% if current_user.is_admin or current_user.can_edit_job_card() %}
+      <div class="mt-2">
+        <a href="{{ url_for('roll_grn.upload') }}" class="btn btn-sm btn-primary">Upload first Excel sheet</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+$(function () {
+  if ($('#grnTable').length) {
+    $('#grnTable').DataTable({
+      order: [[0, 'desc']],
+      pageLength: 25,
+      columnDefs: [{ orderable: false, targets: [] }]
+    });
+  }
+});
+</script>
+{% endblock %}
+
