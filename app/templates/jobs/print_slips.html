@@ -20,16 +20,16 @@
 {% macro detail_elements_block(dl) %}
     {% set slip_row = (slip_detail_by_no or {}).get(dl.detail_no, {}) %}
     <div class="mt-2">
-      <div class="slip-meta mb-1"><strong>Line {{ dl.detail_no }}</strong> — {{ dl.element_name or '—' }}</div>
+      <div class="slip-meta mb-1"><strong>{{ dl.element_name or '—' }}</strong></div>
       <table class="slip-table">
         <thead>
           <tr>
             <th style="width: 28%;">Item code / Item Name</th>
             <th style="width: 14%;">Width ({{ unit1_units.width }})</th>
             <th style="width: 12%;">{{ format_thickness_label() }}</th>
-            <th style="width: 14%;">Weight (kg)</th>
+            <th style="width: 14%;">Planned Weight (kg)</th>
             <th style="width: 14%;">Wastage (kg)</th>
-            <th style="width: 18%;">Total weight (kg)</th>
+            <th style="width: 18%;">Supplied Raw Material Weight (kg)</th>
           </tr>
         </thead>
         <tbody>
@@ -132,11 +132,19 @@
     align-items: center;
   }
   .banner-left img {
-    height: 20mm;
-    max-height: 22mm;
+    height: 28mm;
+    max-height: 30mm;
     width: auto;
     display: block;
     object-fit: contain;
+    filter: grayscale(100%);
+  }
+  .page-banner .slip-meta {
+    font-size: 15px;
+    line-height: 1.35;
+  }
+  .page-banner .slip-meta strong {
+    font-size: 16px;
   }
   .slip-stack {
     display: flex;
@@ -507,12 +515,9 @@
     <table class="slip-table">
       <thead>
         <tr>
-          <th style="width: 28%;">FG num-FG Name</th>
-          <th style="width: 10%; white-space: nowrap;">Art. No.</th>
-          <th style="width: 14%;">Itemcode</th>
+          <th style="width: 40%;">FG num-FG Name</th>
           <th class="tight-col">Delivery qty</th>
-          <th style="width: 18%;">Length ({{ unit1_units.length }}) × Width ({{ unit1_units.width }})</th>
-          <th class="tight-col">UPs</th>
+          <th style="width: 18%;">Width ({{ unit1_units.width }})</th>
         </tr>
       </thead>
       <tbody>
@@ -522,26 +527,13 @@
             <div><strong>{{ hl.fg_display_label }}</strong></div>
             <div class="muted font-monospace">{{ hl.sap_fg_item_code or '—' }}</div>
           </td>
-          <td style="width: 10%; white-space: nowrap;">
-            {% set _fr = frgnname_by_fg.get((hl.sap_fg_item_code or '').strip()) %}
-            {{ _fr if _fr else '—' }}
-          </td>
-          <td>
-            {% set _ic = itemcode_by_fg.get((hl.sap_fg_item_code or '').strip()) %}
-            {{ _ic if _ic else '—' }}
-          </td>
           <td class="text-end tight-col">{{ fmt_num(hl.dispatch_qty or 0) }}</td>
-          <td>
-            {% if hl.length or hl.width %}
-              {% if hl.length %}{{ fmt_num(hl.length) }} {{ unit1_units.length }}{% endif %}
-              {% if hl.length and hl.width %} × {% endif %}
-              {% if hl.width %}{{ fmt_num(hl.width) }} {{ unit1_units.width }}{% endif %}
-            {% else %}—{% endif %}
+          <td class="text-center">
+            {% if hl.width %}{{ fmt_num(hl.width) }} {{ unit1_units.width }}{% else %}—{% endif %}
           </td>
-          <td class="text-center">{{ hl.ups or 1 }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="text-center muted">No lines</td></tr>
+        <tr><td colspan="3" class="text-center muted">No lines</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -567,26 +559,8 @@
       <tr>
         <td><strong>Remarks</strong></td>
         <td colspan="3" class="align-middle py-1">
-          <div class="slip-remarks-row">
-            <div class="remarks-col">
-              <label class="visually-hidden d-print-none" for="slipJobRemarks">Remarks</label>
-              <input type="text" id="slipJobRemarks" class="slip-remarks-input" autocomplete="off" value="{{ (job.remarks or '')|e }}">
-            </div>
-            <div class="fg-col">
-              <span><strong>FG (In Stock)</strong></span>
-              <label class="visually-hidden d-print-none" for="slipFgInStock">FG (In Stock)</label>
-              <input
-                type="text"
-                id="slipFgInStock"
-                class="slip-fg-input"
-                inputmode="numeric"
-                pattern="[0-9]{0,6}"
-                maxlength="6"
-                autocomplete="off"
-                value=""
-              >
-            </div>
-          </div>
+          <label class="visually-hidden d-print-none" for="slipJobRemarks">Remarks</label>
+          <input type="text" id="slipJobRemarks" class="slip-remarks-input" autocomplete="off" value="{{ (job.remarks or '')|e }}">
         </td>
       </tr>
     </table>

@@ -52,6 +52,40 @@
     return false;
   }
 
+  function sectionTitle(sec) {
+    return (sec.getAttribute('data-process-name') || sec.getAttribute('data-process-code') || '').trim();
+  }
+
+  function isEmbossingSection(sec) {
+    const title = sectionTitle(sec);
+    const code = (sec.getAttribute('data-process-code') || '').trim().toUpperCase();
+    const t = title.toLowerCase();
+    return t === 'embossing' || code === 'EMB' || /emb/i.test(code);
+  }
+
+  function isSlittingSection(sec) {
+    const title = sectionTitle(sec);
+    const code = (sec.getAttribute('data-process-code') || '').trim().toUpperCase();
+    const t = title.toLowerCase();
+    return t === 'slitting' || code === 'SLT';
+  }
+
+  function prevStepPlannedQtyForCard(steps, stepIdx, cardIdx) {
+    if (stepIdx <= 0) return null;
+    const prevSec = steps[stepIdx - 1];
+    const prevCards = prevSec.querySelectorAll('.bom-process-card');
+    let prevCard = null;
+    if (prevCards.length === 1) {
+      prevCard = prevCards[0];
+    } else {
+      prevCard = prevSec.querySelector('.bom-process-card[data-card-idx="' + cardIdx + '"]');
+    }
+    if (!prevCard) return null;
+    const pq = prevCard.querySelector('.bom-planned-qty');
+    const v = pq ? parseFloat(pq.value) : NaN;
+    return (isNaN(v) || v <= 0) ? null : v;
+  }
+
   function headerOutputCodeFromCard(card) {
     const nameInp = card.querySelector('.bom-item-name');
     if (!nameInp) return '';
@@ -247,10 +281,12 @@
 
     const steps = Array.prototype.slice.call(block.querySelectorAll('.bom-sections-inner > .border'));
     const totalKg = rmKgFromFgAndWastage(maxKg, wastageKg);
-    let gross = totalKg < 1 ? 1 : totalKg;
+    const tsHid = document.getElementById('detail_total_sheets_hidden');
+    const manualRm = tsHid ? parseFloat(tsHid.value) : 0;
+    let gross = manualRm > 0 ? Math.ceil(manualRm + wastageKg) : (totalKg < 1 ? 1 : totalKg);
 
     const hid = document.getElementById('detail_total_sheets_hidden');
-    if (hid) hid.value = String(gross);
+    if (hid && !(manualRm > 0)) hid.value = String(gross);
 
     let convStepIndex = 0;
     let hasReachedSplit = false;
@@ -268,15 +304,6 @@
         const uomEl = card.querySelector('.bom-uom');
         const ln = lines[cardIdx] || {};
         const lineKg = parseFloat(ln.quantity) || 0;
-
-        let headerQty;
-        if (isFg) {
-          headerQty = lineKg > 0 ? lineKg : maxKg;
-        } else if (convIdx >= 0) {
-          headerQty = plannedKgForConvertStep(gross);
-        } else {
-          headerQty = lineKg > 0 ? lineKg : gross;
-        }
         let headerUom = UNIT1_DEFAULT_UOM;
 
         if (isSplitStep && cardIdx === 0) {
@@ -300,9 +327,6 @@
             }
           });
         }
-
-        if (!isFg && qtyEl && shouldAutoWrite(qtyEl)) qtyEl.value = headerQty;
-        if (uomEl && shouldAutoWrite(uomEl)) uomEl.value = headerUom;
 
         card.querySelectorAll('.bom-extra-wrap .row').forEach(function (ext) {
           const isPrevLink = ext.getAttribute('data-is-prev-output') === 'true';
@@ -443,14 +467,19 @@
           }
         });
 
-        if (isFg) {
-          const prevLink = card.querySelector('.bom-extra-wrap .row[data-is-prev-output="true"]');
-          const prevQtyInp = prevLink && prevLink.querySelector('.bom-item-qty');
-          if (prevQtyInp && qtyEl && shouldAutoWrite(qtyEl)) {
-            const v = parseFloat(prevQtyInp.value);
-            if (!isNaN(v) && v > 0) qtyEl.value = v;
-          }
+        let headerQty;
+        if (isFg || isSlittingSection(sec) || isEmbossingSection(sec)) {
+          const base = lineKg > 0 ? lineKg : maxKg;
+          headerQty = Math.ceil(base + wastageKg);
+        } else if (stepIdx > 0) {
+          const prevQty = prevStepPlannedQtyForCard(steps, stepIdx, cardIdx);
+          headerQty = prevQty != null ? prevQty : plannedKgForConvertStep(gross);
+        } else {
+          headerQty = plannedKgForConvertStep(gross);
         }
+
+        if (!isFg && qtyEl && shouldAutoWrite(qtyEl)) qtyEl.value = headerQty;
+        if (uomEl && shouldAutoWrite(uomEl)) uomEl.value = headerUom;
       });
     });
   }
@@ -594,6 +623,7 @@
       if (wrap) {
         addExtraRow(wrap, '', '', 'FBD-EMB', UNIT1_DEFAULT_UOM);
         if (window.bindDecimalInputs) window.bindDecimalInputs(wrap);
+        syncEditBomFromFg();
       }
       return;
     }
@@ -602,7 +632,10 @@
       const r = rmBtn.closest('.row');
       const inp = r ? r.querySelector('.bom-itemcode-input') : null;
       if (inp && inp.readOnly) return;
-      if (r) r.remove();
+      if (r) {
+        r.remove();
+        syncEditBomFromFg();
+      }
     }
   });
 
@@ -718,20 +751,32 @@
 
   form.addEventListener('input', function (e) {
     const t = e.target;
-    if (!t || !t.name) return;
+    if (!t) return;
+    if (t.classList && t.classList.contains('bom-item-qty')) {
+      syncEditBomFromFg();
+      return;
+    }
+    if (!t.name) return;
     if (
       t.name.indexOf('fg_') === 0
       || t.name === 'detail_wastage_sheets'
+      || t.name === 'detail_total_sheets'
     ) {
       syncAfterFgOrWastageChange();
     }
   });
   form.addEventListener('change', function (e) {
     const t = e.target;
-    if (!t || !t.name) return;
+    if (!t) return;
+    if (t.classList && t.classList.contains('bom-item-qty')) {
+      syncEditBomFromFg();
+      return;
+    }
+    if (!t.name) return;
     if (
       t.name.indexOf('fg_') === 0
       || t.name === 'detail_wastage_sheets'
+      || t.name === 'detail_total_sheets'
     ) {
       syncAfterFgOrWastageChange();
     }

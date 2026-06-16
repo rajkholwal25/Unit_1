@@ -448,8 +448,17 @@ def bom_block_from_saved_bom(
 
 
 def gross_sheet_planned_for_detail(job: JobMaster, detail_line: JobDetailLine) -> int:
-    """Unit 1 gross raw-film kg (total_sheets) from width + coating gsm, else legacy fallback."""
-    from app.utils.unit1_rm_calc import aggregate_rm_plans, ceil_kg
+    """Unit 1 gross raw-film kg: manual ``total_sheets``, else dispatch max + wastage."""
+    try:
+        kg_planned = float(detail_line.total_sheets or 0)
+    except (TypeError, ValueError):
+        kg_planned = 0.0
+    if kg_planned > 0:
+        try:
+            wastage_kg = float(detail_line.wastage_sheets or 0)
+        except (TypeError, ValueError):
+            wastage_kg = 0.0
+        return max(1, int(kg_planned + wastage_kg + 0.999999))
 
     header_lines = list(job.header_lines.order_by(JobHeaderLine.line_no).all())
     allowed_hdr_idxs: list[int] = []
@@ -460,39 +469,15 @@ def gross_sheet_planned_for_detail(job: JobMaster, detail_line: JobDetailLine) -
     if not allowed_hdr_idxs and header_lines:
         allowed_hdr_idxs = list(range(len(header_lines)))
 
-    try:
-        kg_planned = float(detail_line.total_sheets or 0)
-    except (TypeError, ValueError):
-        kg_planned = 0.0
-    if kg_planned > 0:
-        return max(1, int(kg_planned + 0.999999))
-
-    fg_pairs: list[tuple[float, float]] = []
+    net_max_kg = 0.0
     for hi in allowed_hdr_idxs:
         hl2 = header_lines[hi]
-        q = float(hl2.dispatch_qty or 0)
-        w = float(hl2.width or 0)
-        if q > 0:
-            fg_pairs.append((q, w))
-
-    try:
-        raw_w = float(detail_line.sheet_width or 0)
-    except (TypeError, ValueError):
-        raw_w = 0.0
-    if raw_w > 0 and fg_pairs:
-        agg = aggregate_rm_plans(
-            fg_pairs,
-            raw_width_mm=raw_w,
-            film_gsm=detail_line.gsm,
-            thickness_mic=getattr(detail_line, 'thickness_mic', None),
-            rm_item_code=detail_line.raw_material_item_code,
-            chemical_gsm=getattr(detail_line, 'chemical_coating_gsm', None) or 0,
-            metallisation_gsm=getattr(detail_line, 'metallisation_gsm', None) or 0,
-        )
-        if agg.get('ok'):
-            return max(1, ceil_kg(agg['total_raw_film_kg']))
-
-    net_max_kg = max((q for q, _w in fg_pairs), default=0.0)
+        try:
+            q = float(hl2.dispatch_qty or 0)
+        except (TypeError, ValueError):
+            q = 0.0
+        if q > net_max_kg:
+            net_max_kg = q
     try:
         wastage_kg = float(detail_line.wastage_sheets or 0)
     except (TypeError, ValueError):

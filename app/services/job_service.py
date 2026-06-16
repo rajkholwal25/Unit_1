@@ -25,24 +25,13 @@ from app.models.audit import JobStatusHistory
 
 # ---------------------------------------------------------- job number
 def generate_job_no(job_type_cat: str, job_series: str, original_job_no: str = None) -> str:
-    """Generate a 7-digit job number with independent counters per prefix.
-    
-    Prefixes:
-    - Normal: Mono=1, Rigid=2, Commercial=3
-    - Rejection: Mono=7, Rigid=8, Commercial=9
-    
-    Each prefix has its own 6-digit auto-incrementing sequence.
-    """
-    prefix_map = {
-        'Normal': {'Mono': '1', 'Rigid': '2', 'Commercial': '3'},
-        'Rejection': {'Mono': '7', 'Rigid': '8', 'Commercial': '9'}
-    }
-    
-    series = job_series if job_series in prefix_map else 'Normal'
-    cat = job_type_cat if job_type_cat in prefix_map[series] else 'Mono'
-    prefix = prefix_map[series].get(cat, '1')
+    """Generate a 7-digit Unit 1 job number: prefix 4 + 6-digit sequence.
 
-    # Find the last job with the EXACT same prefix
+    All Unit 1 jobs use prefix 4 (Unit 2 uses 1/2/3 for Mono/Rigid/Commercial).
+    job_type_cat and job_series are kept for callers but do not affect numbering.
+    """
+    prefix = '4'
+
     last = (
         JobMaster.query
         .filter(JobMaster.job_no.like(f'{prefix}%'))
@@ -330,6 +319,9 @@ def add_header_line(
     thickness_mic: float = None,
     chemical_coating_gsm: float = None,
     metallisation_gsm: float = None,
+    chemical_item_code: str = None,
+    chemical_qty_kg: float = None,
+    metallisation_qty_kg: float = None,
     print_style: str = None,
     print_type: str = None,
     front_colours: str = None,
@@ -387,6 +379,9 @@ def add_header_line(
         thickness_mic=thickness_mic,
         chemical_coating_gsm=chemical_coating_gsm,
         metallisation_gsm=metallisation_gsm,
+        chemical_item_code=chemical_item_code,
+        chemical_qty_kg=chemical_qty_kg,
+        metallisation_qty_kg=metallisation_qty_kg,
         print_style=print_style,
         print_type=print_type,
         front_colours=front_colours,

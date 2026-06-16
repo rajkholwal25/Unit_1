@@ -237,50 +237,23 @@
                             </div>
                         </div>
                         <div class="row g-2 mt-1">
-                            <div class="col-6 col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Raw width (mm) <span class="text-danger">*</span></label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-raw-width" name="mat_width_{{ loop.index0 }}"
-                                       value="{{ m.sheet_width or '' }}" required data-decimal-input data-decimal-places="2" title="Full roll width before slitting">
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <label class="form-label small mb-0">Planned Raw Material (KGS) <span class="text-danger">*</span></label>
+                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-total-kg" name="mat_total_sheets_{{ loop.index0 }}"
+                                       value="{{ m.total_sheets or '' }}" required data-decimal-input data-decimal-places="2" title="Planner planned RM kg (without wastage)">
                             </div>
-                            <div class="col-6 col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Raw length (mtr)</label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-raw-length" name="mat_length_{{ loop.index0 }}"
-                                       value="{{ m.sheet_length or '' }}" data-decimal-input data-decimal-places="2" title="Roll length (reference)">
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <label class="form-label small mb-0">Wastage (KGS)</label>
+                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-wastage-kg" name="mat_wastage_sheets_{{ loop.index0 }}"
+                                       value="{{ m.wastage_sheets or '' }}" data-decimal-input data-decimal-places="2" title="Extra kg added to planned RM for issue">
                             </div>
-                            <div class="col-6 col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Thickness (µm)</label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-thickness-mic" name="mat_thickness_mic_{{ loop.index0 }}"
-                                       value="{{ m.thickness_mic or '' }}" data-decimal-input data-decimal-places="2" title="Optional; from RM code e.g. PET-12">
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <label class="form-label small mb-0">Supplied Raw Material (KGS)</label>
+                                <input type="text" class="form-control form-control-sm mat-supplied-kg bg-light" id="mat_supplied_kg_{{ loop.index0 }}"
+                                       readonly tabindex="-1" title="Planned raw material + wastage — issued on BOM">
                             </div>
-                            <div class="col-6 col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Film GSM <span class="text-danger">*</span></label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-film-gsm" name="mat_gsm_{{ loop.index0 }}"
-                                       value="{{ m.gsm or '' }}" data-decimal-input data-decimal-places="2" title="Enter film GSM manually">
-                            </div>
-                            <div class="col-6 col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Chemical g/m²</label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-chemical-gsm" name="mat_chemical_gsm_{{ loop.index0 }}"
-                                       value="{{ m.chemical_coating_gsm or '' }}" data-decimal-input data-decimal-places="3" title="HRI / ALOX etc. added at embossing">
-                            </div>
-                            <div class="col-6 col-md-3 col-lg-2">
-                                <label class="form-label small mb-0">Met. g/m²</label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-met-gsm" name="mat_metallisation_gsm_{{ loop.index0 }}"
-                                       value="{{ m.metallisation_gsm or '' }}" data-decimal-input data-decimal-places="3" title="Optional metallisation layer">
-                            </div>
-                        </div>
-                        <div class="row g-2 mt-1">
-                            <div class="col-md-4 col-lg-3">
-                                <label class="form-label small mb-0">Width trim loss (KGS)</label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-wastage-kg bg-light" name="mat_wastage_sheets_{{ loop.index0 }}"
-                                       value="{{ m.wastage_sheets or '' }}" readonly tabindex="-1" data-decimal-input data-decimal-places="2">
-                            </div>
-                            <div class="col-md-4 col-lg-3">
-                                <label class="form-label small mb-0">Total raw film (KGS) <span class="text-danger">*</span></label>
-                                <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-total-kg bg-light" name="mat_total_sheets_{{ loop.index0 }}"
-                                       value="{{ m.total_sheets or '' }}" required readonly tabindex="-1" data-decimal-input data-decimal-places="2">
-                            </div>
-                            <div class="col-md-12 col-lg-6 d-flex align-items-end">
-                                <div class="form-text mb-1">Raw film = FG kg × (raw÷FG width) × film÷(film+chem+met). Chemical weight flows forward through embossing → FG dispatch.</div>
+                            <div class="col-12 col-lg-3 d-flex align-items-end">
+                                <div class="form-text mb-1">Supplied = planned + wastage. BOM / SAP issue uses supplied; process output follows SO qty.</div>
                             </div>
                         </div>
                         <div class="row g-2 mt-1">
@@ -1204,12 +1177,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     
     // Synchronize header and hidden JSON without rebuilding the whole table (prevents focus loss)
     updatePrimaryHeaderFields();
-    if ((k === 'quantity' || k === 'carton_width_mm') && typeof window.updateRowTotalSheets === 'function') {
-      document.querySelectorAll('.material-row').forEach(function (row) {
-        const m = row.id && row.id.match(/^mat_row_(\d+)$/);
-        if (m) window.updateRowTotalSheets(parseInt(m[1], 10));
-      });
-    } else if (k === 'quantity' && typeof window.syncBomYieldFromMaterialRow === 'function') {
+    if (k === 'quantity' && typeof window.syncBomYieldFromMaterialRow === 'function') {
       window.syncBomYieldFromMaterialRow(0);
     }
     syncSelectedToHidden();
@@ -2333,7 +2301,6 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   }
 
   function syncDetailRmFromHeader(materialRowIdx) {
-    updateRowTotalSheets(materialRowIdx);
     recalculateBomQuantities(materialRowIdx);
   }
   window.syncBomYieldFromMaterialRow = syncDetailRmFromHeader;
@@ -2379,127 +2346,29 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
     el.value = fmtDec(val, dp == null ? 2 : dp);
   }
 
-  function parseThicknessFromItemCode(code) {
-    const parts = String(code || '').trim().toUpperCase().split('-');
-    if (parts.length < 2) return 0;
-    const v = parseFloat(parts[1]);
-    return (!isNaN(v) && v > 0) ? v : 0;
+  function plannedRmKgForDetailLine(materialRowIdx) {
+    const tsEl = document.querySelector('input[name="mat_total_sheets_' + materialRowIdx + '"]');
+    return parseDec(tsEl && tsEl.value, 2);
   }
 
-  function getMaterialRmInputs(materialRowIdx) {
-    const q = function (n) { return document.querySelector('input[name="' + n + '_' + materialRowIdx + '"]'); };
-    const rawW = parseDec(q('mat_width') && q('mat_width').value, 2);
-    const lengthM = parseDec(q('mat_length') && q('mat_length').value, 2);
-    let thicknessMic = parseDec(q('mat_thickness_mic') && q('mat_thickness_mic').value, 2);
-    const filmGsm = parseDec(q('mat_gsm') && q('mat_gsm').value, 2);
-    const chemGsm = parseDec(q('mat_chemical_gsm') && q('mat_chemical_gsm').value, 3);
-    const metGsm = parseDec(q('mat_metallisation_gsm') && q('mat_metallisation_gsm').value, 3);
-    const rmCode = firstRawMaterialForLine(materialRowIdx);
-    if ((!thicknessMic || thicknessMic <= 0) && rmCode) {
-      thicknessMic = parseThicknessFromItemCode(rmCode);
-    }
-    return { rawWidthMm: rawW, lengthM: lengthM, filmGsm: filmGsm, thicknessMic: thicknessMic, chemicalGsm: chemGsm, metallisationGsm: metGsm, rmCode: rmCode };
+  function suppliedRmKgForDetailLine(materialRowIdx) {
+    const planned = plannedRmKgForDetailLine(materialRowIdx);
+    const waste = detailWastageKg(materialRowIdx);
+    if (planned <= 0 && waste <= 0) return 0;
+    return Math.ceil((planned > 0 ? planned : 0) + waste);
   }
 
-  function computeUnit1MassPlan(params) {
-    const fgKg = Math.max(0, parseFloat(params.fgKg) || 0);
-    const fgW = Math.max(0, parseFloat(params.fgWidthMm) || 0);
-    const rawW = Math.max(0, parseFloat(params.rawWidthMm) || 0);
-    const chem = Math.max(0, parseFloat(params.chemicalGsm) || 0);
-    const met = Math.max(0, parseFloat(params.metallisationGsm) || 0);
-    const gsm = Math.max(0, parseFloat(params.filmGsm) || 0);
-    const gsmTotal = gsm + chem + met;
-    if (fgKg <= 0 || fgW <= 0 || rawW <= 0 || gsm <= 0 || gsmTotal <= 0) {
-      return { ok: false, rawFilmKg: fgKg, afterEmbossingKg: fgKg, afterMetallisationKg: fgKg, afterSlittingKg: fgKg, fgKg: fgKg, wastageKg: 0 };
-    }
-    const rawFilmKg = fgKg * (rawW / fgW) * (gsm / gsmTotal);
-    const afterEmbKg = rawFilmKg * (gsm + chem) / gsm;
-    const afterMetKg = rawFilmKg * gsmTotal / gsm;
-    const afterSlitKg = afterMetKg * (fgW / rawW);
-    const wastageKg = rawFilmKg * Math.max(0, 1 - (fgW / rawW));
-    return { ok: true, rawFilmKg: rawFilmKg, afterEmbossingKg: afterEmbKg, afterMetallisationKg: afterMetKg, afterSlittingKg: afterSlitKg, fgKg: fgKg, wastageKg: wastageKg };
+  function syncSuppliedRawMaterialDisplay(materialRowIdx) {
+    const outEl = document.getElementById('mat_supplied_kg_' + materialRowIdx);
+    if (!outEl) return;
+    const supplied = suppliedRmKgForDetailLine(materialRowIdx);
+    outEl.value = supplied > 0 ? fmtDec(supplied, 2) : '';
   }
 
-  function isEmbossingProcessTitle(title) {
-    const t = normalizeProcessName(title || '');
-    return t === 'Embossing' || /EMB/i.test(processCodeFor(title));
-  }
-
-  function isSlittingProcessTitle(title) {
-    const t = normalizeProcessName(title || '');
-    const code = processCodeFor(title).toUpperCase();
-    return t === 'Slitting' || code === 'SLT';
-  }
-
-  /** Step output kg: RM ≠ FG; emb output flows until slitting; only slitting/FG = order qty. */
-  function plannedKgForProcessTitle(plan, processTitle, convStepIndex, sequence) {
-    const orderKg = plan.fgKg;
-    const embOut = plan.afterEmbossingKg;
-    const rawKg = plan.rawFilmKg;
-    const t = normalizeProcessName(processTitle || '');
-    const seq = Array.isArray(sequence) ? sequence : [];
-
-    if (isFgProcessTitle(t) || isSlittingProcessTitle(t)) return orderKg;
-    if (isEmbossingProcessTitle(t)) return embOut;
-
-    const embIdx = seq.findIndex(isEmbossingProcessTitle);
-    const slitIdx = seq.findIndex(isSlittingProcessTitle);
-    if (embIdx >= 0 && convStepIndex > embIdx && (slitIdx < 0 || convStepIndex < slitIdx)) {
-      return embOut;
-    }
-    return rawKg;
-  }
-
-  function convertingSequenceFromBomSteps(stepEls) {
-    const out = [];
-    stepEls.forEach(function (sec) {
-      const title = sec.getAttribute('data-process-name') || sec.getAttribute('data-process-code') || '';
-      if (!isFgProcessTitle(normalizeProcessName(title))) out.push(normalizeProcessName(title));
-    });
-    return out;
-  }
-
-  function resolveFgWidthMm(line) {
-    if (!line) return 0;
-    const w = line.carton_width_mm != null ? line.carton_width_mm : (line.width != null ? line.width : line.sap_carton_width_mm);
-    return parseFloat(w) || 0;
-  }
-
-  function linePlanForCard(plans, lines, cardHeaderIdx) {
-    const want = parseInt(cardHeaderIdx, 10);
-    for (let i = 0; i < lines.length; i++) {
-      const hi = lines[i] && lines[i].__header_idx != null ? parseInt(lines[i].__header_idx, 10) : i;
-      if (hi === want) return plans[i] || plans[0];
-    }
-    if (!isNaN(want) && want >= 0 && want < plans.length) return plans[want];
-    return plans[0];
-  }
-
-  function computePlansForMaterialRow(materialRowIdx) {
-    const inputs = getMaterialRmInputs(materialRowIdx);
-    const lines = resolvedLinesForDetailLine(materialRowIdx);
-    const perLine = [];
-    let totalRaw = 0;
-    let totalWaste = 0;
-    lines.forEach(function (ln) {
-      const plan = computeUnit1MassPlan({
-        fgKg: parseFloat(ln.quantity) || 0,
-        fgWidthMm: resolveFgWidthMm(ln),
-        rawWidthMm: inputs.rawWidthMm,
-        filmGsm: inputs.filmGsm,
-        thicknessMic: inputs.thicknessMic,
-        chemicalGsm: inputs.chemicalGsm,
-        metallisationGsm: inputs.metallisationGsm
-      });
-      perLine.push(plan);
-      if (plan.ok) {
-        totalRaw += plan.rawFilmKg;
-        totalWaste += plan.wastageKg;
-      } else {
-        totalRaw += Math.max(0, parseFloat(ln.quantity) || 0);
-      }
-    });
-    return { inputs: inputs, perLine: perLine, totalRawFilmKg: totalRaw, totalWastageKg: totalWaste };
+  /** Embossing BOM planned = SO dispatch kg + detail wastage (header SO unchanged). */
+  function embossingPlannedQtyForLine(lineKg, maxKg, materialRowIdx) {
+    const base = lineKg > 0 ? lineKg : maxKg;
+    return Math.ceil(base + detailWastageKg(materialRowIdx));
   }
 
   function maxFgKgForDetailLine(materialRowIdx) {
@@ -2559,6 +2428,34 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   function isFgProcessTitle(title) {
     const t = normalizeProcessName(title);
     return t === 'FG' || /PACK/i.test(t);
+  }
+
+  function isEmbossingProcessTitle(title) {
+    const t = normalizeProcessName(title || '');
+    const code = (processCodeFor(title) || '').toUpperCase();
+    return t === 'Embossing' || code === 'EMB' || /EMB/i.test(code);
+  }
+
+  function isSlittingProcessTitle(title) {
+    const t = normalizeProcessName(title || '');
+    const code = (processCodeFor(title) || '').toUpperCase();
+    return t === 'Slitting' || code === 'SLT';
+  }
+
+  function prevStepPlannedQtyForCard(steps, stepIdx, cardIdx) {
+    if (stepIdx <= 0) return null;
+    const prevSec = steps[stepIdx - 1];
+    const prevCards = prevSec.querySelectorAll('.bom-process-card');
+    let prevCard = null;
+    if (prevCards.length === 1) {
+      prevCard = prevCards[0];
+    } else {
+      prevCard = prevSec.querySelector('.bom-process-card[data-card-idx="' + cardIdx + '"]');
+    }
+    if (!prevCard) return null;
+    const pq = prevCard.querySelector('.bom-planned-qty');
+    const v = pq ? parseDec(pq.value, 2) : NaN;
+    return (isNaN(v) || v <= 0) ? null : v;
   }
   const PROCESS_WAREHOUSES = {
     'Embossing': 'FBD-EMB',
@@ -2681,18 +2578,33 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   }
 
   let itemTmo;
+  function bomLineIndexFromEl(el) {
+    const block = el && el.closest ? el.closest('.bom-line-block') : null;
+    if (!block) return NaN;
+    return parseInt(block.getAttribute('data-bom-line-index'), 10);
+  }
+
   bomContainer.addEventListener('click', function (e) {
     const addBtn = e.target.closest('.bom-add-extra');
     if (addBtn) {
       const card = addBtn.closest('.bom-process-card');
       const wrap = card ? card.querySelector('.bom-extra-wrap') : null;
-      if (wrap) addExtraRow(wrap, '', '');
+      if (wrap) {
+        addExtraRow(wrap, '', '');
+        const idx = bomLineIndexFromEl(wrap);
+        if (!isNaN(idx) && window.bindDecimalInputs) window.bindDecimalInputs(wrap);
+        if (!isNaN(idx)) recalculateBomQuantities(idx);
+      }
       return;
     }
     const rmBtn = e.target.closest('.bom-rm-extra');
     if (rmBtn) {
       const r = rmBtn.closest('.row');
-      if (r) r.remove();
+      if (r) {
+        const idx = bomLineIndexFromEl(r);
+        r.remove();
+        if (!isNaN(idx)) recalculateBomQuantities(idx);
+      }
     }
   });
 
@@ -2750,18 +2662,19 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
 
     const lines = resolvedLinesForDetailLine(materialRowIdx);
     const detailRowIdx = materialRowIdx;
-    const agg = computePlansForMaterialRow(materialRowIdx);
-    const plans = agg.perLine;
     let maxKg = 0;
     lines.forEach(function (l) {
       const q = parseFloat(l.quantity) || 0;
       if (q > maxKg) maxKg = q;
     });
 
-    const totalKg = Math.ceil(agg.totalRawFilmKg || rmKgFromFgAndWastage(maxKg, detailWastageKg(detailRowIdx)));
+    syncSuppliedRawMaterialDisplay(detailRowIdx);
+    const plannedRm = plannedRmKgForDetailLine(detailRowIdx);
+    const wasteKg = detailWastageKg(detailRowIdx);
+    const suppliedKg = suppliedRmKgForDetailLine(detailRowIdx);
+    const rawIssueKg = plannedRm > 0 ? suppliedKg : Math.ceil(rmKgFromFgAndWastage(maxKg, wasteKg));
 
     const steps = bomWrap.querySelectorAll('.bom-sections-inner > div');
-    const convSequence = convertingSequenceFromBomSteps(steps);
     let convStepIndex = 0;
     let hasReachedSplit = false;
     steps.forEach(function (sec, stepIdx) {
@@ -2778,24 +2691,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
         const ln = lines[cardIdx] || {};
         const lineKg = parseFloat(ln.quantity) || 0;
 
-        const linePlan = linePlanForCard(plans, lines, cardIdx) || { ok: false, fgKg: lineKg, rawFilmKg: totalKg, afterEmbossingKg: totalKg, afterMetallisationKg: totalKg, afterSlittingKg: lineKg };
-        const procTitle = sec.getAttribute('data-process-name') || sec.getAttribute('data-process-code') || '';
-        let headerQty;
-        if (isFg) {
-          headerQty = linePlan.ok ? Math.ceil(linePlan.fgKg) : (lineKg > 0 ? lineKg : maxKg);
-        } else if (convIdx >= 0) {
-          headerQty = linePlan.ok
-            ? Math.ceil(plannedKgForProcessTitle(linePlan, procTitle, convIdx, convSequence))
-            : plannedKgForConvertStep(totalKg);
-        } else {
-          headerQty = lineKg > 0 ? lineKg : totalKg;
-        }
-        let headerUom = UNIT1_DEFAULT_UOM;
-
-        if (qtyEl) setBomQtyInput(qtyEl, headerQty, 2);
-        if (uomEl && _shouldAutoWriteBomField(uomEl)) uomEl.value = headerUom;
-
-        // Required items quantity update
+        // Required items first (raw / prev-output), then header from embossing sum or carry-forward.
         card.querySelectorAll('.bom-extra-wrap .row').forEach(function (ext) {
           if (ext.getAttribute('data-is-raw-material') === 'true') {
             const qInput = ext.querySelector('.bom-item-qty');
@@ -2804,8 +2700,7 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
             const itemInp = ext.querySelector('.bom-itemcode-input');
             const rm = firstRawMaterialForLine(detailRowIdx);
             if (itemInp && rm && _shouldAutoWriteBomField(itemInp)) itemInp.value = rm;
-            const rmKg = linePlan.ok ? Math.ceil(linePlan.rawFilmKg) : totalKg;
-            if (qInput) setBomQtyInput(qInput, rmKg, 2);
+            if (qInput) setBomQtyInput(qInput, rawIssueKg, 2);
             if (uInput && _shouldAutoWriteBomField(uInput)) uInput.value = UNIT1_DEFAULT_UOM;
             if (whInput) whInput.value = UNIT1_RAW_WH;
             return;
@@ -2906,7 +2801,18 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
            }
         });
 
-        // FG planned qty = SO dispatch (order kg), not previous-step mass.
+        let headerQty;
+        if (isFg || isSlittingProcessTitle(title) || isEmbossingProcessTitle(title)) {
+          headerQty = embossingPlannedQtyForLine(lineKg, maxKg, detailRowIdx);
+        } else if (stepIdx > 0) {
+          const prevQty = prevStepPlannedQtyForCard(steps, stepIdx, cardIdx);
+          headerQty = prevQty != null ? prevQty : plannedKgForConvertStep(rawIssueKg);
+        } else {
+          headerQty = plannedKgForConvertStep(rawIssueKg);
+        }
+        const headerUom = UNIT1_DEFAULT_UOM;
+        if (qtyEl && _shouldAutoWriteBomField(qtyEl)) setBomQtyInput(qtyEl, headerQty, 2);
+        if (uomEl && _shouldAutoWriteBomField(uomEl)) uomEl.value = headerUom;
       });
     });
   }
@@ -2914,56 +2820,28 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   document.addEventListener('input', function (e) {
     if (e.target.classList && e.target.classList.contains('mat-raw-material')) {
       const m = e.target.name && e.target.name.match(/mat_raw_material_(\d+)/);
-      if (m) {
-        const idx = parseInt(m[1], 10);
-        const micEl = document.querySelector('input[name="mat_thickness_mic_' + idx + '"]');
-        const code = firstRawMaterialForLine(idx);
-        if (micEl && code && micEl.getAttribute('data-user-edited') !== '1') {
-          const mic = parseThicknessFromItemCode(code);
-          if (mic > 0) micEl.value = fmtDec(mic, 2);
-        }
-        updateRowTotalSheets(idx);
-        syncRawMaterialToBom(idx);
-      }
+      if (m) syncRawMaterialToBom(parseInt(m[1], 10));
+    }
+    if (e.target.classList && (e.target.classList.contains('mat-total-kg') || e.target.classList.contains('mat-wastage-kg'))) {
+      const m = e.target.name && e.target.name.match(/mat_(?:total_sheets|wastage_sheets)_(\d+)/);
+      if (m) recalculateBomQuantities(parseInt(m[1], 10));
     }
   });
 
   bomContainer.addEventListener('input', function (e) {
-    if (e.target.classList.contains('bom-wastage-pct') || e.target.classList.contains('bom-wastage-sheets')) {
-      const block = e.target.closest('.bom-line-block');
-      const idx = block ? parseInt(block.getAttribute('data-bom-line-index'), 10) : NaN;
+    const t = e.target;
+    if (!t || !t.classList) return;
+    if (
+      t.classList.contains('bom-wastage-pct') ||
+      t.classList.contains('bom-wastage-sheets') ||
+      t.classList.contains('bom-item-qty')
+    ) {
+      const idx = bomLineIndexFromEl(t);
       if (!isNaN(idx)) recalculateBomQuantities(idx);
     }
   });
 
-  function _materialRowIdxFromFieldName(name) {
-    if (!name || !name.startsWith('mat_')) return NaN;
-    const parts = name.split('_');
-    return parseInt(parts[parts.length - 1], 10);
-  }
-
-  document.addEventListener('input', function (e) {
-    const t = e.target;
-    if (!t.name) return;
-    const rmFields = ['mat_width_', 'mat_length_', 'mat_thickness_mic_', 'mat_gsm_', 'mat_chemical_gsm_', 'mat_metallisation_gsm_'];
-    const hit = rmFields.some(function (p) { return t.name.startsWith(p); });
-    if (hit) {
-      const idx = _materialRowIdxFromFieldName(t.name);
-      if (!isNaN(idx)) updateRowTotalSheets(idx);
-    }
-  });
-
   function updateRowTotalSheets(idx) {
-      const wsEl = document.querySelector('input[name="mat_wastage_sheets_' + idx + '"]');
-      const tsEl = document.querySelector('input[name="mat_total_sheets_' + idx + '"]');
-      if (!tsEl) return;
-
-      const agg = computePlansForMaterialRow(parseInt(idx, 10));
-      const total = Math.ceil(agg.totalRawFilmKg || 0);
-      const waste = Math.ceil(agg.totalWastageKg || 0);
-      tsEl.value = total > 0 ? fmtDec(total, 2) : '';
-      if (wsEl) wsEl.value = waste > 0 ? fmtDec(waste, 2) : '';
-
       recalculateBomQuantities(parseInt(idx, 10));
   }
 
@@ -2992,17 +2870,18 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
 
     const splitIdx = seq.findIndex(function (p) { return isSplitProcess(p); });
     const detailRowIdx = materialRowIdx;
-    updateRowTotalSheets(detailRowIdx);
-    const aggBuild = computePlansForMaterialRow(materialRowIdx);
-    const plansBuild = aggBuild.perLine;
-    const convSequenceBuild = seq.filter(function (p) { return !isFgProcessTitle(normalizeProcessName(p)); });
 
     const kgByFg = lines.map(function (ln) {
       const q = parseFloat(ln.quantity || 0);
       return (isNaN(q) || q <= 0) ? 0 : q;
     });
     const maxKg = kgByFg.length ? Math.max.apply(null, kgByFg) : 0;
-    const sheetPlanned = Math.ceil(aggBuild.totalRawFilmKg || rmKgFromFgAndWastage(maxKg, detailWastageKg(detailRowIdx)));
+    syncSuppliedRawMaterialDisplay(detailRowIdx);
+    const plannedRm = plannedRmKgForDetailLine(detailRowIdx);
+    const wasteKg = detailWastageKg(detailRowIdx);
+    const sheetPlanned = plannedRm > 0
+      ? suppliedRmKgForDetailLine(detailRowIdx)
+      : Math.ceil(rmKgFromFgAndWastage(maxKg, wasteKg));
 
     bomSections.innerHTML = '';
     bomWrap.classList.remove('d-none');
@@ -3061,21 +2940,16 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
           const prev = (prevOutputs && prevOutputs.length === 1) ? prevOutputs[0] : (prevOutputs ? prevOutputs[cardIdx] : null);
 
           const q = parseFloat(ln.quantity) || 0;
-          const linePlanB = linePlanForCard(plansBuild, linesForStep, ln.__header_idx != null ? ln.__header_idx : cardIdx) || { ok: false, fgKg: q, rawFilmKg: sheetPlanned, afterEmbossingKg: sheetPlanned, afterMetallisationKg: sheetPlanned, afterSlittingKg: q };
           let headerQty;
-          if (isFgStep) {
-            headerQty = linePlanB.ok ? Math.ceil(linePlanB.fgKg) : (q > 0 ? Math.ceil(q) : maxKg);
+          if (isFgStep || isSlittingProcessTitle(p) || isEmbossingProcessTitle(p)) {
+            headerQty = embossingPlannedQtyForLine(q, maxKg, detailRowIdx);
           } else if (myConvIdx >= 0) {
-            headerQty = linePlanB.ok
-              ? Math.ceil(plannedKgForProcessTitle(linePlanB, p, myConvIdx, convSequenceBuild))
-              : plannedKgForConvertStep(sheetPlanned);
+            headerQty = plannedKgForConvertStep(sheetPlanned);
           } else {
             headerQty = q > 0 ? q : sheetPlanned;
           }
           const reqItem = prev ? prev.name : initialRequiredItem;
-          const reqQty = prev
-            ? prev.planned_qty
-            : (i === 0 ? Math.ceil(linePlanB.ok ? linePlanB.rawFilmKg : sheetPlanned) : headerQty);
+          const reqQty = prev ? prev.planned_qty : (i === 0 ? sheetPlanned : headerQty);
           const reqUom = prev ? prev.uom : UNIT1_DEFAULT_UOM;
           let reqWh = prev ? prev.warehouse : null;
           let reqLink = prev ? 'prev' : (i === 0 ? 'raw' : '');
@@ -3291,8 +3165,12 @@ window.unit1FgLabelFromCode = unit1FgLabelFromCode;
   window.fetchSapItemCodes = fetchSapItemCodes;
   window.recalculateBomQuantities = recalculateBomQuantities;
   window.rmKgFromFgAndWastage = rmKgFromFgAndWastage;
-  window.computePlansForMaterialRow = computePlansForMaterialRow;
+  window.syncSuppliedRawMaterialDisplay = syncSuppliedRawMaterialDisplay;
   window.updateRowTotalSheets = updateRowTotalSheets;
+  document.querySelectorAll('.material-row').forEach(function (row) {
+    const m = row.id && row.id.match(/^mat_row_(\d+)$/);
+    if (m) syncSuppliedRawMaterialDisplay(parseInt(m[1], 10));
+  });
   window.createBomForLine = createBomForLine;
 
   const CREATE_JOB_SUBMIT_ID = 'btn_create_job_submit';
@@ -3607,42 +3485,20 @@ function materialRowHtml(idx) {
         </div>
       </div>
       <div class="row g-2 mt-1">
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label small mb-0">Raw width (mm) <span class="text-danger">*</span></label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-raw-width" name="mat_width_${idx}" required data-decimal-input data-decimal-places="2">
+        <div class="col-6 col-md-4 col-lg-3">
+          <label class="form-label small mb-0">Planned Raw Material (KGS) <span class="text-danger">*</span></label>
+          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-total-kg" name="mat_total_sheets_${idx}" required data-decimal-input data-decimal-places="2">
         </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label small mb-0">Raw length (mtr)</label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-raw-length" name="mat_length_${idx}" data-decimal-input data-decimal-places="2">
+        <div class="col-6 col-md-4 col-lg-3">
+          <label class="form-label small mb-0">Wastage (KGS)</label>
+          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-wastage-kg" name="mat_wastage_sheets_${idx}" data-decimal-input data-decimal-places="2">
         </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label small mb-0">Thickness (µm)</label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-thickness-mic" name="mat_thickness_mic_${idx}" data-decimal-input data-decimal-places="2">
+        <div class="col-6 col-md-4 col-lg-3">
+          <label class="form-label small mb-0">Supplied Raw Material (KGS)</label>
+          <input type="text" class="form-control form-control-sm mat-supplied-kg bg-light" id="mat_supplied_kg_${idx}" readonly tabindex="-1">
         </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label small mb-0">Film GSM <span class="text-danger">*</span></label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-film-gsm" name="mat_gsm_${idx}" data-decimal-input data-decimal-places="2">
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label small mb-0">Chemical g/m²</label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-chemical-gsm" name="mat_chemical_gsm_${idx}" data-decimal-input data-decimal-places="3">
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <label class="form-label small mb-0">Met. g/m²</label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-met-gsm" name="mat_metallisation_gsm_${idx}" data-decimal-input data-decimal-places="3">
-        </div>
-      </div>
-      <div class="row g-2 mt-1">
-        <div class="col-md-4 col-lg-3">
-          <label class="form-label small mb-0">Width trim loss (KGS)</label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-wastage-kg bg-light" name="mat_wastage_sheets_${idx}" readonly tabindex="-1" data-decimal-input data-decimal-places="2">
-        </div>
-        <div class="col-md-4 col-lg-3">
-          <label class="form-label small mb-0">Total raw film (KGS) <span class="text-danger">*</span></label>
-          <input type="text" inputmode="decimal" autocomplete="off" class="form-control form-control-sm mat-total-kg bg-light" name="mat_total_sheets_${idx}" required readonly tabindex="-1" data-decimal-input data-decimal-places="2">
-        </div>
-        <div class="col-12 col-lg-6 d-flex align-items-end">
-          <div class="form-text mb-1">Raw film from FG width + coating gsm; chemical mass added at embossing.</div>
+        <div class="col-12 col-lg-3 d-flex align-items-end">
+          <div class="form-text mb-1">Supplied = planned + wastage. BOM issue uses supplied; output follows SO qty.</div>
         </div>
       </div>
       <div class="row g-2 mt-1">
@@ -3659,6 +3515,7 @@ function addMaterialRow() {
     document.getElementById('materialsContainer').insertAdjacentHTML('beforeend', materialRowHtml(idx));
     const newRow = document.getElementById('mat_row_' + idx);
     if (newRow && window.bindDecimalInputs) window.bindDecimalInputs(newRow);
+    if (typeof syncSuppliedRawMaterialDisplay === 'function') syncSuppliedRawMaterialDisplay(idx);
     if (window.rebuildProcessBomUi) window.rebuildProcessBomUi();
     if (window.refreshDetailFgInvolvedSelects) {
       // Next-tick so the new DOM is definitely present.
@@ -4040,14 +3897,9 @@ function removeMaterialRow(idx) {
                     const el = document.querySelector(`input[name="mat_${field}_${idx}"]`);
                     if (el) el.value = val != null && val !== '' ? val : '';
                 };
-                setNum('width', dl.sheet_width);
-                setNum('length', dl.sheet_length);
-                setNum('thickness_mic', dl.thickness_mic);
-                setNum('gsm', dl.gsm);
-                setNum('chemical_gsm', dl.chemical_coating_gsm);
-                setNum('metallisation_gsm', dl.metallisation_gsm);
                 setNum('total_sheets', dl.total_sheets);
                 setNum('wastage_sheets', dl.wastage_sheets);
+                if (typeof syncSuppliedRawMaterialDisplay === 'function') syncSuppliedRawMaterialDisplay(idx);
                 const instrEl = document.querySelector(`input[name="mat_detail_instr_${idx}"]`);
                 if (instrEl) instrEl.value = dl.special_instructions || '';
             }
@@ -4107,7 +3959,7 @@ function removeMaterialRow(idx) {
                 data.detail_lines.forEach((dl, i) => {
                     if (window.addMaterialRow) window.addMaterialRow();
                     fillMaterialRowFromDetail(i, dl);
-                    ['mat_total_sheets_', 'mat_wastage_sheets_', 'mat_width_', 'mat_chemical_gsm_'].forEach(function (pfx) {
+                    ['mat_total_sheets_', 'mat_wastage_sheets_'].forEach(function (pfx) {
                         const el = document.querySelector(`input[name="${pfx}${i}"]`);
                         if (el) el.value = '';
                     });

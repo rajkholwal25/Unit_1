@@ -84,7 +84,8 @@
 
         <div class="section-title mt-2">Required components</div>
         <p class="text-muted small mb-2">Rows marked <span class="badge bg-secondary edit-po-linkage-badge">Link</span> consume the prior step’s output and cannot be edited or removed here.
-          Other lines can be edited, removed (<strong>&times;</strong>), or added below. Type at least two characters in <strong>SAP item code</strong> to search item master (OITM).</p>
+          Other lines can be edited, removed (<strong>&times;</strong>), or added below. Type at least two characters in <strong>SAP item code</strong> to search item master (OITM).
+          <strong>Line WH</strong> lists all warehouses from SAP (glue, chemicals, etc. may sit in any WH).</p>
 
         <div class="table-responsive border rounded edit-po-mat">
           <table class="table table-sm align-middle mb-0">
@@ -274,18 +275,17 @@
     if (uIn && uom && (opts.forceUom || uIn.getAttribute('data-user-edited') !== '1')) {
       uIn.value = uom;
     }
-    if (whIn && wh && !String(whIn.value || '').trim()) {
+    if (whIn && wh) {
       var hasOpt = Array.prototype.some.call(whIn.options || [], function (o) {
         return o.value === wh;
       });
-      if (hasOpt) whIn.value = wh;
-      else {
+      if (!hasOpt) {
         var extra = document.createElement('option');
         extra.value = wh;
         extra.textContent = wh;
         whIn.appendChild(extra);
-        whIn.value = wh;
       }
+      if (!String(whIn.value || '').trim()) whIn.value = wh;
     }
     if (dIn) {
       var nm = meta.name || '';

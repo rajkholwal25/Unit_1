@@ -12,7 +12,12 @@ def login_user(user):
     session['role'] = user.role
     if not getattr(user, 'username', None):
         user.username = (user.email or '').split('@')[0] or f'user{user.id}'
-    fl_login_user(user, remember=True)
+    fl_login_user(user, remember=False)
+
+
+def restore_flask_login(user):
+    """Re-attach flask_login after server restart without clearing the session."""
+    fl_login_user(user, remember=False)
 
 
 def logout_user():

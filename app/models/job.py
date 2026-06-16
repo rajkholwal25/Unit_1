@@ -239,6 +239,9 @@ class JobDetailLine(db.Model):
     thickness_mic = db.Column(db.Numeric(6, 2), nullable=True)
     chemical_coating_gsm = db.Column(db.Numeric(8, 3), nullable=True)
     metallisation_gsm = db.Column(db.Numeric(8, 3), nullable=True)
+    chemical_item_code = db.Column(db.String(50), nullable=True)
+    chemical_qty_kg = db.Column(db.Numeric(10, 3), nullable=True)
+    metallisation_qty_kg = db.Column(db.Numeric(10, 3), nullable=True)
 
     # Printing spec
     print_style = db.Column(db.String(50), nullable=True)     # sheetfed / web / roll

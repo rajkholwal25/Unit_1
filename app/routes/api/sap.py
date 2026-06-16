@@ -299,6 +299,19 @@ def mjd1_job_card():
     return jsonify(payload)
 
 
+@sap_api_bp.route('/warehouses')
+@login_required
+def warehouses_list():
+    """All active SAP warehouse codes (OWHS) for PO/BOM line dropdowns."""
+    if not _configured():
+        return jsonify({'error': 'SAP Service Layer URL is not configured.'}), 503
+
+    from app.services.sap_warehouses import sap_warehouse_codes
+
+    codes = sap_warehouse_codes()
+    return jsonify([{'warehouse_code': c} for c in codes])
+
+
 @sap_api_bp.route('/items')
 @login_required
 def items_search():

@@ -640,6 +640,44 @@ class SAPClient:
                 break
         return out
 
+    def fetch_warehouses(self) -> list:
+        """GET warehouse master (OWHS) codes via Service Layer, paginated."""
+        out: list = []
+        skip = 0
+        page = 500
+        use_inactive_filter = True
+        while True:
+            params: dict = {
+                '$select': 'WarehouseCode,WarehouseName,Inactive',
+                '$orderby': 'WarehouseCode',
+                '$top': page,
+                '$skip': skip,
+            }
+            if use_inactive_filter:
+                params['$filter'] = "Inactive eq 'tNO'"
+            try:
+                data = self.get('/Warehouses', params=params)
+            except SAPClientError:
+                if use_inactive_filter and skip == 0:
+                    use_inactive_filter = False
+                    continue
+                raise
+            batch = data.get('value') or []
+            if not batch:
+                break
+            for row in batch:
+                if use_inactive_filter:
+                    inactive = row.get('Inactive')
+                    if inactive is not None and str(inactive).strip().upper() in ('TYES', 'Y', 'YES'):
+                        continue
+                code = (row.get('WarehouseCode') or '').strip()
+                if code:
+                    out.append(row)
+            skip += len(batch)
+            if skip > 100000:
+                break
+        return out
+
     def fetch_open_sales_orders(self, card_code: str) -> list:
         """GET open Sales Orders for a customer (CardCode)."""
         k = self._odata_key(card_code)

@@ -1929,6 +1929,9 @@ def new_job():
                         thickness_mic=request.form.get(f'mat_thickness_mic_{idx}') or None,
                         chemical_coating_gsm=request.form.get(f'mat_chemical_gsm_{idx}') or None,
                         metallisation_gsm=request.form.get(f'mat_metallisation_gsm_{idx}') or None,
+                        chemical_item_code=(request.form.get(f'mat_chemical_item_{idx}', '').split('—')[0].strip() or None),
+                        chemical_qty_kg=request.form.get(f'mat_chemical_qty_{idx}') or None,
+                        metallisation_qty_kg=request.form.get(f'mat_met_qty_{idx}') or None,
                         print_style=request.form.get(f'mat_print_style_{idx}', '').strip() or None,
                         print_type=request.form.get(f'mat_print_type_{idx}', '').strip() or None,
                         front_colours=request.form.get(f'mat_front_colours_{idx}', '').strip() or None,
@@ -1982,6 +1985,9 @@ def new_job():
                 detail.thickness_mic = request.form.get(f'mat_thickness_mic_{idx}') or None
                 detail.chemical_coating_gsm = request.form.get(f'mat_chemical_gsm_{idx}') or None
                 detail.metallisation_gsm = request.form.get(f'mat_metallisation_gsm_{idx}') or None
+                detail.chemical_item_code = (request.form.get(f'mat_chemical_item_{idx}', '').split('—')[0].strip() or None)
+                detail.chemical_qty_kg = request.form.get(f'mat_chemical_qty_{idx}') or None
+                detail.metallisation_qty_kg = request.form.get(f'mat_met_qty_{idx}') or None
                 detail.print_style = request.form.get(f'mat_print_style_{idx}', '').strip() or None
                 detail.print_type = request.form.get(f'mat_print_type_{idx}', '').strip() or None
                 detail.front_colours = request.form.get(f'mat_front_colours_{idx}', '').strip() or None
@@ -2694,10 +2700,12 @@ def _slip_detail_rows_ctx(job, detail_lines: list) -> dict[int, dict]:
             if hl0.dispatch_qty is not None:
                 net_weight = float(hl0.dispatch_qty)
 
-        gross = float(dl.total_sheets) if dl.total_sheets is not None else None
+        planned_rm = float(dl.total_sheets) if dl.total_sheets is not None else None
         waste = float(dl.wastage_sheets or 0)
-        if net_weight is None and gross is not None:
-            net_weight = gross - waste
+        # Supplied RM (issue qty) = detail-line planned RM + wastage — matches job create form.
+        supplied_rm = float(dl.total_sheets_with_wastage) if planned_rm is not None else None
+        if net_weight is None and planned_rm is not None:
+            net_weight = planned_rm
 
         rm_code = (dl.raw_material_item_code or '').strip()
         ctx[dl.detail_no] = {
@@ -2707,7 +2715,7 @@ def _slip_detail_rows_ctx(job, detail_lines: list) -> dict[int, dict]:
             'thickness': _fg_thickness_display_from_item_code(fg_code_for_thickness or ''),
             'weight_net': net_weight,
             'weight_wastage': waste,
-            'weight_total': gross,
+            'weight_total': supplied_rm,
         }
     return ctx
 
@@ -3687,27 +3695,23 @@ def edit_bom_spec(job_id, bom_id):
 
 
 def _edit_po_warehouse_options(step: BomStep, input_rows: list) -> list[str]:
-    """Dropdown choices for component line warehouses (Unit 1 FBD + common SAP codes)."""
+    """All SAP warehouses (OWHS) plus step-specific codes for LINE WH dropdown."""
+    from app.services.sap_warehouses import sap_warehouse_codes
     from app.services.unit1_processes import UNIT1_WAREHOUSE_OPTIONS
 
-    opts: list[str] = []
-    seen: set[str] = set()
-
-    def _add(wh: str | None) -> None:
-        w = (wh or '').strip()
-        if w and w not in seen:
-            opts.append(w)
-            seen.add(w)
-
+    extras: list[str] = []
     for w in UNIT1_WAREHOUSE_OPTIONS:
-        _add(w)
-    for w in ('WH-STR', 'OHJW-U1'):
-        _add(w)
-    _add(step.sap_warehouse)
-    _add(step.warehouse)
+        extras.append(w)
+    extras.extend(('WH-STR', 'OHJW-U1'))
+    if step.sap_warehouse:
+        extras.append(step.sap_warehouse)
+    if step.warehouse:
+        extras.append(step.warehouse)
     for row in input_rows:
-        _add(getattr(row.get('inp'), 'sap_warehouse', None))
-    return opts
+        wh = getattr(row.get('inp'), 'sap_warehouse', None)
+        if wh:
+            extras.append(str(wh))
+    return sap_warehouse_codes(extra=extras)
 
 
 @jobs_bp.route('/<int:job_id>/bom-steps/<int:step_id>/edit-po', methods=['GET', 'POST'])

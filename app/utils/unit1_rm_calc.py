@@ -73,6 +73,8 @@ def compute_unit1_rm_plan(
             'after_slitting_kg': fg_k,
             'fg_kg': fg_k,
             'wastage_kg': 0.0,
+            'chemical_kg': 0.0,
+            'metallisation_kg': 0.0,
             'film_gsm': gsm,
         }
 
@@ -81,6 +83,8 @@ def compute_unit1_rm_plan(
     after_met_kg = raw_film_kg * gsm_total / gsm
     after_slit_kg = after_met_kg * (fg_w / raw_w)
     width_trim_kg = raw_film_kg * max(0.0, 1.0 - (fg_w / raw_w)) if raw_w > 0 else 0.0
+    chemical_kg = raw_film_kg * chem / gsm if gsm > 0 else 0.0
+    metallisation_kg = raw_film_kg * met / gsm if gsm > 0 else 0.0
 
     return {
         'ok': True,
@@ -90,6 +94,8 @@ def compute_unit1_rm_plan(
         'after_slitting_kg': after_slit_kg,
         'fg_kg': fg_k,
         'wastage_kg': width_trim_kg,
+        'chemical_kg': chemical_kg,
+        'metallisation_kg': metallisation_kg,
         'film_gsm': gsm,
     }
 
@@ -144,6 +150,8 @@ def aggregate_rm_plans(
     per_line: list[dict[str, Any]] = []
     total_raw = 0.0
     total_waste = 0.0
+    total_chemical = 0.0
+    total_met = 0.0
     for fg_kg, fg_w in fg_lines:
         plan = compute_unit1_rm_plan(
             fg_kg=fg_kg,
@@ -159,6 +167,8 @@ def aggregate_rm_plans(
         if plan.get('ok'):
             total_raw += float(plan['raw_film_kg'])
             total_waste += float(plan['wastage_kg'])
+            total_chemical += float(plan.get('chemical_kg') or 0)
+            total_met += float(plan.get('metallisation_kg') or 0)
         else:
             total_raw += max(0.0, float(fg_kg))
     return {
@@ -166,6 +176,8 @@ def aggregate_rm_plans(
         'per_line': per_line,
         'total_raw_film_kg': total_raw,
         'total_wastage_kg': total_waste,
+        'total_chemical_kg': total_chemical,
+        'total_metallisation_kg': total_met,
         'total_rm_kg': total_raw,
     }
 

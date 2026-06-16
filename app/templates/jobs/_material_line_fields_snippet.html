@@ -9,7 +9,7 @@
 </div>
 <div class="row g-2 mb-2">
   <div class="col-md-4 col-lg-3">
-    <label class="form-label small mb-0 text-muted">Total RM (KGS)</label>
+    <label class="form-label small mb-0 text-muted">Planned Raw Material (KGS)</label>
     <div class="form-control form-control-sm bg-light">{{ detail.total_sheets if detail.total_sheets is not none else '—' }}</div>
   </div>
   <div class="col-md-4 col-lg-3">
@@ -19,6 +19,10 @@
   <div class="col-md-4 col-lg-3">
     <label class="form-label small mb-0 text-muted">Wastage (KGS)</label>
     <div class="form-control form-control-sm bg-light">{{ detail.wastage_sheets if detail.wastage_sheets is not none else '—' }}</div>
+  </div>
+  <div class="col-md-4 col-lg-3">
+    <label class="form-label small mb-0 text-muted">Supplied Raw Material (KGS)</label>
+    <div class="form-control form-control-sm bg-light">{{ detail.total_sheets_with_wastage if detail.total_sheets is not none else '—' }}</div>
   </div>
 </div>
 <div class="row g-2">
